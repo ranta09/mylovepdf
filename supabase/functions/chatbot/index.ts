@@ -5,10 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are MagicPDF Assistant, a helpful chatbot embedded on the MagicPDF website (mylovepdf.lovable.app). Your job is to help users find the right tool, explain how tools work, and guide them through the site.
+const SYSTEM_PROMPT = `You are MagicPDFs Assistant, a helpful chatbot embedded on the MagicPDFs website (mylovepdf.lovable.app). Your job is to help users find the right tool, explain how tools work, and guide them through the site.
 
-## About MagicPDF
-MagicPDF is a free online PDF toolkit with 35+ tools. All processing is done in the browser — files are never uploaded to servers. No sign-up required. 100% free with no watermarks or limits.
+## About MagicPDFs
+MagicPDFs is a free online PDF toolkit with 35+ tools. All processing is done in the browser — files are never uploaded to servers. No sign-up required. 100% free with no watermarks or limits.
 
 ## Available Tools
 
