@@ -41,12 +41,6 @@ const Footer = () => {
             {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground/60">
-            <span className="flex items-center gap-1.5">🔒 {t.footerLocal}</span>
-            <span className="flex items-center gap-1.5">⚡ {t.footerNoSignup}</span>
-            <span className="flex items-center gap-1.5">💯 {t.footerFree}</span>
-          </div>
-
           <div className="relative flex justify-center md:justify-end">
             <select
               value={lang}
