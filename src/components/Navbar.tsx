@@ -45,11 +45,11 @@ const Navbar = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             <span
-              className="relative z-10 flex items-baseline gap-0.5"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
+              className="relative z-10 flex items-baseline gap-0"
+              style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
             >
-              <span className="text-2xl font-medium tracking-tight text-foreground">Magic</span>
-              <span className="text-2xl font-black tracking-tight text-foreground">PDF</span>
+              <span className="text-2xl font-bold tracking-tight text-foreground">Magic</span>
+              <span className="text-2xl font-black tracking-tight text-primary">PDF</span>
             </span>
             <motion.img
               src={logoImg}
