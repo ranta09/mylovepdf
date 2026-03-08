@@ -26,16 +26,7 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-20 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <motion.img
-            src={logoImg}
-            alt="PDF Magic"
-            className="h-14 w-14"
-            initial={{ rotate: -180, scale: 0 }}
-            animate={{ rotate: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, duration: 0.8 }}
-            whileHover={{ rotate: 15, scale: 1.1 }}
-          />
+        <Link to="/" className="flex items-center gap-1 group">
 
           <motion.div
             className="flex items-baseline gap-1"
