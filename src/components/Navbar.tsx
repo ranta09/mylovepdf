@@ -42,7 +42,15 @@ const Navbar = () => {
             className="relative z-10 flex items-baseline gap-0"
             style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
           >
-            <span className="text-2xl font-bold tracking-tight text-foreground">Magic</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground">Mag</span>
+            <span className="relative text-2xl font-bold tracking-tight text-foreground">
+              <span className="invisible">i</span>
+              <span className="absolute inset-0 flex flex-col items-center">
+                <span className="text-primary animate-bounce text-[10px] leading-none" style={{ marginTop: '-2px' }}>✦</span>
+                <span className="text-foreground text-2xl font-bold leading-none" style={{ marginTop: '-4px' }}>ı</span>
+              </span>
+            </span>
+            <span className="text-2xl font-bold tracking-tight text-foreground">c</span>
             <span className="text-2xl font-black tracking-tight text-primary">PDFs</span>
           </span>
         </Link>
