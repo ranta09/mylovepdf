@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { FileImage } from "lucide-react";
+import { FileImage, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -51,10 +51,11 @@ const JpgToPdf = () => {
       <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select images to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? "Converting…" : `Convert ${files.length} image${files.length > 1 ? "s" : ""}`}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : `Convert ${files.length} image${files.length > 1 ? "s" : ""}`}
           </Button>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-10 seconds</p>}
         </div>
       )}
     </ToolLayout>

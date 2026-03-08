@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Image } from "lucide-react";
+import { Image, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -65,10 +65,11 @@ const PdfToJpg = () => {
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && previews.length === 0 && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? "Converting…" : "Convert to JPG"}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to JPG"}
           </Button>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~5-20 seconds</p>}
         </div>
       )}
       {previews.length > 0 && (

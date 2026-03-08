@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Merge } from "lucide-react";
+import { Merge, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -49,10 +49,11 @@ const MergePdf = () => {
       <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length >= 2 && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={merge} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? "Merging…" : `Merge ${files.length} files`}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Merging…</> : `Merge ${files.length} files`}
           </Button>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-10 seconds</p>}
         </div>
       )}
     </ToolLayout>
