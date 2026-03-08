@@ -139,6 +139,8 @@ const ChatWithPdf = () => {
       <div className="space-y-6">
         {!documentText ? (
           <>
+            <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload a PDF to chat with" />
+
             {/* Instructions */}
             <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
               <div className="flex items-center gap-3">
@@ -169,8 +171,6 @@ const ChatWithPdf = () => {
                 </p>
               </div>
             </div>
-
-            <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload a PDF to chat with" />
             {files.length > 0 && (
               <div className="space-y-3">
                 {extracting && <Progress value={progress} className="h-2" />}

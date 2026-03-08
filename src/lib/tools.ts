@@ -43,7 +43,7 @@ export const aiTools: PdfTool[] = [
   { id: "ai-summarizer", name: "PDF Summarizer", description: "AI-powered notes and summaries from any PDF", icon: Sparkles, path: "/pdf-summarizer", category: "ai", available: true },
   { id: "ai-quiz", name: "Quiz Generator", description: "Generate quizzes from study material with AI", icon: BrainCircuit, path: "/quiz-generator", category: "ai", available: true },
   { id: "ai-chat", name: "Chat with PDF", description: "Ask questions and chat with your document", icon: MessageSquare, path: "/chat-with-pdf", category: "ai", available: true },
-  { id: "ai-ats", name: "ATS Resume Checker", description: "Check resume ATS compatibility and get suggestions", icon: ScanSearch, path: "/ats-checker", category: "ai", available: true },
+  { id: "ai-ats", name: "ATS Resume Checker", description: "Get your resume ATS score and tips", icon: ScanSearch, path: "/ats-checker", category: "ai", available: true },
 ];
 
 export const categoryColors: Record<ToolCategory, string> = {
