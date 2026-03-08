@@ -6,6 +6,7 @@ import ToolCard from "@/components/ToolCard";
 import HomeFAQ, { faqs } from "@/components/HomeFAQ";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
+import HowItWorks from "@/components/HowItWorks";
 import { Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
