@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import NeuralBackground from "@/components/NeuralBackground";
+import MagicBackground from "@/components/MagicBackground";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
@@ -46,7 +46,7 @@ const Index = () => {
         <meta name="description" content="Every tool you need to work with PDFs — plus AI-powered document tools. Merge, split, compress, convert, summarize, generate quizzes, chat with PDFs, and check resume ATS scores. Free, fast and secure." />
       </Helmet>
       <div className="relative flex min-h-screen flex-col">
-        <NeuralBackground />
+        <MagicBackground />
         <Navbar />
         <main className="flex-1">
           {/* Hero */}
