@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Merge, Loader2 } from "lucide-react";
+import { Merge, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ const MergePdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Merge PDF</h1>
             <p className="text-sm text-muted-foreground">Combine multiple PDF files into a single document</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with contracts, reports, invoices, and any PDF files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with contracts, reports, invoices, and any PDF files. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
           </div>
         </div>
       </div>

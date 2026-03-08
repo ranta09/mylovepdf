@@ -183,7 +183,7 @@ const QuizGenerator = () => {
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">AI Quiz Generator</h1>
               <p className="text-sm text-muted-foreground">Create practice tests from any document</p>
-              <p className="mt-1 text-xs text-muted-foreground/70">◗ Upload multiple files at once. Supports PDF, TXT, DOC, CSV, HTML, and more. Great for exam prep, revision, and self-testing. Your files are private and deleted after processing.</p>
+              <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Upload multiple files at once. Supports PDF, TXT, DOC, CSV, HTML, and more. Great for exam prep, revision, and self-testing. Your files are private and deleted after processing.</span></div>
             </div>
           </div>
         </div>

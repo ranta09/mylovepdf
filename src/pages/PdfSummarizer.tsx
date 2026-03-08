@@ -133,7 +133,7 @@ const PdfSummarizer = () => {
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">Summarize PDF with AI</h1>
               <p className="text-sm text-muted-foreground">Get instant notes from any document</p>
-              <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with research papers, textbooks, reports, articles, and any text-based PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+              <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with research papers, textbooks, reports, articles, and any text-based PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
             </div>
           </div>
         </div>

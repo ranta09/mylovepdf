@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScanLine, Copy, Download, Loader2 } from "lucide-react";
+import { ScanLine, Copy, Download, Loader2, Info } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -84,7 +84,7 @@ const OcrPdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">OCR PDF</h1>
             <p className="text-sm text-muted-foreground">Extract text from scanned PDFs using text recognition</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with scanned documents, photographed pages, and image-based PDFs. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with scanned documents, photographed pages, and image-based PDFs. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
           </div>
         </div>
       </div>
