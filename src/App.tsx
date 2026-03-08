@@ -37,6 +37,10 @@ import CropPdf from "./pages/CropPdf";
 import RedactPdf from "./pages/RedactPdf";
 import FlattenPdf from "./pages/FlattenPdf";
 import TranslatePdf from "./pages/TranslatePdf";
+import HtmlToPdf from "./pages/HtmlToPdf";
+import OcrPdf from "./pages/OcrPdf";
+import PdfToPdfa from "./pages/PdfToPdfa";
+import ComparePdf from "./pages/ComparePdf";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +84,10 @@ const App = () => (
             <Route path="/redact-pdf" element={<RedactPdf />} />
             <Route path="/flatten-pdf" element={<FlattenPdf />} />
             <Route path="/translate-pdf" element={<TranslatePdf />} />
+            <Route path="/html-to-pdf" element={<HtmlToPdf />} />
+            <Route path="/ocr-pdf" element={<OcrPdf />} />
+            <Route path="/pdf-to-pdfa" element={<PdfToPdfa />} />
+            <Route path="/compare-pdf" element={<ComparePdf />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
