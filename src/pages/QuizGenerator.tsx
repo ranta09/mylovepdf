@@ -131,6 +131,8 @@ const QuizGenerator = () => {
       hideHeader
     >
       <div className="space-y-6">
+        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload study material (PDF)" />
+
         {/* Instructions */}
         <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
           <div className="flex items-center gap-3">
@@ -161,8 +163,6 @@ const QuizGenerator = () => {
             </p>
           </div>
         </div>
-
-        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload study material (PDF)" />
 
         {files.length > 0 && questions.length === 0 && (
           <div className="space-y-4">
