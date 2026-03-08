@@ -6,6 +6,7 @@ import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
 import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>My Love PDF — Free Online PDF & AI Document Tools</title>
+        <title>DocuMind — AI-Powered PDF & Document Tools</title>
         <meta name="description" content="Every tool you need to work with PDFs — plus AI-powered document tools. Merge, split, compress, convert, summarize, generate quizzes, chat with PDFs, and check resume ATS scores. Free, fast and secure." />
       </Helmet>
       <div className="relative flex min-h-screen flex-col">
@@ -52,9 +53,7 @@ const Index = () => {
           <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
             <div className="container relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-hero shadow-elevated">
-                  <Heart className="h-8 w-8 fill-primary-foreground text-primary-foreground" />
-                </div>
+                <img src={logoImg} alt="DocuMind" className="mx-auto mb-6 h-20 w-20 rounded-2xl shadow-elevated" />
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
                   Every PDF tool you need
                 </h1>

@@ -28,7 +28,7 @@ const ToolLayout = ({ title, description, category, icon, children, metaTitle, m
   return (
     <>
       <Helmet>
-        <title>{metaTitle || `${title} - My Love PDF`}</title>
+        <title>{metaTitle || `${title} - DocuMind`}</title>
         <meta name="description" content={metaDescription || description} />
       </Helmet>
       <div className="flex min-h-screen flex-col">

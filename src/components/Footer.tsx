@@ -1,15 +1,13 @@
-import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import logoImg from "@/assets/logo.png";
 
 const Footer = () => (
   <footer className="border-t border-border bg-secondary/50 py-12">
     <div className="container">
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-hero">
-            <Heart className="h-4 w-4 fill-primary-foreground text-primary-foreground" />
-          </div>
-          <span className="font-display text-lg font-bold text-foreground">My Love PDF</span>
+        <div className="flex items-center gap-2.5">
+          <img src={logoImg} alt="DocuMind" className="h-8 w-8 rounded-lg" />
+          <span className="font-display text-lg font-bold text-foreground">DocuMind</span>
         </div>
         <p className="max-w-md text-sm text-muted-foreground">
           Every tool you need to work with PDFs — plus AI-powered tools to summarize, generate quizzes, and chat with your documents. Free, fast, and secure.
