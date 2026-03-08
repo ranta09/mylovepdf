@@ -24,7 +24,7 @@ const RotatePdf = () => {
       setProgress(80);
       const pdfBytes = await doc.save();
       setProgress(100);
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

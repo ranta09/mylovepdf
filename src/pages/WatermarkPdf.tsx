@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import { Droplets } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -37,13 +37,13 @@ const WatermarkPdf = () => {
           font,
           color: rgb(0.5, 0.5, 0.5),
           opacity: opacity[0],
-          rotate: { type: "degrees" as const, angle: -45 },
+          rotate: degrees(-45),
         });
       });
       setProgress(80);
       const pdfBytes = await doc.save();
       setProgress(100);
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
