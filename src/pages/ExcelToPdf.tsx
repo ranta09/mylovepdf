@@ -1,0 +1,99 @@
+import { useState } from "react";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+import { FileSpreadsheet } from "lucide-react";
+import ToolLayout from "@/components/ToolLayout";
+import FileUpload from "@/components/FileUpload";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
+
+const ExcelToPdf = () => {
+  const [files, setFiles] = useState<File[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const convert = async () => {
+    if (files.length === 0) return;
+    setProcessing(true);
+    setProgress(10);
+    try {
+      const text = await files[0].text();
+      setProgress(30);
+      
+      const rows = text.split("\n").map(row => row.split(",").map(cell => cell.replace(/^"|"$/g, "").trim()));
+      
+      const doc = await PDFDocument.create();
+      const font = await doc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
+      const fontSize = 9;
+      const margin = 40;
+      const pageWidth = 842; // landscape A4
+      const pageHeight = 595;
+      const rowHeight = 20;
+      const maxRows = Math.floor((pageHeight - margin * 2) / rowHeight) - 1;
+      
+      const colCount = Math.max(...rows.map(r => r.length));
+      const colWidth = (pageWidth - margin * 2) / Math.max(colCount, 1);
+
+      for (let chunk = 0; chunk < rows.length; chunk += maxRows) {
+        const page = doc.addPage([pageWidth, pageHeight]);
+        const pageRows = rows.slice(chunk, chunk + maxRows);
+        
+        pageRows.forEach((row, rowIdx) => {
+          const y = pageHeight - margin - (rowIdx + 1) * rowHeight;
+          const isHeader = chunk === 0 && rowIdx === 0;
+          const usedFont = isHeader ? boldFont : font;
+          
+          row.forEach((cell, colIdx) => {
+            const x = margin + colIdx * colWidth + 4;
+            const truncated = cell.length > 20 ? cell.substring(0, 18) + "…" : cell;
+            page.drawText(truncated, { x, y: y + 5, size: fontSize, font: usedFont });
+          });
+          
+          // Draw row line
+          page.drawLine({
+            start: { x: margin, y },
+            end: { x: pageWidth - margin, y },
+            thickness: 0.5,
+            opacity: 0.2,
+          });
+        });
+        setProgress(30 + Math.round(((chunk + maxRows) / rows.length) * 60));
+      }
+
+      const pdfBytes = await doc.save();
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "spreadsheet.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+      setProgress(100);
+      toast.success("Spreadsheet converted to PDF!");
+    } catch {
+      toast.error("Failed to convert to PDF");
+    } finally {
+      setProcessing(false);
+      setProgress(0);
+    }
+  };
+
+  return (
+    <ToolLayout title="Excel to PDF" description="Convert CSV spreadsheet data into a PDF table" category="convert" icon={<FileSpreadsheet className="h-7 w-7" />}
+      metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free" metaDescription="Convert CSV and spreadsheet data to PDF tables. Free online converter.">
+      <FileUpload accept=".csv,.tsv,.txt" files={files} onFilesChange={setFiles} label="Select a CSV file to convert" />
+      {processing && <Progress value={progress} className="mt-4" />}
+      {files.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+            {processing ? "Converting…" : "Convert to PDF"}
+          </Button>
+        </div>
+      )}
+      <p className="mt-4 text-center text-xs text-muted-foreground">Upload a CSV file. For .xlsx files, export as CSV from Excel first.</p>
+    </ToolLayout>
+  );
+};
+
+export default ExcelToPdf;
