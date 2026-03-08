@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Wand2 } from "lucide-react";
+import { Menu, X, Wand2, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import logoImg from "@/assets/logo.png";
 
@@ -21,14 +22,50 @@ const Navbar = () => {
       }, 300);
     }
   };
+
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
-      <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <img src={logoImg} alt="PDF Magic" className="h-14 w-14" />
-          <span className="font-display text-xl font-bold text-foreground">
-            PDF Magic
-          </span>
+      <div className="container flex h-20 items-center justify-between">
+        <Link to="/" className="flex items-center gap-3 group">
+          {/* Spinning wand logo */}
+          <motion.img
+            src={logoImg}
+            alt="PDF Magic"
+            className="h-16 w-16"
+            initial={{ rotate: -180, scale: 0 }}
+            animate={{ rotate: 0, scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15, duration: 0.8 }}
+            whileHover={{ rotate: 15, scale: 1.1 }}
+          />
+
+          {/* Text that fades in after wand animation */}
+          <motion.div
+            className="flex items-center gap-1"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <span
+              className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              PDF Magic
+            </span>
+
+            {/* Blinking sparkles */}
+            <motion.span
+              animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </motion.span>
+            <motion.span
+              animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1, delay: 0.5 }}
+            >
+              <Sparkles className="h-3 w-3 text-accent" />
+            </motion.span>
+          </motion.div>
         </Link>
 
         {/* Desktop */}
