@@ -171,9 +171,41 @@ const QuizGenerator = () => {
       metaTitle="AI Quiz Generator — Create Practice Tests | PDF Magic"
       metaDescription="Upload study material and instantly create MCQ, true/false, or short answer quizzes with AI."
       toolId="ai-quiz"
+      hideHeader
     >
       <div className="space-y-6">
-        {/* Upload */}
+        {/* Instructions first */}
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+              <BrainCircuit className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">AI Quiz Generator</h1>
+              <p className="text-sm text-muted-foreground">Create practice tests from any document</p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {[
+              { step: "1", text: "Upload your study material" },
+              { step: "2", text: "Pick quiz type & number of questions" },
+              { step: "3", text: "Take the quiz or download it" },
+            ].map((s) => (
+              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{s.step}</span>
+                <span className="text-sm text-foreground">{s.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Upload multiple files at once. Supports PDF, TXT, DOC, CSV, HTML, and more. Great for exam prep, revision, and self-testing. Your files are private and deleted after processing.
+            </p>
+          </div>
+        </div>
+
+        {/* Upload below instructions */}
         <FileUpload
           accept=".pdf,.txt,.md,.doc,.docx,.csv,.json,.xml,.html,.rtf"
           multiple={true}
