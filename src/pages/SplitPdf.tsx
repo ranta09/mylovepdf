@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { parseRange } from "@/lib/parseRange";
 
 const SplitPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -82,21 +83,5 @@ const SplitPdf = () => {
     </ToolLayout>
   );
 };
-
-function parseRange(input: string, max: number): number[] {
-  const pages: number[] = [];
-  const parts = input.split(",").map(s => s.trim());
-  for (const part of parts) {
-    if (part.includes("-")) {
-      const [start, end] = part.split("-").map(Number);
-      if (isNaN(start) || isNaN(end)) continue;
-      for (let i = Math.max(1, start); i <= Math.min(max, end); i++) pages.push(i);
-    } else {
-      const n = Number(part);
-      if (!isNaN(n) && n >= 1 && n <= max) pages.push(n);
-    }
-  }
-  return [...new Set(pages)].sort((a, b) => a - b);
-}
 
 export default SplitPdf;

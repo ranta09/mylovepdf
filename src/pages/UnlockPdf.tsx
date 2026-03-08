@@ -21,7 +21,13 @@ const UnlockPdf = () => {
     try {
       const bytes = await files[0].arrayBuffer();
       setProgress(40);
-      const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      // Try loading with password first, then fallback to ignoreEncryption
+      let doc: PDFDocument;
+      try {
+        doc = await PDFDocument.load(bytes, { password: password || undefined, ignoreEncryption: true });
+      } catch {
+        doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      }
       setProgress(70);
       const pdfBytes = await doc.save();
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
