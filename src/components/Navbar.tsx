@@ -40,10 +40,11 @@ const Navbar = () => {
               whileHover={{ rotate: 15, scale: 1.1 }}
             />
             <span
-              className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent relative z-0 pl-1"
+              className="relative z-0 pl-1 flex items-baseline gap-0.5"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
             >
-              Magic
+              <span className="text-2xl font-medium tracking-tight text-foreground">Magic</span>
+              <span className="text-2xl font-black tracking-tight text-foreground">PDF</span>
             </span>
             <motion.span
               animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.15, 0.9] }}
