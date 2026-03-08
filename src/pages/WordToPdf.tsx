@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { FileText } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
