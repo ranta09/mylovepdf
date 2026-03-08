@@ -72,7 +72,7 @@ const Index = () => {
               <>
                 {/* AI Tools FIRST */}
                 {filteredAiTools.length > 0 && (
-                  <div className="mb-16">
+                  <div className="mb-16" id="ai-tools">
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-tool-ai/10">
                         <Sparkles className="h-6 w-6 text-tool-ai" />
