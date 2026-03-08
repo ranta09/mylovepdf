@@ -162,17 +162,6 @@ const Chatbot = () => {
           </motion.div>
         )}
       </AnimatePresence>
-          >
-            <Button
-              onClick={() => setOpen(true)}
-              size="lg"
-              className="h-14 w-14 rounded-full shadow-elevated p-0"
-            >
-              <MessageCircle className="h-6 w-6" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Chat panel */}
       <AnimatePresence>
