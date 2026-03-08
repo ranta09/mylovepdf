@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import { HelmetProvider } from "react-helmet-async";
+import { LanguageProvider } from "./lib/i18n/LanguageContext";
 import Index from "./pages/Index";
 import MergePdf from "./pages/MergePdf";
 import SplitPdf from "./pages/SplitPdf";
@@ -47,6 +48,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
+    <LanguageProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -95,6 +97,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+    </LanguageProvider>
   </HelmetProvider>
 );
 
