@@ -25,6 +25,10 @@ import PageNumbers from "./pages/PageNumbers";
 import OrganizePdf from "./pages/OrganizePdf";
 import RepairPdf from "./pages/RepairPdf";
 import NotFound from "./pages/NotFound";
+import PdfSummarizer from "./pages/PdfSummarizer";
+import QuizGenerator from "./pages/QuizGenerator";
+import ChatWithPdf from "./pages/ChatWithPdf";
+import AtsChecker from "./pages/AtsChecker";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +60,10 @@ const App = () => (
             <Route path="/page-numbers" element={<PageNumbers />} />
             <Route path="/organize-pdf" element={<OrganizePdf />} />
             <Route path="/repair-pdf" element={<RepairPdf />} />
+            <Route path="/pdf-summarizer" element={<PdfSummarizer />} />
+            <Route path="/quiz-generator" element={<QuizGenerator />} />
+            <Route path="/chat-with-pdf" element={<ChatWithPdf />} />
+            <Route path="/ats-checker" element={<AtsChecker />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
