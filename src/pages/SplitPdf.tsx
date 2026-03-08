@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Scissors, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import ToolHeader, { ToolSteps } from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,25 +63,37 @@ const SplitPdf = () => {
 
   return (
     <ToolLayout title="Split PDF" description="Extract specific pages from your PDF document" category="split" icon={<Scissors className="h-7 w-7" />}
-      metaTitle="Split PDF — Extract Pages Online Free" metaDescription="Split PDF files and extract pages. Free online PDF splitter tool." toolId="split">
-      <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to split" />
-      {totalPages > 0 && (
-        <div className="mt-6 space-y-4">
-          <p className="text-sm text-muted-foreground">Total pages: <span className="font-semibold text-foreground">{totalPages}</span></p>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Page range</label>
-            <Input placeholder="e.g. 1-3, 5, 7-9" value={pageRange} onChange={e => setPageRange(e.target.value)} />
-            <p className="mt-1 text-xs text-muted-foreground">Enter page numbers or ranges separated by commas</p>
-          </div>
-          {processing && <Progress value={progress} />}
-          <div className="flex flex-col items-center gap-2">
-            <Button size="lg" onClick={split} disabled={processing || !pageRange} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Splitting…</> : "Split PDF"}
+      metaTitle="Split PDF — Extract Pages Online Free" metaDescription="Split PDF files and extract pages. Free online PDF splitter tool." toolId="split" hideHeader>
+      <div className="space-y-6">
+        <ToolHeader
+          icon={<Scissors className="h-5 w-5 text-primary-foreground" />}
+          title="Split PDF"
+          subtitle="Extract specific pages from your document"
+          category="split"
+          infoText="Upload a PDF and select which pages to extract into a new file. Use ranges like 1-3, 5, 7-9. Max file size: 100MB. Your files are private and automatically deleted."
+        />
+        <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to split" />
+        <ToolSteps steps={[
+          { step: "1", text: "Upload your PDF file" },
+          { step: "2", text: "Enter page range" },
+          { step: "3", text: "Download split PDF" },
+        ]} category="split" />
+        {totalPages > 0 && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Total pages: <span className="font-semibold text-foreground">{totalPages}</span></p>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground">Page range</label>
+              <Input placeholder="e.g. 1-3, 5, 7-9" value={pageRange} onChange={e => setPageRange(e.target.value)} />
+              <p className="mt-1 text-xs text-muted-foreground">Enter page numbers or ranges separated by commas</p>
+            </div>
+            {processing && <Progress value={progress} className="h-2" />}
+            <Button size="lg" onClick={split} disabled={processing || !pageRange} className="w-full rounded-xl">
+              {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Splitting…</> : "Split PDF"}
             </Button>
-            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
+            {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~3-5 seconds</p>}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </ToolLayout>
   );
 };

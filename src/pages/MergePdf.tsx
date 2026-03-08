@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Merge, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import ToolHeader, { ToolSteps } from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -45,17 +46,29 @@ const MergePdf = () => {
 
   return (
     <ToolLayout title="Merge PDF" description="Combine multiple PDF files into a single document" category="merge" icon={<Merge className="h-7 w-7" />}
-      metaTitle="Merge PDF — Combine PDF Files Online Free" metaDescription="Merge multiple PDF files into one document. Free, fast and secure online PDF merger." toolId="merge">
-      <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length >= 2 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={merge} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Merging…</> : `Merge ${files.length} files`}
+      metaTitle="Merge PDF — Combine PDF Files Online Free" metaDescription="Merge multiple PDF files into one document. Free, fast and secure online PDF merger." toolId="merge" hideHeader>
+      <div className="space-y-6">
+        <ToolHeader
+          icon={<Merge className="h-5 w-5 text-primary-foreground" />}
+          title="Merge PDF"
+          subtitle="Combine multiple PDFs into one document"
+          category="merge"
+          infoText="Upload two or more PDF files and merge them into a single document. Drag to reorder files before merging. Max file size: 100MB. Your files are private and automatically deleted after processing."
+        />
+        <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
+        <ToolSteps steps={[
+          { step: "1", text: "Upload your PDF files" },
+          { step: "2", text: "Arrange file order" },
+          { step: "3", text: "Download merged PDF" },
+        ]} category="merge" />
+        {processing && <Progress value={progress} className="h-2" />}
+        {files.length >= 2 && (
+          <Button size="lg" onClick={merge} disabled={processing} className="w-full rounded-xl">
+            {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Merging…</> : `Merge ${files.length} files`}
           </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-10 seconds</p>}
-        </div>
-      )}
+        )}
+        {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~3-10 seconds</p>}
+      </div>
     </ToolLayout>
   );
 };
