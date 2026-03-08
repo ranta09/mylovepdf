@@ -50,13 +50,17 @@ const ToolLayout = ({ title, description, category, icon, children, metaTitle, m
         <Navbar />
         <main className="flex-1">
           {!hideHeader && (
-            <section className="border-b border-border bg-secondary/30 py-12">
-              <div className="container text-center">
-                <div className={cn("mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-primary-foreground", categoryColors[category])}>
-                  {icon}
+            <section className="border-b border-border bg-secondary/30 py-8">
+              <div className="container max-w-3xl">
+                <div className="flex items-center gap-3">
+                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary-foreground", categoryColors[category])}>
+                    {icon}
+                  </div>
+                  <div>
+                    <h1 className="font-display text-xl font-bold text-foreground">{title}</h1>
+                    <p className="text-sm text-muted-foreground">{description}</p>
+                  </div>
                 </div>
-                <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">{title}</h1>
-                <p className="mx-auto mt-3 max-w-lg text-muted-foreground">{description}</p>
               </div>
             </section>
           )}
