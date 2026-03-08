@@ -135,21 +135,16 @@ const AtsChecker = () => {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tool-ai">
               <ScanSearch className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">ATS Resume Checker</h1>
               <p className="text-sm text-muted-foreground">Make sure your resume beats the bots</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">◗ Most companies use ATS to filter resumes before a human sees them. This tool checks formatting, keywords, skills, and structure. Your files are private and deleted after processing.</p>
             </div>
-          </div>
-          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Most companies use ATS (Applicant Tracking Systems) to filter resumes before a human sees them. This tool checks your resume for formatting, keywords, skills, and structure to help you get past the screening. Your files are private and deleted after processing.
-            </p>
           </div>
         </div>
 
