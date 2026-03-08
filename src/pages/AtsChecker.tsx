@@ -4,7 +4,7 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -125,25 +125,57 @@ const AtsChecker = () => {
   return (
     <ToolLayout
       title="Resume ATS Checker"
-      description="Upload your resume and get an ATS compatibility score with actionable suggestions."
+      description="Check if your resume passes ATS screening — get a score and tips to improve."
       category="ai"
       icon={<ScanSearch className="h-7 w-7" />}
-      metaTitle="Resume ATS Checker — AI Resume Analyzer | My Love PDF"
-      metaDescription="Check your resume's ATS compatibility. Get a score, keyword analysis, and actionable suggestions to improve."
+      metaTitle="Free ATS Resume Checker — Score & Optimize Your Resume | My Love PDF"
+      metaDescription="Check your resume's ATS compatibility score. Get keyword analysis, formatting tips, and actionable suggestions to land more interviews."
+      hideHeader
     >
       <div className="space-y-6">
+        {/* Instructions */}
+        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+              <ScanSearch className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">ATS Resume Checker</h1>
+              <p className="text-sm text-muted-foreground">Make sure your resume beats the bots</p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {[
+              { step: "1", text: "Upload your resume (PDF)" },
+              { step: "2", text: "Optionally paste a job description" },
+              { step: "3", text: "Get your ATS score & tips" },
+            ].map((s) => (
+              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
+                <span className="text-sm text-foreground">{s.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Most companies use ATS (Applicant Tracking Systems) to filter resumes before a human sees them. This tool checks your resume for formatting, keywords, skills, and structure to help you get past the screening. Your files are private and deleted after processing.
+            </p>
+          </div>
+        </div>
+
         <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your resume (PDF)" />
 
         {files.length > 0 && !result && (
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Job Description (optional — for keyword matching)
+                Job Description (optional — for better keyword matching)
               </label>
               <Textarea
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description here for better keyword analysis…"
+                placeholder="Paste the job description here to compare keywords…"
                 className="rounded-xl"
                 rows={4}
               />
@@ -153,14 +185,13 @@ const AtsChecker = () => {
 
             <Button onClick={handleAnalyze} disabled={processing} size="lg" className="w-full rounded-xl">
               <ScanSearch className="mr-2 h-5 w-5" />
-              {processing ? "Analyzing…" : "Analyze Resume"}
+              {processing ? "Analyzing Resume…" : "Check My Resume"}
             </Button>
           </div>
         )}
 
         {result && (
           <div className="space-y-6">
-            {/* Score */}
             <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-card">
               <p className="text-sm font-medium text-muted-foreground">ATS Compatibility Score</p>
               <p className={`font-display text-6xl font-extrabold ${getScoreColor(result.score)}`}>
@@ -169,7 +200,6 @@ const AtsChecker = () => {
               <p className="text-lg text-muted-foreground">/ 100</p>
             </div>
 
-            {/* Sections */}
             {Object.entries(result.sections).map(([key, section]) => (
               <div key={key} className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
                 <div className="flex items-center justify-between">
@@ -234,10 +264,9 @@ const AtsChecker = () => {
               </div>
             ))}
 
-            {/* Overall suggestions */}
             {result.overallSuggestions.length > 0 && (
               <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-2">
-                <h3 className="font-display text-base font-semibold text-foreground">💡 Overall Suggestions</h3>
+                <h3 className="font-display text-base font-semibold text-foreground">💡 Top Tips to Improve</h3>
                 <ul className="space-y-2">
                   {result.overallSuggestions.map((s, i) => (
                     <li key={i} className="text-sm text-foreground">• {s}</li>
@@ -251,10 +280,9 @@ const AtsChecker = () => {
                 <Download className="mr-2 h-4 w-4" /> Download Report
               </Button>
               <Button variant="ghost" onClick={() => { setResult(null); setFiles([]); setJobDescription(""); }} className="rounded-xl">
-                Analyze Another Resume
+                Check Another Resume
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">Your files are private and automatically deleted after processing.</p>
           </div>
         )}
       </div>

@@ -4,7 +4,7 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { MessageSquare, Send, Loader2, User, Bot } from "lucide-react";
+import { MessageSquare, Send, Loader2, User, Bot, Info } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
@@ -47,7 +47,7 @@ const ChatWithPdf = () => {
       }
 
       setDocumentText(text);
-      setMessages([{ role: "assistant", content: "I've read your document! Ask me anything about it." }]);
+      setMessages([{ role: "assistant", content: "I've read your document! Ask me anything about it — summaries, explanations, key points, and more." }]);
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "Failed to extract text.", variant: "destructive" });
     } finally {
@@ -74,7 +74,7 @@ const ChatWithPdf = () => {
         },
         body: JSON.stringify({
           documentText,
-          messages: newMessages.filter((m) => m.role !== "assistant" || m.content !== "I've read your document! Ask me anything about it."),
+          messages: newMessages.filter((m) => m.role !== "assistant" || !m.content.startsWith("I've read your document")),
         }),
       });
 
@@ -128,30 +128,61 @@ const ChatWithPdf = () => {
 
   return (
     <ToolLayout
-      title="Chat With PDF"
-      description="Upload a PDF and ask questions — the AI answers based on your document."
+      title="Chat with PDF"
+      description="Upload any PDF and ask questions — get instant AI answers based on your document."
       category="ai"
       icon={<MessageSquare className="h-7 w-7" />}
-      metaTitle="Chat With PDF — AI Document Chat | My Love PDF"
-      metaDescription="Upload any PDF and chat with it. Ask questions, get explanations, and explore your document with AI."
+      metaTitle="Chat with PDF — Ask Questions About Any Document | My Love PDF"
+      metaDescription="Upload any PDF and have a conversation with it. Ask questions, get explanations, and explore your document with AI."
+      hideHeader
     >
       <div className="space-y-6">
         {!documentText ? (
           <>
+            {/* Instructions */}
+            <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+                  <MessageSquare className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="font-display text-xl font-bold text-foreground">Chat with PDF</h1>
+                  <p className="text-sm text-muted-foreground">Talk to your document like a conversation</p>
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  { step: "1", text: "Upload any PDF file" },
+                  { step: "2", text: "AI reads your document" },
+                  { step: "3", text: "Ask anything about it" },
+                ].map((s) => (
+                  <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
+                    <span className="text-sm text-foreground">{s.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  Try asking: "What is the main idea?", "Summarize chapter 2", "Explain this concept", or "List the key takeaways". The AI answers only from your document. Files are private and deleted after use.
+                </p>
+              </div>
+            </div>
+
             <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload a PDF to chat with" />
             {files.length > 0 && (
               <div className="space-y-3">
                 {extracting && <Progress value={progress} className="h-2" />}
                 <Button onClick={handleExtract} disabled={extracting} size="lg" className="w-full rounded-xl">
                   <MessageSquare className="mr-2 h-5 w-5" />
-                  {extracting ? "Processing…" : "Start Chatting"}
+                  {extracting ? "Reading Document…" : "Start Chatting"}
                 </Button>
               </div>
             )}
           </>
         ) : (
           <div className="flex flex-col" style={{ height: "65vh" }}>
-            {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto rounded-2xl border border-border bg-secondary/20 p-4 space-y-4">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -195,7 +226,6 @@ const ChatWithPdf = () => {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input */}
             <div className="mt-3 flex gap-2">
               <Input
                 value={input}
@@ -211,7 +241,7 @@ const ChatWithPdf = () => {
             </div>
 
             <div className="mt-3 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Your files are private and automatically deleted after processing.</p>
+              <p className="text-xs text-muted-foreground">Your files are private and automatically deleted.</p>
               <Button variant="ghost" size="sm" onClick={() => { setDocumentText(""); setFiles([]); setMessages([]); }} className="text-xs">
                 Upload New PDF
               </Button>
