@@ -65,7 +65,7 @@ const DeletePages = () => {
 
   return (
     <ToolLayout title="Delete PDF Pages" description="Remove specific pages from your PDF document" category="edit" icon={<Trash2 className="h-7 w-7" />}
-      metaTitle="Delete PDF Pages — Remove Pages Online Free" metaDescription="Delete specific pages from PDF files. Free online tool.">
+      metaTitle="Delete PDF Pages — Remove Pages Online Free" metaDescription="Delete specific pages from PDF files. Free online tool." toolId="delete-pages">
       <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF" />
       {totalPages > 0 && (
         <div className="mt-6 space-y-4">

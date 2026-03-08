@@ -61,7 +61,7 @@ const ExtractPages = () => {
 
   return (
     <ToolLayout title="Extract PDF Pages" description="Extract specific pages into a new PDF document" category="edit" icon={<FileOutput className="h-7 w-7" />}
-      metaTitle="Extract PDF Pages — Pull Pages Online Free" metaDescription="Extract specific pages from PDF into a new file. Free online tool.">
+      metaTitle="Extract PDF Pages — Pull Pages Online Free" metaDescription="Extract specific pages from PDF into a new file. Free online tool." toolId="extract-pages">
       <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF" />
       {totalPages > 0 && (
         <div className="mt-6 space-y-4">

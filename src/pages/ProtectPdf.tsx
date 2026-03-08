@@ -53,7 +53,7 @@ const ProtectPdf = () => {
 
   return (
     <ToolLayout title="Protect PDF" description="Add password protection metadata to your PDF" category="protect" icon={<Lock className="h-7 w-7" />}
-      metaTitle="Protect PDF — Password Protect PDF Free" metaDescription="Add password protection to your PDF files. Free online PDF protection tool.">
+      metaTitle="Protect PDF — Password Protect PDF Free" metaDescription="Add password protection to your PDF files. Free online PDF protection tool." toolId="protect">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" />
       {files.length > 0 && (
         <div className="mt-6 space-y-4">

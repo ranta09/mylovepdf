@@ -61,7 +61,7 @@ const PdfToJpg = () => {
 
   return (
     <ToolLayout title="PDF to JPG" description="Convert each PDF page into a high-quality JPG image" category="convert" icon={<Image className="h-7 w-7" />}
-      metaTitle="PDF to JPG — Convert PDF Pages to Images Free" metaDescription="Convert PDF pages to JPG images. Free online PDF to image converter.">
+      metaTitle="PDF to JPG — Convert PDF Pages to Images Free" metaDescription="Convert PDF pages to JPG images. Free online PDF to image converter." toolId="pdf-to-jpg">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && previews.length === 0 && (

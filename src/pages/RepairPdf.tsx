@@ -45,7 +45,7 @@ const RepairPdf = () => {
 
   return (
     <ToolLayout title="Repair PDF" description="Fix corrupted or broken PDF files by re-serializing the structure" category="edit" icon={<Wrench className="h-7 w-7" />}
-      metaTitle="Repair PDF — Fix Broken PDF Files Free" metaDescription="Repair corrupted PDF files. Free online PDF repair tool.">
+      metaTitle="Repair PDF — Fix Broken PDF Files Free" metaDescription="Repair corrupted PDF files. Free online PDF repair tool." toolId="repair">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a corrupted PDF" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (

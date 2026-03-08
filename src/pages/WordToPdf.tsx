@@ -86,7 +86,7 @@ const WordToPdf = () => {
 
   return (
     <ToolLayout title="Word to PDF" description="Convert text documents to PDF format" category="convert" icon={<FileText className="h-7 w-7" />}
-      metaTitle="Word to PDF — Convert Documents to PDF Free" metaDescription="Convert Word and text documents to PDF. Free online document to PDF converter.">
+      metaTitle="Word to PDF — Convert Documents to PDF Free" metaDescription="Convert Word and text documents to PDF. Free online document to PDF converter." toolId="word-to-pdf">
       <FileUpload accept=".txt,.doc,.docx,.rtf" files={files} onFilesChange={setFiles} label="Select a document to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (

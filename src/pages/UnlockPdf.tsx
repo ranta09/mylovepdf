@@ -43,7 +43,7 @@ const UnlockPdf = () => {
 
   return (
     <ToolLayout title="Unlock PDF" description="Remove restrictions from protected PDF files" category="protect" icon={<Unlock className="h-7 w-7" />}
-      metaTitle="Unlock PDF — Remove PDF Password Free" metaDescription="Remove password protection from PDF files. Free online PDF unlocker.">
+      metaTitle="Unlock PDF — Remove PDF Password Free" metaDescription="Remove password protection from PDF files. Free online PDF unlocker." toolId="unlock">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a protected PDF" />
       {files.length > 0 && (
         <div className="mt-6 space-y-4">
