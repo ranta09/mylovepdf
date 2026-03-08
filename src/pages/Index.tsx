@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import MagicBackground from "@/components/MagicBackground";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import HomeFAQ, { faqs } from "@/components/HomeFAQ";
+
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
 import HowItWorks from "@/components/HowItWorks";
@@ -39,15 +39,6 @@ const jsonLd = {
   "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "12500" },
 };
 
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": faqs.map(f => ({
-    "@type": "Question",
-    "name": f.q,
-    "acceptedAnswer": { "@type": "Answer", "text": f.a },
-  })),
-};
 
 const Index = () => {
   const [search, setSearch] = useState("");
@@ -88,7 +79,7 @@ const Index = () => {
         <meta name="twitter:title" content="MagicPDF — Free Online PDF & AI Document Tools" />
         <meta name="twitter:description" content="35+ free PDF tools with AI. Merge, split, compress, convert, summarize, chat, quiz & more." />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        
       </Helmet>
       <div className="relative flex min-h-screen flex-col">
         <MagicBackground />
@@ -255,8 +246,6 @@ const Index = () => {
             </section>
           )}
 
-          {/* FAQ */}
-          {!search && <HomeFAQ />}
         </main>
         <Footer />
       </div>
