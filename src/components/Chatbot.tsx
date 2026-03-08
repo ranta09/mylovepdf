@@ -72,12 +72,26 @@ const Chatbot = () => {
   const { t } = useLanguage();
   const QUICK_PROMPTS = [t.chatbotQuick1, t.chatbotQuick2, t.chatbotQuick3, t.chatbotQuick4];
   const [open, setOpen] = useState(false);
+  const [showHelpText, setShowHelpText] = useState(true);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Auto-dismiss help text after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHelpText(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Dismiss on scroll
+  useEffect(() => {
+    const handleScroll = () => setShowHelpText(false);
+    window.addEventListener("scroll", handleScroll, { once: true, passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -140,14 +154,19 @@ const Chatbot = () => {
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
           >
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-xl bg-card border border-border shadow-card px-3 py-2 text-sm text-foreground whitespace-nowrap"
-            >
-              {t.chatbotHelp} 👋
-            </motion.div>
+            <AnimatePresence>
+              {showHelpText && (
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-xl bg-card border border-border shadow-card px-3 py-2 text-sm text-foreground whitespace-nowrap"
+                >
+                  {t.chatbotHelp} 👋
+                </motion.div>
+              )}
+            </AnimatePresence>
             <Button
               onClick={() => setOpen(true)}
               size="lg"
