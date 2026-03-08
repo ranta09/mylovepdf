@@ -10,7 +10,9 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/favicon.png" alt="My Love PDF" className="h-9 w-9 rounded-lg" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-hero">
+            <Heart className="h-5 w-5 fill-primary-foreground text-primary-foreground" />
+          </div>
           <span className="font-display text-xl font-bold text-foreground">
             My Love PDF
           </span>

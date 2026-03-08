@@ -29,7 +29,9 @@ const Index = () => {
           <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
             <div className="container relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <img src="/logo.png" alt="My Love PDF" className="mx-auto mb-6 h-24 w-24" />
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-hero shadow-elevated">
+                  <Heart className="h-8 w-8 fill-primary-foreground text-primary-foreground" />
+                </div>
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
                   Every PDF tool you need
                 </h1>
