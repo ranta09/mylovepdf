@@ -15,7 +15,7 @@ const NeuralBackground = () => {
   const animRef = useRef<number>(0);
 
   const initParticles = useCallback((w: number, h: number) => {
-    const count = Math.floor((w * h) / 12000);
+    const count = Math.floor((w * h) / 6000);
     const particles: Particle[] = [];
     for (let i = 0; i < count; i++) {
       particles.push({
