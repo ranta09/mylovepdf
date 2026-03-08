@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { Presentation, Loader2 } from "lucide-react";
+import { Presentation, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ const PdfToPpt = () => {
       const bytes = await files[0].arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
       const zip = new JSZip();
-
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 2 });
@@ -38,7 +37,6 @@ const PdfToPpt = () => {
         zip.file(`slide-${i}.png`, base64, { base64: true });
         setProgress(10 + Math.round((i / pdf.numPages) * 80));
       }
-
       setProgress(95);
       const blob = await zip.generateAsync({ type: "blob" });
       saveAs(blob, "presentation-slides.zip");
@@ -54,18 +52,49 @@ const PdfToPpt = () => {
 
   return (
     <ToolLayout title="PDF to PowerPoint" description="Export PDF pages as slide images for presentations" category="convert" icon={<Presentation className="h-7 w-7" />}
-      metaTitle="PDF to PowerPoint — Convert PDF to Slides Free" metaDescription="Convert PDF pages to presentation slides. Free online PDF to PowerPoint converter." toolId="pdf-to-ppt">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length > 0 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Export as Slides"}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~5-20 seconds</p>}
+      metaTitle="PDF to PowerPoint — Convert PDF to Slides Free" metaDescription="Convert PDF pages to presentation slides. Free online PDF to PowerPoint converter." toolId="pdf-to-ppt" hideHeader>
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-tool-convert/20 bg-tool-convert/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-convert">
+              <Presentation className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">PDF to PowerPoint</h1>
+              <p className="text-sm text-muted-foreground">Export PDF pages as presentation slides</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Pages are exported as high-quality PNG images in a ZIP. Import them into PowerPoint as slides.
+            </p>
+          </div>
         </div>
-      )}
-      <p className="mt-4 text-center text-xs text-muted-foreground">Pages are exported as high-quality PNG images. Import them into PowerPoint as slides.</p>
+
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[
+            { step: "1", text: "Upload your PDF file" },
+            { step: "2", text: "We render each slide" },
+            { step: "3", text: "Download slides as ZIP" },
+          ].map((s) => (
+            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-convert text-xs font-bold text-primary-foreground">{s.step}</span>
+              <span className="text-sm text-foreground">{s.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {processing && <Progress value={progress} className="h-2" />}
+        {files.length > 0 && (
+          <Button size="lg" onClick={convert} disabled={processing} className="w-full rounded-xl">
+            {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Converting…</> : <><Presentation className="mr-2 h-5 w-5" />Export as Slides</>}
+          </Button>
+        )}
+        {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~5-20 seconds</p>}
+      </div>
     </ToolLayout>
   );
 };

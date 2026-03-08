@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { Hash, Loader2 } from "lucide-react";
+import { Hash, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -55,29 +55,59 @@ const PageNumbers = () => {
 
   return (
     <ToolLayout title="Page Numbers" description="Add page numbers to every page of your PDF" category="edit" icon={<Hash className="h-7 w-7" />}
-      metaTitle="Add Page Numbers to PDF — Free Online Tool" metaDescription="Add page numbers to your PDF documents. Free online page numbering tool." toolId="page-numbers">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
-      {files.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <Button variant={position === "bottom" ? "default" : "outline"} onClick={() => setPosition("bottom")}
-              className={position === "bottom" ? "bg-primary text-primary-foreground" : ""}>
-              Bottom
-            </Button>
-            <Button variant={position === "top" ? "default" : "outline"} onClick={() => setPosition("top")}
-              className={position === "top" ? "bg-primary text-primary-foreground" : ""}>
-              Top
-            </Button>
+      metaTitle="Add Page Numbers to PDF — Free Online Tool" metaDescription="Add page numbers to your PDF documents. Free online page numbering tool." toolId="page-numbers" hideHeader>
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-tool-edit/20 bg-tool-edit/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-edit">
+              <Hash className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">Page Numbers</h1>
+              <p className="text-sm text-muted-foreground">Add page numbers to every page of your PDF</p>
+            </div>
           </div>
-          {processing && <Progress value={progress} />}
-          <div className="flex flex-col items-center gap-2">
-            <Button size="lg" onClick={addNumbers} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Adding…</> : "Add Page Numbers"}
-            </Button>
-            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~2-3 seconds</p>}
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Automatically number all pages in your PDF. Choose top or bottom placement.
+            </p>
           </div>
         </div>
-      )}
+
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[
+            { step: "1", text: "Upload your PDF file" },
+            { step: "2", text: "Choose number position" },
+            { step: "3", text: "Download numbered PDF" },
+          ].map((s) => (
+            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-edit text-xs font-bold text-primary-foreground">{s.step}</span>
+              <span className="text-sm text-foreground">{s.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {files.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-3">
+              <Button variant={position === "bottom" ? "default" : "outline"} onClick={() => setPosition("bottom")} className="rounded-xl">
+                Bottom
+              </Button>
+              <Button variant={position === "top" ? "default" : "outline"} onClick={() => setPosition("top")} className="rounded-xl">
+                Top
+              </Button>
+            </div>
+            {processing && <Progress value={progress} className="h-2" />}
+            <Button size="lg" onClick={addNumbers} disabled={processing} className="w-full rounded-xl">
+              {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Adding…</> : <><Hash className="mr-2 h-5 w-5" />Add Page Numbers</>}
+            </Button>
+            {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~2-3 seconds</p>}
+          </div>
+        )}
+      </div>
     </ToolLayout>
   );
 };
