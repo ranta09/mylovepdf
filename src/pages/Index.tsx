@@ -53,7 +53,7 @@ const Index = () => {
           <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
             <div className="container relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <img src={logoImg} alt="PDF Magic" className="mx-auto mb-6 h-40 w-40" />
+                <img src={logoImg} alt="My Love PDF" className="mx-auto mb-6 h-40 w-40" />
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
                   Every PDF tool you need
                 </h1>

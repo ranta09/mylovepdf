@@ -33,7 +33,7 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <img src={logoImg} alt="PDF Magic logo" className="h-11 w-11 object-contain" />
+            <img src={logoImg} alt="My Love PDF logo" className="h-11 w-11 object-contain" />
             <span
               className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent relative z-0 pl-1"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
