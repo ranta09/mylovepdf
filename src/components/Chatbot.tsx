@@ -72,12 +72,26 @@ const Chatbot = () => {
   const { t } = useLanguage();
   const QUICK_PROMPTS = [t.chatbotQuick1, t.chatbotQuick2, t.chatbotQuick3, t.chatbotQuick4];
   const [open, setOpen] = useState(false);
+  const [showHelpText, setShowHelpText] = useState(true);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Auto-dismiss help text after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHelpText(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Dismiss on scroll
+  useEffect(() => {
+    const handleScroll = () => setShowHelpText(false);
+    window.addEventListener("scroll", handleScroll, { once: true, passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
