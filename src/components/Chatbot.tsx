@@ -4,17 +4,11 @@ import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chatbot`;
-
-const QUICK_PROMPTS = [
-  "What tools are available?",
-  "How do I merge PDFs?",
-  "Check my resume ATS score",
-  "Convert PDF to Word",
-];
 
 async function streamChat({
   messages,
