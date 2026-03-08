@@ -54,7 +54,6 @@ const Index = () => {
             <div className="container relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <img src={logoImg} alt="DocuMind" className="mx-auto mb-6 h-20 w-20 rounded-2xl shadow-elevated" />
-                </div>
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
                   Every PDF tool you need
                 </h1>
