@@ -132,6 +132,7 @@ const ChatWithPdf = () => {
       icon={<MessageSquare className="h-7 w-7" />}
       metaTitle="Chat with PDF — Ask Questions About Any Document | PDF Magic"
       metaDescription="Upload any PDF and have a conversation with it. Ask questions, get explanations, and explore your document with AI."
+      toolId="ai-chat"
       hideHeader
     >
       <div className="space-y-6">

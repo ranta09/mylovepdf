@@ -120,6 +120,7 @@ const PdfSummarizer = () => {
       icon={<Wand2 className="h-7 w-7" />}
       metaTitle="Summarize PDF Online — AI Notes Generator | PDF Magic"
       metaDescription="Upload any PDF and instantly get AI-powered summaries, bullet points, and key highlights. Free and fast."
+      toolId="ai-summarizer"
       hideHeader
     >
       <div className="space-y-6">
