@@ -69,8 +69,22 @@ const PdfToExcel = () => {
 
   return (
     <ToolLayout title="PDF to Excel" description="Extract text and table data from PDF as CSV" category="convert" icon={<FileSpreadsheet className="h-7 w-7" />}
-      metaTitle="PDF to Excel — Extract PDF Tables Free" metaDescription="Extract tables and data from PDF files to CSV/Excel format. Free online tool." toolId="pdf-to-excel">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to extract data from" />
+      metaTitle="PDF to Excel — Extract PDF Tables Free" metaDescription="Extract tables and data from PDF files to CSV/Excel format. Free online tool." toolId="pdf-to-excel" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <FileSpreadsheet className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">PDF to Excel</h1>
+            <p className="text-sm text-muted-foreground">Extract text and table data from PDF as CSV</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with invoices, financial reports, data tables, and spreadsheets. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to extract data from" />
+      </div>
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
         <div className="mt-6 flex flex-col items-center gap-2">

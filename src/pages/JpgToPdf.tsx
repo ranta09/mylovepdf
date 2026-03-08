@@ -47,8 +47,22 @@ const JpgToPdf = () => {
 
   return (
     <ToolLayout title="JPG to PDF" description="Convert JPG and PNG images into a PDF document" category="convert" icon={<FileImage className="h-7 w-7" />}
-      metaTitle="JPG to PDF — Convert Images to PDF Online Free" metaDescription="Convert JPG and PNG images to PDF. Free online image to PDF converter." toolId="jpg-to-pdf">
-      <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select images to convert" />
+      metaTitle="JPG to PDF — Convert Images to PDF Online Free" metaDescription="Convert JPG and PNG images to PDF. Free online image to PDF converter." toolId="jpg-to-pdf" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <FileImage className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">JPG to PDF</h1>
+            <p className="text-sm text-muted-foreground">Convert JPG and PNG images into a PDF document</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with photos, screenshots, scanned images, and artwork. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select images to convert" />
+      </div>
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
         <div className="mt-6 flex flex-col items-center gap-2">

@@ -81,8 +81,22 @@ const ExcelToPdf = () => {
 
   return (
     <ToolLayout title="Excel to PDF" description="Convert CSV spreadsheet data into a PDF table" category="convert" icon={<FileSpreadsheet className="h-7 w-7" />}
-      metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free" metaDescription="Convert CSV and spreadsheet data to PDF tables. Free online converter." toolId="excel-to-pdf">
-      <FileUpload accept=".csv,.tsv,.txt" files={files} onFilesChange={setFiles} label="Select a CSV file to convert" />
+      metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free" metaDescription="Convert CSV and spreadsheet data to PDF tables. Free online converter." toolId="excel-to-pdf" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <FileSpreadsheet className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Excel to PDF</h1>
+            <p className="text-sm text-muted-foreground">Convert CSV spreadsheet data into a PDF table</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with data exports, financial spreadsheets, and CSV files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".csv,.tsv,.txt" files={files} onFilesChange={setFiles} label="Select a CSV file to convert" />
+      </div>
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
         <div className="mt-6 flex flex-col items-center gap-2">

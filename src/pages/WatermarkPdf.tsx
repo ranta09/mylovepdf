@@ -61,8 +61,22 @@ const WatermarkPdf = () => {
 
   return (
     <ToolLayout title="Add Watermark" description="Stamp text on every page of your PDF" category="edit" icon={<Droplets className="h-7 w-7" />}
-      metaTitle="Add Watermark to PDF — Free Online Tool" metaDescription="Add watermark text to your PDF files. Free online watermark tool." toolId="watermark">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
+      metaTitle="Add Watermark to PDF — Free Online Tool" metaDescription="Add watermark text to your PDF files. Free online watermark tool." toolId="watermark" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <Droplets className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Add Watermark</h1>
+            <p className="text-sm text-muted-foreground">Stamp text on every page of your PDF</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with confidential documents, drafts, and branded materials. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
+      </div>
       {files.length > 0 && (
         <div className="mt-6 space-y-5">
           <div>

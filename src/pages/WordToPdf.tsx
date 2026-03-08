@@ -86,8 +86,22 @@ const WordToPdf = () => {
 
   return (
     <ToolLayout title="Word to PDF" description="Convert text documents to PDF format" category="convert" icon={<FileText className="h-7 w-7" />}
-      metaTitle="Word to PDF — Convert Documents to PDF Free" metaDescription="Convert Word and text documents to PDF. Free online document to PDF converter." toolId="word-to-pdf">
-      <FileUpload accept=".txt,.doc,.docx,.rtf" files={files} onFilesChange={setFiles} label="Select a document to convert" />
+      metaTitle="Word to PDF — Convert Documents to PDF Free" metaDescription="Convert Word and text documents to PDF. Free online document to PDF converter." toolId="word-to-pdf" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <FileText className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Word to PDF</h1>
+            <p className="text-sm text-muted-foreground">Convert text documents to PDF format</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with essays, letters, resumes, and text documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".txt,.doc,.docx,.rtf" files={files} onFilesChange={setFiles} label="Select a document to convert" />
+      </div>
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
         <div className="mt-6 flex flex-col items-center gap-2">
