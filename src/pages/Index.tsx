@@ -39,6 +39,32 @@ const jsonLd = {
   "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "12500" },
 };
 
+const sitelinksJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "MagicPDFs",
+  "url": "https://mylovepdf.lovable.app",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://mylovepdf.lovable.app/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+};
+
+const siteNavigationJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "SiteNavigationElement", "name": "Edit PDF", "description": "Free online PDF Editor. Easily edit documents and add text, shapes and annotations.", "url": "https://mylovepdf.lovable.app/edit-pdf" },
+    { "@type": "SiteNavigationElement", "name": "JPG to PDF", "description": "Convert JPG images to PDF in seconds. Easily adjust orientation and margins.", "url": "https://mylovepdf.lovable.app/jpg-to-pdf" },
+    { "@type": "SiteNavigationElement", "name": "PDF to Word Converter", "description": "Convert PDF to editable Word documents for free.", "url": "https://mylovepdf.lovable.app/pdf-to-word" },
+    { "@type": "SiteNavigationElement", "name": "Merge PDF files", "description": "Combine PDFs in the order you want with the easiest PDF merger.", "url": "https://mylovepdf.lovable.app/merge-pdf" },
+    { "@type": "SiteNavigationElement", "name": "Compress PDF files", "description": "Compress PDF file to get the same PDF quality but less filesize.", "url": "https://mylovepdf.lovable.app/compress-pdf" },
+    { "@type": "SiteNavigationElement", "name": "PDF to JPG", "description": "Convert each PDF page into a JPG or extract all images contained in a PDF.", "url": "https://mylovepdf.lovable.app/pdf-to-jpg" },
+    { "@type": "SiteNavigationElement", "name": "PDF Summarizer", "description": "AI-powered notes and summaries from any PDF document.", "url": "https://mylovepdf.lovable.app/pdf-summarizer" },
+    { "@type": "SiteNavigationElement", "name": "ATS Resume Checker", "description": "Get your resume ATS score and improvement tips with AI.", "url": "https://mylovepdf.lovable.app/ats-checker" },
+  ]
+};
+
 
 const Index = () => {
   const [search, setSearch] = useState("");
