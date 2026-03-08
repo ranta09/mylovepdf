@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning } from "lucide-react";
+import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ const Index = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackEmail, setFeedbackEmail] = useState("");
+  const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
   const { toast } = useToast();
 
   const allTools = [...tools, ...aiTools];
@@ -28,10 +29,11 @@ const Index = () => {
   const filteredAiTools = filtered.filter(t => t.category === "ai");
 
   const handleFeedbackSubmit = () => {
-    if (!feedbackText.trim()) return;
+    if (!feedbackText.trim() || !feedbackEmail.trim()) return;
     toast({ title: "Feedback Sent", description: "Thank you! We'll look into it." });
     setFeedbackText("");
     setFeedbackEmail("");
+    setFeedbackScreenshot(null);
     setFeedbackOpen(false);
   };
 
@@ -161,12 +163,17 @@ const Index = () => {
                         <DialogTitle className="font-display">Report an Issue</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 pt-2">
-                        <Input
-                          placeholder="Your email (optional)"
-                          value={feedbackEmail}
-                          onChange={e => setFeedbackEmail(e.target.value)}
-                          className="rounded-xl"
-                        />
+                        <div>
+                          <Input
+                            placeholder="Your email *"
+                            type="email"
+                            value={feedbackEmail}
+                            onChange={e => setFeedbackEmail(e.target.value)}
+                            className="rounded-xl"
+                            required
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">Required so we can follow up</p>
+                        </div>
                         <Textarea
                           placeholder="Describe the issue — which tool, what went wrong, etc."
                           value={feedbackText}
@@ -174,7 +181,21 @@ const Index = () => {
                           rows={4}
                           className="rounded-xl resize-none"
                         />
-                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim()} className="w-full rounded-xl">
+                        <div>
+                          <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">
+                            <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              {feedbackScreenshot ? feedbackScreenshot.name : "Attach a screenshot (optional)"}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)}
+                            />
+                          </label>
+                        </div>
+                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">
                           Submit Report
                         </Button>
                       </div>
