@@ -133,43 +133,11 @@ const ChatWithPdf = () => {
       metaTitle="Chat with PDF — Ask Questions About Any Document | PDF Magic"
       metaDescription="Upload any PDF and have a conversation with it. Ask questions, get explanations, and explore your document with AI."
       toolId="ai-chat"
-      hideHeader
     >
       <div className="space-y-6">
         {!documentText ? (
           <>
-            {/* Instructions first */}
-            <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
-                  <MessageSquare className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="font-display text-xl font-bold text-foreground">Chat with PDF</h1>
-                  <p className="text-sm text-muted-foreground">Talk to your document like a conversation</p>
-                </div>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {[
-                  { step: "1", text: "Upload any PDF file" },
-                  { step: "2", text: "AI reads your document" },
-                  { step: "3", text: "Ask anything about it" },
-                ].map((s) => (
-                  <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
-                    <span className="text-sm text-foreground">{s.text}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
-                  Try asking: "What is the main idea?", "Summarize chapter 2", "Explain this concept", or "List the key takeaways". The AI answers only from your document. Files are private and deleted after use.
-                </p>
-              </div>
-            </div>
-
-            {/* Upload below instructions */}
+            {/* Upload */}
             <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload a PDF to chat with" />
 
             {files.length > 0 && (
