@@ -64,7 +64,7 @@ const PdfToPdfa = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">PDF to PDF/A</h1>
             <p className="text-sm text-muted-foreground">Convert your PDF to PDF/A format for long-term archiving</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with legal documents, government records, and archival files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with legal documents, government records, and archival files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

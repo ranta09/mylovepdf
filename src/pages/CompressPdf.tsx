@@ -63,7 +63,7 @@ const CompressPdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Compress PDF</h1>
             <p className="text-sm text-muted-foreground">Reduce PDF file size without losing quality</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with large scanned documents, image-heavy PDFs, and email attachments. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with large scanned documents, image-heavy PDFs, and email attachments. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

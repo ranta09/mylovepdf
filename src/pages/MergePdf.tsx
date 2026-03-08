@@ -54,7 +54,7 @@ const MergePdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Merge PDF</h1>
             <p className="text-sm text-muted-foreground">Combine multiple PDF files into a single document</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with contracts, reports, invoices, and any PDF files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with contracts, reports, invoices, and any PDF files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

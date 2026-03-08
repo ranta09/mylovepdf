@@ -71,7 +71,7 @@ const ExtractPages = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Extract PDF Pages</h1>
             <p className="text-sm text-muted-foreground">Extract specific pages into a new PDF document</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with large documents, books, and multi-section reports. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with large documents, books, and multi-section reports. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

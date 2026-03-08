@@ -145,7 +145,7 @@ const SignPdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Sign PDF</h1>
             <p className="text-sm text-muted-foreground">Draw or type your signature and place it on your PDF</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with contracts, agreements, forms, and legal documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with contracts, agreements, forms, and legal documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

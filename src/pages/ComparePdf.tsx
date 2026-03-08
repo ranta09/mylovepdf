@@ -66,7 +66,7 @@ const ComparePdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Compare PDF</h1>
             <p className="text-sm text-muted-foreground">Compare two PDF files side by side and spot differences</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with contract revisions, document versions, and legal comparisons. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with contract revisions, document versions, and legal comparisons. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

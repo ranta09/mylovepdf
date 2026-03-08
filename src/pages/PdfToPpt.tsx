@@ -63,7 +63,7 @@ const PdfToPpt = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">PDF to PowerPoint</h1>
             <p className="text-sm text-muted-foreground">Export PDF pages as slide images for presentations</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with lecture slides, pitch decks, and visual presentations. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with lecture slides, pitch decks, and visual presentations. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

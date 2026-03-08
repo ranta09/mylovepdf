@@ -78,7 +78,7 @@ const PdfToExcel = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">PDF to Excel</h1>
             <p className="text-sm text-muted-foreground">Extract text and table data from PDF as CSV</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with invoices, financial reports, data tables, and spreadsheets. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with invoices, financial reports, data tables, and spreadsheets. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>
