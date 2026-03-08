@@ -78,9 +78,7 @@ const ChatWithPdf = () => {
         }),
       });
 
-      if (!resp.ok || !resp.body) {
-        throw new Error("Failed to get response");
-      }
+      if (!resp.ok || !resp.body) throw new Error("Failed to get response");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -139,9 +137,7 @@ const ChatWithPdf = () => {
       <div className="space-y-6">
         {!documentText ? (
           <>
-            <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload a PDF to chat with" />
-
-            {/* Instructions */}
+            {/* Instructions first */}
             <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
@@ -171,6 +167,10 @@ const ChatWithPdf = () => {
                 </p>
               </div>
             </div>
+
+            {/* Upload below instructions */}
+            <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload a PDF to chat with" />
+
             {files.length > 0 && (
               <div className="space-y-3">
                 {extracting && <Progress value={progress} className="h-2" />}
@@ -191,20 +191,12 @@ const ChatWithPdf = () => {
                       <Bot className="h-4 w-4 text-primary" />
                     </div>
                   )}
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card border border-border shadow-card"
-                    }`}
-                  >
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border shadow-card"}`}>
                     {msg.role === "assistant" ? (
                       <div className="prose prose-sm max-w-none text-foreground">
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
-                    ) : (
-                      msg.content
-                    )}
+                    ) : msg.content}
                   </div>
                   {msg.role === "user" && (
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">

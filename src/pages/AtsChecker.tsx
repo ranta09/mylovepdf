@@ -108,18 +108,18 @@ const AtsChecker = () => {
     });
 
     write("Overall Suggestions:", true);
-    result.overallSuggestions.forEach((s) => write(`  • ${s}`));
+    result.overallSuggestions.forEach((s) => write(`  - ${s}`));
 
     const pdfBytes = await doc.save();
     saveAs(new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" }), "ats-report.pdf");
   };
 
   const sectionLabels: Record<string, string> = {
-    formatting: "📄 Formatting",
-    keywords: "🔑 Keywords",
-    experience: "💼 Experience",
-    skills: "🛠 Skills",
-    education: "🎓 Education",
+    formatting: "Formatting",
+    keywords: "Keywords",
+    experience: "Experience",
+    skills: "Skills",
+    education: "Education",
   };
 
   return (
@@ -133,9 +133,7 @@ const AtsChecker = () => {
       hideHeader
     >
       <div className="space-y-6">
-        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your resume (PDF)" />
-
-        {/* Instructions */}
+        {/* Instructions first */}
         <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
@@ -166,6 +164,9 @@ const AtsChecker = () => {
           </div>
         </div>
 
+        {/* Upload below instructions */}
+        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your resume (PDF)" />
+
         {files.length > 0 && !result && (
           <div className="space-y-4">
             <div>
@@ -194,18 +195,14 @@ const AtsChecker = () => {
           <div className="space-y-6">
             <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-card">
               <p className="text-sm font-medium text-muted-foreground">ATS Compatibility Score</p>
-              <p className={`font-display text-6xl font-extrabold ${getScoreColor(result.score)}`}>
-                {result.score}
-              </p>
+              <p className={`font-display text-6xl font-extrabold ${getScoreColor(result.score)}`}>{result.score}</p>
               <p className="text-lg text-muted-foreground">/ 100</p>
             </div>
 
             {Object.entries(result.sections).map(([key, section]) => (
               <div key={key} className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-display text-base font-semibold text-foreground">
-                    {sectionLabels[key] || key}
-                  </h3>
+                  <h3 className="font-display text-base font-semibold text-foreground">{sectionLabels[key] || key}</h3>
                   <div className="flex items-center gap-2">
                     {getScoreIcon(section.score)}
                     <span className={`font-bold ${getScoreColor(section.score)}`}>{section.score}/100</span>
@@ -266,7 +263,7 @@ const AtsChecker = () => {
 
             {result.overallSuggestions.length > 0 && (
               <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-2">
-                <h3 className="font-display text-base font-semibold text-foreground">💡 Top Tips to Improve</h3>
+                <h3 className="font-display text-base font-semibold text-foreground">Top Tips to Improve</h3>
                 <ul className="space-y-2">
                   {result.overallSuggestions.map((s, i) => (
                     <li key={i} className="text-sm text-foreground">• {s}</li>

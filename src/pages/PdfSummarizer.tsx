@@ -3,7 +3,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Sparkles, Copy, Download, FileText, CheckCircle2, Info } from "lucide-react";
+import { Wand2, Copy, Download, FileText, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
@@ -117,19 +117,17 @@ const PdfSummarizer = () => {
       title="Summarize PDF"
       description="Turn any PDF into concise notes, bullet points, or key highlights using AI."
       category="ai"
-      icon={<Sparkles className="h-7 w-7" />}
+      icon={<Wand2 className="h-7 w-7" />}
       metaTitle="Summarize PDF Online — AI Notes Generator | My Love PDF"
       metaDescription="Upload any PDF and instantly get AI-powered summaries, bullet points, and key highlights. Free and fast."
       hideHeader
     >
       <div className="space-y-6">
-        <FileUpload accept=".pdf" multiple={false} onFilesChange={handleFilesChange} files={files} label="Upload your PDF" />
-
-        {/* Instructions */}
+        {/* Instructions first */}
         <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
+              <Wand2 className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">Summarize PDF with AI</h1>
@@ -156,6 +154,9 @@ const PdfSummarizer = () => {
           </div>
         </div>
 
+        {/* Upload below instructions */}
+        <FileUpload accept=".pdf" multiple={false} onFilesChange={handleFilesChange} files={files} label="Upload your PDF" />
+
         {files.length > 0 && !summary && (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
@@ -175,7 +176,7 @@ const PdfSummarizer = () => {
             {processing && <Progress value={progress} className="h-2" />}
 
             <Button onClick={handleSummarize} disabled={processing} size="lg" className="w-full rounded-xl">
-              <Sparkles className="mr-2 h-5 w-5" />
+              <Wand2 className="mr-2 h-5 w-5" />
               {processing ? "Summarizing…" : "Summarize Now"}
             </Button>
           </div>

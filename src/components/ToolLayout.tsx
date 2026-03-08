@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import ReportIssue from "./ReportIssue";
 import { type ToolCategory, categoryColors } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 import { Helmet } from "react-helmet-async";
@@ -38,6 +39,7 @@ const ToolLayout = ({ title, description, category, icon, children, metaTitle, m
         )}
         <section className="container max-w-3xl py-10">
           {children}
+          <ReportIssue />
         </section>
       </main>
       <Footer />
