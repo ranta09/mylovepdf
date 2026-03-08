@@ -4,7 +4,7 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { BrainCircuit, Download, Eye, EyeOff, CheckCircle2, XCircle, Info, RotateCcw } from "lucide-react";
+import { BrainCircuit, Download, Eye, EyeOff, CheckCircle2, XCircle, Info, RotateCcw, Loader2 } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -237,9 +237,9 @@ const QuizGenerator = () => {
 
             {processing && <Progress value={progress} className="h-2" />}
             <Button onClick={handleGenerate} disabled={processing} size="lg" className="w-full rounded-xl">
-              <BrainCircuit className="mr-2 h-5 w-5" />
-              {processing ? "Creating Quiz…" : `Generate ${questionCount} Questions`}
+              {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Creating Quiz…</> : <><BrainCircuit className="mr-2 h-5 w-5" />{`Generate ${questionCount} Questions`}</>}
             </Button>
+            {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~15-30 seconds</p>}
           </div>
         )}
 

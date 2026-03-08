@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { Globe } from "lucide-react";
+import { Globe, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -55,7 +55,7 @@ const HtmlToPdf = () => {
               onKeyDown={(e) => e.key === "Enter" && handleConvert()}
             />
             <Button onClick={handleConvert} disabled={loading || !url.trim()} className="rounded-xl shrink-0">
-              {loading ? "Opening…" : "Convert to PDF"}
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Opening…</> : "Convert to PDF"}
             </Button>
           </div>
         </div>
