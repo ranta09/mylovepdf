@@ -4,17 +4,11 @@ import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chatbot`;
-
-const QUICK_PROMPTS = [
-  "What tools are available?",
-  "How do I merge PDFs?",
-  "Check my resume ATS score",
-  "Convert PDF to Word",
-];
 
 async function streamChat({
   messages,
@@ -75,6 +69,8 @@ async function streamChat({
 }
 
 const Chatbot = () => {
+  const { t } = useLanguage();
+  const QUICK_PROMPTS = [t.chatbotQuick1, t.chatbotQuick2, t.chatbotQuick3, t.chatbotQuick4];
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -150,7 +146,7 @@ const Chatbot = () => {
               transition={{ delay: 0.3 }}
               className="rounded-xl bg-card border border-border shadow-card px-3 py-2 text-sm text-foreground whitespace-nowrap"
             >
-              How can I help you? 👋
+              {t.chatbotHelp} 👋
             </motion.div>
             <Button
               onClick={() => setOpen(true)}
@@ -180,8 +176,8 @@ const Chatbot = () => {
                   <Bot className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">MagicPDF Assistant</p>
-                  <p className="text-[10px] text-muted-foreground">Ask me anything about our tools</p>
+                  <p className="text-sm font-semibold text-foreground">{t.chatbotTitle}</p>
+                  <p className="text-[10px] text-muted-foreground">{t.chatbotSubtitle}</p>
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen(false)}>
@@ -198,7 +194,7 @@ const Chatbot = () => {
                       <Bot className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div className="rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-sm text-foreground">
-                      Hi! 👋 I'm your MagicPDF assistant. I can help you find the right tool, explain features, or guide you through any task. What do you need help with?
+                      {t.chatbotWelcome}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 pl-9">
@@ -275,7 +271,7 @@ const Chatbot = () => {
                   type="text"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  placeholder="Ask me anything..."
+                  placeholder={t.chatbotPlaceholder}
                   disabled={loading}
                   className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
                 />

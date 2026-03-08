@@ -15,15 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-const categories = [
-  { id: "ai", label: "AI Tools", icon: Wand2, filter: (t: any) => t.category === "ai" },
-  { id: "convert", label: "Convert", icon: FileText, filter: (t: any) => t.category === "convert" },
-  { id: "edit", label: "Edit", icon: Edit3, filter: (t: any) => t.category === "edit" },
-  { id: "merge", label: "Merge", icon: Merge, filter: (t: any) => t.category === "merge" },
-  { id: "split", label: "Split", icon: Scissors, filter: (t: any) => t.category === "split" },
-  { id: "compress", label: "Compress", icon: Minimize2, filter: (t: any) => t.category === "compress" },
-  { id: "protect", label: "Protect", icon: Lock, filter: (t: any) => t.category === "protect" },
+const categoryMeta = [
+  { id: "ai", labelKey: "catAi" as const, icon: Wand2, filter: (t: any) => t.category === "ai" },
+  { id: "convert", labelKey: "catConvert" as const, icon: FileText, filter: (t: any) => t.category === "convert" },
+  { id: "edit", labelKey: "catEdit" as const, icon: Edit3, filter: (t: any) => t.category === "edit" },
+  { id: "merge", labelKey: "catMerge" as const, icon: Merge, filter: (t: any) => t.category === "merge" },
+  { id: "split", labelKey: "catSplit" as const, icon: Scissors, filter: (t: any) => t.category === "split" },
+  { id: "compress", labelKey: "catCompress" as const, icon: Minimize2, filter: (t: any) => t.category === "compress" },
+  { id: "protect", labelKey: "catProtect" as const, icon: Lock, filter: (t: any) => t.category === "protect" },
 ];
 
 const jsonLd = {
@@ -55,11 +56,12 @@ const Index = () => {
   const [feedbackEmail, setFeedbackEmail] = useState("");
   const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
   const { toast } = useToast();
+  const { t, tt } = useLanguage();
 
   const allTools = [...aiTools, ...tools];
-  const filtered = allTools.filter(t =>
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.description.toLowerCase().includes(search.toLowerCase())
+  const filtered = allTools.filter(tool =>
+    tool.name.toLowerCase().includes(search.toLowerCase()) ||
+    tool.description.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleFeedbackSubmit = () => {
@@ -104,18 +106,25 @@ const Index = () => {
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                 />
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
-                  Every PDF tool you need
+                  {t.heroTitle}
                 </h1>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                  Merge, split, compress, convert, edit and protect your PDFs — plus <span className="font-semibold text-primary">AI-powered tools</span> to summarize, quiz, translate, and chat with your documents. All free, no sign-up.
+                  {(() => {
+                    const parts = t.heroDesc.split("{ai}");
+                    return <>
+                      {parts[0]}
+                      <span className="font-semibold text-primary">{t.heroAi}</span>
+                      {parts[1] || ""}
+                    </>;
+                  })()}
                 </p>
 
                 {/* Trust Badges */}
                 <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> 35+ Free Tools</span>
-                  <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-primary" /> 100% Secure</span>
-                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5 text-primary" /> No Sign-up Required</span>
-                  <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /> Browser-based Processing</span>
+                  <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> {t.trustTools}</span>
+                  <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-primary" /> {t.trustSecure}</span>
+                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5 text-primary" /> {t.trustNoSignup}</span>
+                  <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /> {t.trustBrowser}</span>
                 </div>
 
                 {/* Search */}
@@ -124,7 +133,7 @@ const Index = () => {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="Search tools… e.g. merge, summarize, quiz, ATS, OCR"
+                      placeholder={t.searchPlaceholder}
                       value={search}
                       onChange={e => setSearch(e.target.value)}
                       className="pl-10 rounded-xl border-border bg-card shadow-card h-12 text-sm"
@@ -141,8 +150,8 @@ const Index = () => {
             {search ? (
               filtered.length === 0 ? (
                 <div className="py-12 text-center">
-                  <p className="text-lg text-muted-foreground">No tools found for "{search}"</p>
-                  <p className="mt-2 text-sm text-muted-foreground">Try searching for "merge", "convert", "OCR", or "summarize"</p>
+                  <p className="text-lg text-muted-foreground">{tt("noToolsFound", { query: search })}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{t.trySearching}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -153,7 +162,7 @@ const Index = () => {
               )
             ) : (
               <div className="space-y-16">
-                {categories.map(cat => {
+                {categoryMeta.map(cat => {
                   const catTools = allTools.filter(cat.filter);
                   if (catTools.length === 0) return null;
                   const Icon = cat.icon;
@@ -165,10 +174,10 @@ const Index = () => {
                         </div>
                         <div>
                           <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
-                            {cat.label}
+                            {t[cat.labelKey]}
                             {cat.id === "ai" && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
                           </h2>
-                          <p className="text-sm text-muted-foreground">{catTools.length} tools</p>
+                          <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
                         </div>
                       </motion.div>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -190,12 +199,12 @@ const Index = () => {
           {!search && (
             <section className="border-t border-border bg-secondary/30 py-16">
               <div className="container">
-                <h2 className="font-display text-2xl font-bold text-foreground text-center mb-10 md:text-3xl">Why Choose MagicPDF?</h2>
+                <h2 className="font-display text-2xl font-bold text-foreground text-center mb-10 md:text-3xl">{t.whyTitle}</h2>
                 <div className="grid gap-8 md:grid-cols-3">
                   {[
-                    { icon: Zap, title: "Lightning Fast", desc: "Process files instantly in your browser. No waiting, no queues, no file size limits on most tools." },
-                    { icon: Shield, title: "100% Secure & Private", desc: "Files are processed locally in your browser and never stored on our servers. Your data stays yours." },
-                    { icon: Heart, title: "Completely Free Forever", desc: "All 35+ tools are free to use with no hidden limits, no sign-ups, and no watermarks. Ever." },
+                    { icon: Zap, title: t.whyFastTitle, desc: t.whyFastDesc },
+                    { icon: Shield, title: t.whySecureTitle, desc: t.whySecureDesc },
+                    { icon: Heart, title: t.whyFreeTitle, desc: t.whyFreeDesc },
                   ].map((f, i) => (
                     <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.1 }}
                       className="flex flex-col items-center gap-3 text-center"
@@ -211,24 +220,23 @@ const Index = () => {
 
                 {/* Report Issue */}
                 <div className="mt-12 flex flex-col items-center gap-3 text-center">
-                  <p className="text-sm text-muted-foreground">Something not working?</p>
+                  <p className="text-sm text-muted-foreground">{t.somethingNotWorking}</p>
                   <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="rounded-xl gap-2">
                         <MessageCircleWarning className="h-4 w-4" />
-                        Report an Issue
+                        {t.reportIssue}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
-                        <DialogTitle className="font-display">Report an Issue</DialogTitle>
+                        <DialogTitle className="font-display">{t.reportIssue}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 pt-2">
                         <div>
                           <Input placeholder="Your email *" type="email" value={feedbackEmail} onChange={e => setFeedbackEmail(e.target.value)} className="rounded-xl" required />
-                          <p className="mt-1 text-xs text-muted-foreground">Required so we can follow up</p>
                         </div>
-                        <Textarea placeholder="Describe the issue — which tool, what went wrong, etc." value={feedbackText} onChange={e => setFeedbackText(e.target.value)} rows={4} className="rounded-xl resize-none" />
+                        <Textarea placeholder="Describe the issue…" value={feedbackText} onChange={e => setFeedbackText(e.target.value)} rows={4} className="rounded-xl resize-none" />
                         <div>
                           <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">
                             <ImagePlus className="h-4 w-4 text-muted-foreground" />
@@ -238,7 +246,7 @@ const Index = () => {
                             <input type="file" accept="image/*" className="hidden" onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)} />
                           </label>
                         </div>
-                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">Submit Report</Button>
+                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">Submit</Button>
                       </div>
                     </DialogContent>
                   </Dialog>

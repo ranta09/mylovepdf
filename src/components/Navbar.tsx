@@ -4,21 +4,23 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import logoImg from "@/assets/logo.png";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const navCategories = [
-  { id: "ai", label: "AI Tools", icon: Wand2, isNew: true },
-  { id: "convert", label: "Convert", icon: FileText },
-  { id: "edit", label: "Edit", icon: Edit3 },
-  { id: "merge", label: "Merge", icon: Merge },
-  { id: "split", label: "Split", icon: Scissors },
-  { id: "compress", label: "Compress", icon: Minimize2 },
-  { id: "protect", label: "Protect", icon: Lock },
+  { id: "ai", labelKey: "catAi" as const, icon: Wand2, isNew: true },
+  { id: "convert", labelKey: "catConvert" as const, icon: FileText },
+  { id: "edit", labelKey: "catEdit" as const, icon: Edit3 },
+  { id: "merge", labelKey: "catMerge" as const, icon: Merge },
+  { id: "split", labelKey: "catSplit" as const, icon: Scissors },
+  { id: "compress", labelKey: "catCompress" as const, icon: Minimize2 },
+  { id: "protect", labelKey: "catProtect" as const, icon: Lock },
 ];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const scrollToCategory = (e: React.MouseEvent, catId: string) => {
     e.preventDefault();
@@ -72,7 +74,7 @@ const Navbar = () => {
                 className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/60 cursor-pointer"
               >
                 <Icon className="h-3.5 w-3.5" />
-                {cat.label}
+                {t[cat.labelKey]}
                 {cat.isNew && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-none text-primary-foreground">NEW</span>}
               </a>
             );
@@ -98,7 +100,7 @@ const Navbar = () => {
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary/60 cursor-pointer"
                 >
                   <Icon className="h-4 w-4" />
-                  {cat.label}
+                  {t[cat.labelKey]}
                   {cat.isNew && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-none text-primary-foreground">NEW</span>}
                 </a>
               );
