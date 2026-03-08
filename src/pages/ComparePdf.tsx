@@ -28,10 +28,10 @@ const ComparePdf = () => {
   };
 
   const handleCompare = async () => {
-    if (!file1 || !file2) return;
+    if (files1.length === 0 || files2.length === 0) return;
     setComparing(true);
     try {
-      const [r1, r2] = await Promise.all([extractText(file1), extractText(file2)]);
+      const [r1, r2] = await Promise.all([extractText(files1[0]), extractText(files2[0])]);
       setResult({ pages1: r1.pages, pages2: r2.pages, text1: r1.text, text2: r2.text });
       toast({ title: "Comparison Ready", description: "Documents compared successfully." });
     } catch {
@@ -62,15 +62,15 @@ const ComparePdf = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Document 1</p>
-              <FileUpload accept=".pdf" onFileSelect={setFile1} maxSizeMB={20} />
+              <FileUpload accept=".pdf" onFilesChange={setFiles1} files={files1} />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Document 2</p>
-              <FileUpload accept=".pdf" onFileSelect={setFile2} maxSizeMB={20} />
+              <FileUpload accept=".pdf" onFilesChange={setFiles2} files={files2} />
             </div>
           </div>
 
-          {file1 && file2 && (
+          {files1.length > 0 && files2.length > 0 && (
             <button
               onClick={handleCompare}
               disabled={comparing}
@@ -86,11 +86,11 @@ const ComparePdf = () => {
             <h2 className="font-display text-lg font-semibold text-foreground mb-4">Comparison Results</h2>
             <div className="grid gap-4 md:grid-cols-2 mb-4">
               <div className="rounded-xl bg-secondary/50 p-3 text-sm">
-                <p className="font-medium text-foreground">Document 1: {file1?.name}</p>
+                <p className="font-medium text-foreground">Document 1: {files1[0]?.name}</p>
                 <p className="text-muted-foreground">{result.pages1} pages</p>
               </div>
               <div className="rounded-xl bg-secondary/50 p-3 text-sm">
-                <p className="font-medium text-foreground">Document 2: {file2?.name}</p>
+                <p className="font-medium text-foreground">Document 2: {files2[0]?.name}</p>
                 <p className="text-muted-foreground">{result.pages2} pages</p>
               </div>
             </div>
