@@ -33,19 +33,19 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <motion.img
-              src={logoImg}
-              alt="PDF Magic"
-              className="h-14 w-14 relative z-10 -mr-3"
-              whileHover={{ rotate: 15, scale: 1.1 }}
-            />
             <span
-              className="relative z-0 pl-1 flex items-baseline gap-0.5"
+              className="relative z-10 flex items-baseline gap-0.5"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
             >
               <span className="text-2xl font-medium tracking-tight text-foreground">Magic</span>
               <span className="text-2xl font-black tracking-tight text-foreground">PDF</span>
             </span>
+            <motion.img
+              src={logoImg}
+              alt="Magic PDF"
+              className="h-10 w-10 relative z-10 ml-1"
+              whileHover={{ rotate: 15, scale: 1.1 }}
+            />
             <motion.span
               animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.15, 0.9] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
