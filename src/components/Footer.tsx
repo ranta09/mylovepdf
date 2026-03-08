@@ -52,9 +52,6 @@ const Footer = () => (
             Magic<span className="text-primary">PDF</span>
           </span>
         </div>
-        <p className="max-w-lg text-sm text-muted-foreground">
-          Every tool you need to work with PDFs — plus AI-powered document tools. Merge, split, compress, convert, summarize, generate quizzes, chat with PDFs, and check resume ATS scores. Free, fast, and secure.
-        </p>
         <div className="flex flex-wrap justify-center gap-4 text-xs text-muted-foreground/60">
           <span>🔒 Files processed locally & auto-deleted</span>
           <span>⚡ No sign-up required</span>
