@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Image, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import ToolLayout from "@/components/ToolLayout";
+import ToolHeader, { ToolSteps } from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -61,28 +62,40 @@ const PdfToJpg = () => {
 
   return (
     <ToolLayout title="PDF to JPG" description="Convert each PDF page into a high-quality JPG image" category="convert" icon={<Image className="h-7 w-7" />}
-      metaTitle="PDF to JPG — Convert PDF Pages to Images Free" metaDescription="Convert PDF pages to JPG images. Free online PDF to image converter." toolId="pdf-to-jpg">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length > 0 && previews.length === 0 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to JPG"}
+      metaTitle="PDF to JPG — Convert PDF Pages to Images Free" metaDescription="Convert PDF pages to JPG images. Free online PDF to image converter." toolId="pdf-to-jpg" hideHeader>
+      <div className="space-y-6">
+        <ToolHeader
+          icon={<Image className="h-5 w-5 text-primary-foreground" />}
+          title="PDF to JPG"
+          subtitle="Convert each page into a high-quality image"
+          category="convert"
+          infoText="Each page is exported as a high-quality JPG image and downloaded as a ZIP. Great for presentations and social media. Max file size: 100MB. Your files are private and automatically deleted."
+        />
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
+        <ToolSteps steps={[
+          { step: "1", text: "Upload your PDF file" },
+          { step: "2", text: "Click convert" },
+          { step: "3", text: "Download images as ZIP" },
+        ]} category="convert" />
+        {processing && <Progress value={progress} className="h-2" />}
+        {files.length > 0 && previews.length === 0 && (
+          <Button size="lg" onClick={convert} disabled={processing} className="w-full rounded-xl">
+            {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Converting…</> : "Convert to JPG"}
           </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~5-20 seconds</p>}
-        </div>
-      )}
-      {previews.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <p className="text-center text-sm font-medium text-foreground">{previews.length} images extracted — ZIP downloaded automatically</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {previews.slice(0, 9).map((src, i) => (
-              <img key={i} src={src} alt={`Page ${i + 1}`} className="rounded-lg border border-border shadow-card" />
-            ))}
+        )}
+        {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~5-20 seconds</p>}
+        {previews.length > 0 && (
+          <div className="space-y-4">
+            <p className="text-center text-sm font-medium text-foreground">{previews.length} images extracted — ZIP downloaded automatically</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {previews.slice(0, 9).map((src, i) => (
+                <img key={i} src={src} alt={`Page ${i + 1}`} className="rounded-lg border border-border shadow-card" />
+              ))}
+            </div>
+            {previews.length > 9 && <p className="text-center text-xs text-muted-foreground">+{previews.length - 9} more pages</p>}
           </div>
-          {previews.length > 9 && <p className="text-center text-xs text-muted-foreground">+{previews.length - 9} more pages</p>}
-        </div>
-      )}
+        )}
+      </div>
     </ToolLayout>
   );
 };
