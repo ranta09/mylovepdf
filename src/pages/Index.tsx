@@ -6,6 +6,7 @@ import ToolCard from "@/components/ToolCard";
 import HomeFAQ, { faqs } from "@/components/HomeFAQ";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
+import HowItWorks from "@/components/HowItWorks";
 import { Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
@@ -183,31 +184,7 @@ const Index = () => {
           </section>
 
           {/* How It Works */}
-          {!search && (
-            <section className="border-t border-border bg-secondary/20 py-16">
-              <div className="container">
-                <h2 className="font-display text-2xl font-bold text-foreground text-center mb-2 md:text-3xl">How MagicPDF Works</h2>
-                <p className="text-center text-muted-foreground mb-10">Three simple steps to work with any PDF</p>
-                <div className="grid gap-8 md:grid-cols-3">
-                  {[
-                    { step: "1", title: "Choose a Tool", desc: "Pick from 35+ PDF and AI tools — merge, split, compress, convert, edit, summarize, and more." },
-                    { step: "2", title: "Upload Your File", desc: "Drag and drop your PDF or document. All processing happens securely in your browser." },
-                    { step: "3", title: "Download Result", desc: "Get your processed file instantly. No waiting, no queues, no watermarks." },
-                  ].map((s, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                      className="flex flex-col items-center gap-3 text-center"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold">
-                        {s.step}
-                      </div>
-                      <h3 className="font-display text-lg font-semibold text-foreground">{s.title}</h3>
-                      <p className="text-sm text-muted-foreground">{s.desc}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
+          {!search && <HowItWorks />}
 
           {/* Features */}
           {!search && (
