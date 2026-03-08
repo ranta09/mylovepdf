@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Languages, Copy, Download, Loader2 } from "lucide-react";
+import { Languages, Copy, Download, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -70,17 +70,43 @@ const TranslatePdf = () => {
 
   return (
     <ToolLayout title="Translate PDF" description="AI-powered document translation to any language" category="ai" icon={<Languages className="h-7 w-7" />}
-      metaTitle="Translate PDF — AI Document Translation Free" metaDescription="Translate PDF documents to any language using AI. Free online tool." toolId="ai-translate">
-      <div className="space-y-4 rounded-xl border border-border bg-card p-4 mb-6">
-        <h3 className="font-semibold text-foreground">How to use</h3>
-        <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-          <li>Upload your PDF document</li>
-          <li>Select the target language</li>
-          <li>Click Translate and get your result</li>
-        </ol>
-      </div>
+      metaTitle="Translate PDF — AI Document Translation Free" metaDescription="Translate PDF documents to any language using AI. Free online tool." toolId="ai-translate" hideHeader>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+              <Languages className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">Translate PDF</h1>
+              <p className="text-sm text-muted-foreground">AI-powered document translation to any language</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Translate any PDF into 20+ languages using AI. Works with research papers, contracts, articles, and more. Your files are private and deleted after processing.
+            </p>
+          </div>
+        </div>
 
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to translate" />
+        {/* Upload */}
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to translate" />
+
+        {/* Steps below upload */}
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[
+            { step: "1", text: "Upload your PDF document" },
+            { step: "2", text: "Select the target language" },
+            { step: "3", text: "Get your translated text" },
+          ].map((s) => (
+            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
+              <span className="text-sm text-foreground">{s.text}</span>
+            </div>
+          ))}
+        </div>
       {files.length > 0 && (
         <div className="mt-6 space-y-4">
           <div>
