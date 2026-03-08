@@ -6,125 +6,124 @@ const steps = [
   { step: "3", title: "Download Result", desc: "Get your processed file instantly. No waiting, no queues, no watermarks." },
 ];
 
-const FlowingLine = () => (
-  <div className="hidden md:flex items-center justify-center flex-1 relative h-12">
-    <svg className="w-full h-12 overflow-visible" viewBox="0 0 200 40" preserveAspectRatio="none">
-      {/* Base line */}
-      <path
-        d="M 0 20 Q 50 5, 100 20 Q 150 35, 200 20"
-        fill="none"
-        stroke="hsl(var(--primary) / 0.15)"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      {/* Animated flowing line */}
-      <motion.path
-        d="M 0 20 Q 50 5, 100 20 Q 150 35, 200 20"
-        fill="none"
-        stroke="hsl(var(--primary))"
-        strokeWidth="3"
-        strokeLinecap="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        whileInView={{ pathLength: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2, ease: "easeInOut" }}
-      />
-      {/* Animated droplet/glow traveling along the path */}
-      <motion.circle
-        r="4"
-        fill="hsl(var(--primary))"
-        filter="url(#glow)"
-        initial={{ offsetDistance: "0%" }}
-        whileInView={{ offsetDistance: "100%" }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatDelay: 2 }}
-        style={{ offsetPath: "path('M 0 20 Q 50 5, 100 20 Q 150 35, 200 20')" } as any}
-      />
-      <defs>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-    </svg>
-  </div>
-);
-
 const HowItWorks = () => (
   <section className="border-t border-border bg-secondary/20 py-16">
     <div className="container">
       <h2 className="font-display text-2xl font-bold text-foreground text-center mb-2 md:text-3xl">
         How MagicPDF Works
       </h2>
-      <p className="text-center text-muted-foreground mb-10">
+      <p className="text-center text-muted-foreground mb-14">
         Three simple steps to work with any PDF
       </p>
 
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-0">
-        {steps.map((s, i) => (
-          <div key={i} className="flex flex-col md:flex-row items-center flex-1 w-full">
-            {/* Step card */}
+      {/* Desktop: horizontal pipe */}
+      <div className="hidden md:block relative max-w-3xl mx-auto">
+        {/* Pipe track */}
+        <div className="absolute top-7 left-[calc(16.66%+28px)] right-[calc(16.66%+28px)] h-2 rounded-full bg-muted border border-border overflow-hidden">
+          {/* Liquid fill */}
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full"
+            style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.6))" }}
+            initial={{ width: "0%" }}
+            whileInView={{ width: "100%" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.8, ease: "easeInOut", delay: 0.3 }}
+          />
+          {/* Flowing bubbles */}
+          {[0, 1, 2].map(i => (
             <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              key={i}
+              className="absolute top-1/2 -translate-y-1/2 h-1.5 w-4 rounded-full bg-primary-foreground/30"
+              animate={{ left: ["-10%", "110%"] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.7, ease: "linear" }}
+            />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-8 relative">
+          {steps.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.25, duration: 0.5, ease: "easeOut" }}
-              className="flex flex-col items-center gap-3 text-center flex-1 relative"
+              transition={{ delay: i * 0.3 + 0.2, duration: 0.5 }}
+              className="flex flex-col items-center gap-3 text-center"
             >
-              {/* Ripple ring */}
-              <div className="relative">
+              {/* Node on pipe */}
+              <div className="relative z-10">
                 <motion.div
                   className="absolute inset-0 rounded-full bg-primary/20"
-                  initial={{ scale: 1, opacity: 0 }}
-                  whileInView={{ scale: [1, 1.8, 2.2], opacity: [0, 0.4, 0] }}
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0, 0.4] }}
+                  transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.4 }}
+                />
+                <motion.div
+                  className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold shadow-lg ring-4 ring-background"
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.25 + 0.3, duration: 1.2, ease: "easeOut" }}
-                />
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-primary/10"
-                  animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
-                  transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}
-                />
-                <motion.div
-                  className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold shadow-lg"
-                  whileHover={{ scale: 1.1, boxShadow: "0 0 20px hsl(var(--primary) / 0.5)" }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  transition={{ delay: i * 0.3, type: "spring", stiffness: 300, damping: 15 }}
                 >
                   {s.step}
                 </motion.div>
               </div>
-
-              <h3 className="font-display text-lg font-semibold text-foreground">{s.title}</h3>
+              <h3 className="font-display text-lg font-semibold text-foreground mt-1">{s.title}</h3>
               <p className="text-sm text-muted-foreground max-w-[220px]">{s.desc}</p>
             </motion.div>
+          ))}
+        </div>
+      </div>
 
-            {/* Flowing connector between steps */}
-            {i < steps.length - 1 && <FlowingLine />}
+      {/* Mobile: vertical pipe */}
+      <div className="md:hidden relative max-w-xs mx-auto">
+        {/* Vertical pipe track */}
+        <div className="absolute left-7 top-7 bottom-7 w-2 rounded-full bg-muted border border-border overflow-hidden">
+          <motion.div
+            className="absolute inset-x-0 top-0 rounded-full"
+            style={{ background: "linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.6))" }}
+            initial={{ height: "0%" }}
+            whileInView={{ height: "100%" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.8, ease: "easeInOut", delay: 0.3 }}
+          />
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              className="absolute left-1/2 -translate-x-1/2 w-1.5 h-4 rounded-full bg-primary-foreground/30"
+              animate={{ top: ["-10%", "110%"] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.7, ease: "linear" }}
+            />
+          ))}
+        </div>
 
-            {/* Mobile vertical connector */}
-            {i < steps.length - 1 && (
-              <div className="flex md:hidden flex-col items-center my-2">
+        <div className="flex flex-col gap-10 relative">
+          {steps.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.25, duration: 0.5 }}
+              className="flex items-start gap-5"
+            >
+              <div className="relative z-10 shrink-0">
                 <motion.div
-                  className="w-0.5 h-8 bg-primary/20 relative overflow-hidden rounded-full"
-                  initial={{ scaleY: 0 }}
-                  whileInView={{ scaleY: 1 }}
+                  className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold shadow-lg ring-4 ring-background"
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.25 + 0.2, duration: 0.4 }}
-                  style={{ transformOrigin: "top" }}
+                  transition={{ delay: i * 0.25, type: "spring", stiffness: 300, damping: 15 }}
                 >
-                  <motion.div
-                    className="absolute inset-x-0 w-full h-3 bg-primary rounded-full"
-                    animate={{ top: ["-12px", "32px"] }}
-                    transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1.5, ease: "easeInOut" }}
-                  />
+                  {s.step}
                 </motion.div>
               </div>
-            )}
-          </div>
-        ))}
+              <div className="pt-2">
+                <h3 className="font-display text-lg font-semibold text-foreground">{s.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   </section>
