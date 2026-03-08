@@ -107,49 +107,48 @@ const TranslatePdf = () => {
             </div>
           ))}
         </div>
-      {files.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Target Language</label>
-            <Select value={targetLang} onValueChange={setTargetLang}>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map(lang => (
-                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {processing && <Progress value={progress} />}
-          <div className="flex flex-col items-center gap-2">
-            <Button size="lg" onClick={translate} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Translating…</> : "Translate PDF"}
+        {files.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground">Target Language</label>
+              <Select value={targetLang} onValueChange={setTargetLang}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map(lang => (
+                    <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {processing && <Progress value={progress} />}
+            <Button size="lg" onClick={translate} disabled={processing} className="w-full rounded-xl">
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Translating…</> : <><Languages className="mr-2 h-5 w-5" />Translate PDF</>}
             </Button>
-            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~15-30 seconds</p>}
+            {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~15-30 seconds</p>}
           </div>
-        </div>
-      )}
+        )}
 
-      {translation && (
-        <div className="mt-8 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-foreground">Translation ({targetLang})</h3>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={copyToClipboard} className="rounded-xl gap-1">
-                <Copy className="h-3.5 w-3.5" /> Copy
-              </Button>
-              <Button variant="outline" size="sm" onClick={downloadAsText} className="rounded-xl gap-1">
-                <Download className="h-3.5 w-3.5" /> Download
-              </Button>
+        {translation && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-foreground">Translation ({targetLang})</h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={copyToClipboard} className="rounded-xl gap-1">
+                  <Copy className="h-3.5 w-3.5" /> Copy
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadAsText} className="rounded-xl gap-1">
+                  <Download className="h-3.5 w-3.5" /> Download
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border bg-secondary/30 p-4 max-h-96 overflow-y-auto prose prose-sm max-w-none text-foreground">
+              <ReactMarkdown>{translation}</ReactMarkdown>
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-secondary/30 p-4 max-h-96 overflow-y-auto prose prose-sm max-w-none text-foreground">
-            <ReactMarkdown>{translation}</ReactMarkdown>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </ToolLayout>
   );
 };
