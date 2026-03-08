@@ -34,7 +34,7 @@ const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden items-center gap-6 md:flex">
-          <a href="/#ai-tools" onClick={scrollToAiTools} className="text-sm font-semibold text-primary transition-colors hover:text-foreground flex items-center gap-1 cursor-pointer"><Wand2 className="h-4 w-4" /> AI Tools</a>
+          <a href="/#ai-tools" onClick={scrollToAiTools} className="text-sm font-semibold text-primary transition-colors hover:text-foreground flex items-center gap-1 cursor-pointer"><Wand2 className="h-4 w-4" /> AI Tools <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span></a>
           <Link to="/merge-pdf" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Merge</Link>
           <Link to="/split-pdf" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Split</Link>
           <Link to="/compress-pdf" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Compress</Link>
@@ -50,7 +50,7 @@ const Navbar = () => {
       {open && (
         <div className="border-t border-border bg-card px-6 py-4 md:hidden">
           <div className="flex flex-col gap-3">
-            <a href="/#ai-tools" onClick={scrollToAiTools} className="text-sm font-semibold text-primary cursor-pointer flex items-center gap-1"><Wand2 className="h-4 w-4" /> AI Tools</a>
+            <a href="/#ai-tools" onClick={scrollToAiTools} className="text-sm font-semibold text-primary cursor-pointer flex items-center gap-1"><Wand2 className="h-4 w-4" /> AI Tools <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span></a>
             <Link to="/merge-pdf" className="text-sm font-medium text-muted-foreground" onClick={() => setOpen(false)}>Merge PDF</Link>
             <Link to="/split-pdf" className="text-sm font-medium text-muted-foreground" onClick={() => setOpen(false)}>Split PDF</Link>
             <Link to="/compress-pdf" className="text-sm font-medium text-muted-foreground" onClick={() => setOpen(false)}>Compress PDF</Link>
