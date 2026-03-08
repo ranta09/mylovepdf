@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import { Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus } from "lucide-react";
+import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
