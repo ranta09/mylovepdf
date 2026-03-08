@@ -73,7 +73,9 @@ const PdfToJpg = () => {
           </div>
         </div>
       </div>
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
+      <div className="mt-5">
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
+      </div>
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && previews.length === 0 && (
         <div className="mt-6 flex flex-col items-center gap-2">
