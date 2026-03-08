@@ -1,9 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import logoImg from "@/assets/logo.png";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const navCategories = [
