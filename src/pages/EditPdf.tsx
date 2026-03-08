@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Edit3 } from "lucide-react";
+import { Edit3, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -150,10 +150,11 @@ const EditPdf = () => {
           </div>
 
           {processing && <Progress value={progress} />}
-          <div className="flex justify-center gap-3">
+          <div className="flex flex-col items-center gap-2">
             <Button size="lg" onClick={save} disabled={processing || annotations.length === 0} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? "Saving…" : `Save PDF (${annotations.length} edit${annotations.length !== 1 ? "s" : ""})`}
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : `Save PDF (${annotations.length} edit${annotations.length !== 1 ? "s" : ""})`}
             </Button>
+            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
           </div>
         </div>
       )}

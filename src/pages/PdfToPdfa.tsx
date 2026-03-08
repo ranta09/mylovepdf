@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { FileCheck } from "lucide-react";
+import { FileCheck, Loader2 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -58,10 +58,11 @@ const PdfToPdfa = () => {
       <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} label="Select a PDF to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={handleConvert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? "Converting…" : "Convert to PDF/A"}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to PDF/A"}
           </Button>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
         </div>
       )}
       <p className="mt-4 text-center text-xs text-muted-foreground">Sets PDF/A-compliant metadata and re-serializes the document for archival readiness.</p>

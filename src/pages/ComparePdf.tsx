@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { GitCompare } from "lucide-react";
+import { GitCompare, Loader2 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -71,10 +71,11 @@ const ComparePdf = () => {
       {comparing && <Progress value={progress} className="mt-4" />}
 
       {files1.length > 0 && files2.length > 0 && !result && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={handleCompare} disabled={comparing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {comparing ? "Comparing…" : "Compare Documents"}
+            {comparing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Comparing…</> : "Compare Documents"}
           </Button>
+          {comparing && <p className="text-xs text-muted-foreground">Estimated time: ~5-15 seconds</p>}
         </div>
       )}
 
