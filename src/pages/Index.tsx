@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus } from "lucide-react";
+import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+
+const categories = [
+  { id: "ai", label: "AI Tools", icon: Wand2, filter: (t: any) => t.category === "ai" },
+  { id: "convert", label: "Convert", icon: FileText, filter: (t: any) => t.category === "convert" },
+  { id: "edit", label: "Edit", icon: Edit3, filter: (t: any) => t.category === "edit" },
+  { id: "merge", label: "Merge", icon: Merge, filter: (t: any) => t.category === "merge" },
+  { id: "split", label: "Split", icon: Scissors, filter: (t: any) => t.category === "split" },
+  { id: "compress", label: "Compress", icon: Minimize2, filter: (t: any) => t.category === "compress" },
+  { id: "protect", label: "Protect", icon: Lock, filter: (t: any) => t.category === "protect" },
+];
 
 const Index = () => {
   const [search, setSearch] = useState("");
@@ -22,13 +32,11 @@ const Index = () => {
   const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const allTools = [...tools, ...aiTools];
+  const allTools = [...aiTools, ...tools];
   const filtered = allTools.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.description.toLowerCase().includes(search.toLowerCase())
   );
-  const filteredPdfTools = filtered.filter(t => t.category !== "ai");
-  const filteredAiTools = filtered.filter(t => t.category === "ai");
 
   const handleFeedbackSubmit = () => {
     if (!feedbackText.trim() || !feedbackEmail.trim()) return;
@@ -84,52 +92,50 @@ const Index = () => {
             </div>
           </section>
 
-          {/* Tools Grid */}
+          {/* Category Sections */}
           <section className="container py-16">
-            {search && filtered.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-lg text-muted-foreground">No tools found for "{search}"</p>
-                <p className="mt-2 text-sm text-muted-foreground">Try searching for "merge", "convert", or "summarize"</p>
-              </div>
+            {search ? (
+              filtered.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-lg text-muted-foreground">No tools found for "{search}"</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Try searching for "merge", "convert", or "summarize"</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {filtered.map((tool, i) => (
+                    <ToolCard key={tool.id} tool={tool} index={i} />
+                  ))}
+                </div>
+              )
             ) : (
-              <>
-                {/* AI Tools FIRST */}
-                {filteredAiTools.length > 0 && (
-                  <div className="mb-16" id="ai-tools">
-                    {!search && (
-                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                          <Sparkles className="h-6 w-6 text-primary" />
+              <div className="space-y-16">
+                {categories.map(cat => {
+                  const catTools = allTools.filter(cat.filter);
+                  if (catTools.length === 0) return null;
+                  const Icon = cat.icon;
+                  return (
+                    <div key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-24">
+                      <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-6 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                          <Icon className="h-5 w-5 text-primary" />
                         </div>
-                        <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
-                        <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
+                        <div>
+                          <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
+                            {cat.label}
+                            {cat.id === "ai" && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
+                          </h2>
+                          <p className="text-sm text-muted-foreground">{catTools.length} tools</p>
+                        </div>
                       </motion.div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
-                      {filteredAiTools.map((tool, i) => (
-                        <ToolCard key={tool.id} tool={tool} index={i} />
-                      ))}
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                        {catTools.map((tool, i) => (
+                          <ToolCard key={tool.id} tool={tool} index={i} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {/* PDF Tools */}
-                {filteredPdfTools.length > 0 && (
-                  <>
-                    {!search && filteredAiTools.length > 0 && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 text-center">
-                        <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">All PDF Tools</h2>
-                        <p className="mt-2 text-muted-foreground">Everything you need to work with PDF files</p>
-                      </motion.div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                      {filteredPdfTools.map((tool, i) => (
-                        <ToolCard key={tool.id} tool={tool} index={i} />
-                      ))}
-                    </div>
-                  </>
-                )}
-              </>
+                  );
+                })}
+              </div>
             )}
           </section>
 
