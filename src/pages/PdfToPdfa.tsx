@@ -6,24 +6,22 @@ import { useToast } from "@/hooks/use-toast";
 import { PDFDocument } from "pdf-lib";
 
 const PdfToPdfa = () => {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
   const handleConvert = async () => {
+    const file = files[0];
     if (!file) return;
     setProcessing(true);
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
-
-      // Add PDF/A metadata
       pdfDoc.setTitle(file.name.replace('.pdf', ''));
       pdfDoc.setProducer('MagicPDF - PDF/A Converter');
       pdfDoc.setCreator('MagicPDF');
-
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -55,17 +53,15 @@ const PdfToPdfa = () => {
             <li>Click "Convert to PDF/A" to process</li>
             <li>Download your archival-ready PDF/A file</li>
           </ol>
-          <FileUpload accept=".pdf" onFileSelect={setFile} maxSizeMB={20} />
-          {file && (
-            <div className="mt-4">
-              <button
-                onClick={handleConvert}
-                disabled={processing}
-                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-              >
-                {processing ? "Converting…" : "Convert to PDF/A"}
-              </button>
-            </div>
+          <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} />
+          {files.length > 0 && (
+            <button
+              onClick={handleConvert}
+              disabled={processing}
+              className="mt-4 w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {processing ? "Converting…" : "Convert to PDF/A"}
+            </button>
           )}
         </div>
 

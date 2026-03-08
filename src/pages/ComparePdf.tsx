@@ -9,8 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 const ComparePdf = () => {
-  const [file1, setFile1] = useState<File | null>(null);
-  const [file2, setFile2] = useState<File | null>(null);
+  const [files1, setFiles1] = useState<File[]>([]);
+  const [files2, setFiles2] = useState<File[]>([]);
   const [comparing, setComparing] = useState(false);
   const [result, setResult] = useState<{ pages1: number; pages2: number; text1: string; text2: string } | null>(null);
   const { toast } = useToast();

@@ -5,11 +5,11 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const OcrPdf = () => {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const { toast } = useToast();
 
   const handleProcess = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
     toast({
       title: "OCR Processing",
       description: "OCR text recognition is being applied to your PDF. This feature uses browser-based text extraction.",
@@ -33,8 +33,8 @@ const OcrPdf = () => {
             <li>Our OCR engine will recognize all text in the document</li>
             <li>Download the searchable PDF with selectable text</li>
           </ol>
-          <FileUpload accept=".pdf" onFileSelect={setFile} maxSizeMB={20} />
-          {file && (
+          <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} />
+          {files.length > 0 && (
             <div className="mt-4">
               <button
                 onClick={handleProcess}
