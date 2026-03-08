@@ -114,7 +114,7 @@ const QuizGenerator = () => {
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
-      doc.text("Quiz - My Love PDF", margin, y);
+      doc.text("Quiz - Magic PDF", margin, y);
       y += 12;
 
       questions.forEach((q, i) => {
@@ -168,7 +168,7 @@ const QuizGenerator = () => {
       description="Create quizzes from any document — perfect for students, teachers, and exam prep."
       category="ai"
       icon={<BrainCircuit className="h-7 w-7" />}
-      metaTitle="AI Quiz Generator — Create Practice Tests | My Love PDF"
+      metaTitle="AI Quiz Generator — Create Practice Tests | Magic PDF"
       metaDescription="Upload study material and instantly create MCQ, true/false, or short answer quizzes with AI."
       hideHeader
     >
