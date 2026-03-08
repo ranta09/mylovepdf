@@ -39,8 +39,8 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
     </motion.div>
   );
 
-  if (!tool.available) return content;
-  return <Link to={tool.path}>{content}</Link>;
+  if (!tool.available) return <div data-tool-path={tool.path}>{content}</div>;
+  return <Link to={tool.path} data-tool-path={tool.path}>{content}</Link>;
 };
 
 export default ToolCard;

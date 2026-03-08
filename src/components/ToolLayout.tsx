@@ -26,6 +26,11 @@ interface ToolLayoutProps {
 const ToolLayout = ({ title, description, category, icon, children, metaTitle, metaDescription, hideHeader, toolId }: ToolLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Save last visited tool path for scroll-to on landing page
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem("lastVisitedTool", location.pathname);
+  }
   const showBack = location.pathname !== "/";
   const faqs = toolId ? toolFaqs[toolId] : undefined;
 
