@@ -23,8 +23,8 @@ const PdfToPdfa = () => {
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       setProgress(50);
       pdfDoc.setTitle(file.name.replace('.pdf', ''));
-      pdfDoc.setProducer('PDF Magic — PDF/A Converter');
-      pdfDoc.setCreator('PDF Magic');
+      pdfDoc.setProducer('MagicPDFs — PDF/A Converter');
+      pdfDoc.setCreator('MagicPDFs');
       setProgress(70);
       const pdfBytes = await pdfDoc.save();
       setProgress(90);

@@ -44,11 +44,11 @@ const Navbar = () => {
               style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
             >
               <span className="text-2xl font-bold tracking-tight text-foreground">Magic</span>
-              <span className="text-2xl font-black tracking-tight text-primary">PDF</span>
+              <span className="text-2xl font-black tracking-tight text-primary">PDFs</span>
             </span>
             <img
               src="/favicon.png"
-              alt="Magic PDF"
+              alt="MagicPDFs"
               width={32}
               height={32}
               loading="eager"

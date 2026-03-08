@@ -30,7 +30,7 @@ const categoryMeta = [
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "MagicPDF",
+  "name": "MagicPDFs",
   "url": "https://mylovepdf.lovable.app",
   "description": "Free online PDF tools — merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker and translator.",
   "applicationCategory": "Productivity",
@@ -91,7 +91,7 @@ const Index = () => {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <motion.img
                   src={logoImg}
-                  alt="MagicPDF — Free Online PDF Tools"
+                  alt="MagicPDFs — Free Online PDF Tools"
                   className="mx-auto mb-6 h-24 w-24 relative"
                   whileHover={{ scale: 1.15, rotate: [0, -8, 8, -4, 0] }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
