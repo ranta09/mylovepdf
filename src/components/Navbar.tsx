@@ -40,12 +40,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center group relative">
-          <motion.div
-            className="flex items-center relative"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
+          <div className="flex items-center relative">
             <span
               className="relative z-10 flex items-baseline gap-0"
               style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
@@ -53,13 +48,12 @@ const Navbar = () => {
               <span className="text-2xl font-bold tracking-tight text-foreground">Magic</span>
               <span className="text-2xl font-black tracking-tight text-primary">PDF</span>
             </span>
-            <motion.img
+            <img
               src={logoImg}
               alt="Magic PDF"
               className="h-8 w-8 relative z-10 ml-1.5"
-              whileHover={{ rotate: 15, scale: 1.1 }}
             />
-          </motion.div>
+          </div>
         </Link>
 
         {/* Desktop */}
