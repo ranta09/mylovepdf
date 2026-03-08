@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
-import { Droplets, Loader2 } from "lucide-react";
+import { Droplets, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -61,31 +61,51 @@ const WatermarkPdf = () => {
 
   return (
     <ToolLayout title="Add Watermark" description="Stamp text on every page of your PDF" category="edit" icon={<Droplets className="h-7 w-7" />}
-      metaTitle="Add Watermark to PDF — Free Online Tool" metaDescription="Add watermark text to your PDF files. Free online watermark tool." toolId="watermark">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
-      {files.length > 0 && (
-        <div className="mt-6 space-y-5">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Watermark text</label>
-            <Input value={text} onChange={e => setText(e.target.value)} placeholder="Enter watermark text" />
+      metaTitle="Add Watermark to PDF — Free Online Tool" metaDescription="Add watermark text to your PDF files. Free online watermark tool." toolId="watermark" hideHeader>
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-tool-edit/20 bg-tool-edit/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-edit">
+              <Droplets className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">Add Watermark</h1>
+              <p className="text-sm text-muted-foreground">Stamp text on every page of your PDF</p>
+            </div>
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">Opacity: {Math.round(opacity[0] * 100)}%</label>
-            <Slider value={opacity} onValueChange={setOpacity} min={0.05} max={1} step={0.05} />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">Font size: {fontSize[0]}px</label>
-            <Slider value={fontSize} onValueChange={setFontSize} min={12} max={120} step={4} />
-          </div>
-          {processing && <Progress value={progress} />}
-          <div className="flex flex-col items-center gap-2">
-            <Button size="lg" onClick={apply} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Applying…</> : "Add Watermark"}
-            </Button>
-            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Customize watermark text, opacity, and font size. The watermark is placed diagonally across each page. Max file size: 100MB. Your files are private and automatically deleted after processing.
+            </p>
           </div>
         </div>
-      )}
+
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
+        {files.length > 0 && (
+          <div className="mt-6 space-y-5">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground">Watermark text</label>
+              <Input value={text} onChange={e => setText(e.target.value)} placeholder="Enter watermark text" />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Opacity: {Math.round(opacity[0] * 100)}%</label>
+              <Slider value={opacity} onValueChange={setOpacity} min={0.05} max={1} step={0.05} />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Font size: {fontSize[0]}px</label>
+              <Slider value={fontSize} onValueChange={setFontSize} min={12} max={120} step={4} />
+            </div>
+            {processing && <Progress value={progress} />}
+            <div className="flex flex-col items-center gap-2">
+              <Button size="lg" onClick={apply} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+                {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Applying…</> : "Add Watermark"}
+              </Button>
+              {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
+            </div>
+          </div>
+        )}
+      </div>
     </ToolLayout>
   );
 };
