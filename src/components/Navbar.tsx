@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Wand2 } from "lucide-react";
+import { Menu, X, Wand2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -33,13 +33,25 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <img src={logoImg} alt="Magic PDF logo" className="h-20 w-20 object-contain -my-4" />
+            <motion.img
+              src={logoImg}
+              alt="PDF Magic"
+              className="h-14 w-14 relative z-10 -mr-3"
+              whileHover={{ rotate: 15, scale: 1.1 }}
+            />
             <span
-              className="text-2xl font-black tracking-tight text-foreground relative z-0 pl-1.5"
+              className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent relative z-0 pl-1"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
             >
-              Magic PDF
+              Magic
             </span>
+            <motion.span
+              animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.15, 0.9] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="ml-0.5"
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </motion.span>
           </motion.div>
         </Link>
 

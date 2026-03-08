@@ -118,7 +118,7 @@ const PdfSummarizer = () => {
       description="Turn any PDF into concise notes, bullet points, or key highlights using AI."
       category="ai"
       icon={<Wand2 className="h-7 w-7" />}
-      metaTitle="Summarize PDF Online — AI Notes Generator | Magic PDF"
+      metaTitle="Summarize PDF Online — AI Notes Generator | PDF Magic"
       metaDescription="Upload any PDF and instantly get AI-powered summaries, bullet points, and key highlights. Free and fast."
       hideHeader
     >

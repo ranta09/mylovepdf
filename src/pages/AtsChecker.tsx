@@ -93,7 +93,7 @@ const AtsChecker = () => {
       y -= sz + 5;
     };
 
-    write("ATS Resume Analysis Report — Magic PDF", true);
+    write("ATS Resume Analysis Report — PDF Magic", true);
     y -= 10;
     write(`Overall ATS Score: ${result.score}/100`, true);
     y -= 10;
@@ -128,7 +128,7 @@ const AtsChecker = () => {
       description="Check if your resume passes ATS screening — get a score and tips to improve."
       category="ai"
       icon={<ScanSearch className="h-7 w-7" />}
-      metaTitle="Free ATS Resume Checker — Score & Optimize Your Resume | Magic PDF"
+      metaTitle="Free ATS Resume Checker — Score & Optimize Your Resume | PDF Magic"
       metaDescription="Check your resume's ATS compatibility score. Get keyword analysis, formatting tips, and actionable suggestions to land more interviews."
       hideHeader
     >
