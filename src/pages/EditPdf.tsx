@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Edit3, Loader2 } from "lucide-react";
+import { Edit3, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -110,54 +110,74 @@ const EditPdf = () => {
 
   return (
     <ToolLayout title="Edit PDF" description="Click on pages to add text annotations" category="edit" icon={<Edit3 className="h-7 w-7" />}
-      metaTitle="Edit PDF — Add Text to PDF Online Free" metaDescription="Add text annotations to your PDF files. Free online PDF editor." toolId="edit">
-      <FileUpload accept=".pdf" files={files} onFilesChange={loadPreview} label="Select a PDF to edit" />
-
-      {previews.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-foreground">Text to add</label>
-              <Input value={newText} onChange={e => setNewText(e.target.value)} />
+      metaTitle="Edit PDF — Add Text to PDF Online Free" metaDescription="Add text annotations to your PDF files. Free online PDF editor." toolId="edit" hideHeader>
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-tool-edit/20 bg-tool-edit/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-edit">
+              <Edit3 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <div className="w-32">
-              <label className="mb-1 block text-sm font-medium text-foreground">Size: {fontSize[0]}</label>
-              <Slider value={fontSize} onValueChange={setFontSize} min={8} max={48} step={1} />
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">Edit PDF</h1>
+              <p className="text-sm text-muted-foreground">Add text annotations to your PDF pages</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Click anywhere on the page to place text. Click annotations to remove them.</p>
-
-          <div className="space-y-4">
-            {previews.map((src, pageIdx) => (
-              <div key={pageIdx} className="relative cursor-crosshair rounded-lg border border-border overflow-hidden shadow-card"
-                ref={el => { previewRefs.current[pageIdx] = el; }}
-                onClick={(e) => handlePageClick(e, pageIdx)}>
-                <img src={src} alt={`Page ${pageIdx + 1}`} className="w-full" draggable={false} />
-                {annotations.filter(a => a.page === pageIdx).map((ann, i) => (
-                  <div key={i}
-                    className="absolute cursor-pointer rounded bg-primary/20 px-1 text-foreground border border-primary/40 text-xs leading-tight hover:bg-destructive/30"
-                    style={{ left: `${ann.x}%`, top: `${ann.y}%`, fontSize: `${Math.max(10, fontSize[0] * 0.7)}px`, transform: "translate(-50%, -50%)" }}
-                    onClick={(e) => { e.stopPropagation(); removeAnnotation(annotations.indexOf(ann)); }}
-                    title="Click to remove">
-                    {ann.text}
-                  </div>
-                ))}
-                <div className="absolute bottom-2 right-2 rounded-md bg-foreground/70 px-2 py-0.5 text-xs text-background">
-                  Page {pageIdx + 1}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {processing && <Progress value={progress} />}
-          <div className="flex flex-col items-center gap-2">
-            <Button size="lg" onClick={save} disabled={processing || annotations.length === 0} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : `Save PDF (${annotations.length} edit${annotations.length !== 1 ? "s" : ""})`}
-            </Button>
-            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Click anywhere on a page to place text. Adjust font size and text content before clicking. Click annotations to remove them. Max file size: 100MB. Your files are private and automatically deleted after processing.
+            </p>
           </div>
         </div>
-      )}
+
+        <FileUpload accept=".pdf" files={files} onFilesChange={loadPreview} label="Select a PDF to edit" />
+
+        {previews.length > 0 && (
+          <div className="mt-6 space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="flex-1">
+                <label className="mb-1 block text-sm font-medium text-foreground">Text to add</label>
+                <Input value={newText} onChange={e => setNewText(e.target.value)} />
+              </div>
+              <div className="w-32">
+                <label className="mb-1 block text-sm font-medium text-foreground">Size: {fontSize[0]}</label>
+                <Slider value={fontSize} onValueChange={setFontSize} min={8} max={48} step={1} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Click anywhere on the page to place text. Click annotations to remove them.</p>
+
+            <div className="space-y-4">
+              {previews.map((src, pageIdx) => (
+                <div key={pageIdx} className="relative cursor-crosshair rounded-lg border border-border overflow-hidden shadow-card"
+                  ref={el => { previewRefs.current[pageIdx] = el; }}
+                  onClick={(e) => handlePageClick(e, pageIdx)}>
+                  <img src={src} alt={`Page ${pageIdx + 1}`} className="w-full" draggable={false} />
+                  {annotations.filter(a => a.page === pageIdx).map((ann, i) => (
+                    <div key={i}
+                      className="absolute cursor-pointer rounded bg-primary/20 px-1 text-foreground border border-primary/40 text-xs leading-tight hover:bg-destructive/30"
+                      style={{ left: `${ann.x}%`, top: `${ann.y}%`, fontSize: `${Math.max(10, fontSize[0] * 0.7)}px`, transform: "translate(-50%, -50%)" }}
+                      onClick={(e) => { e.stopPropagation(); removeAnnotation(annotations.indexOf(ann)); }}
+                      title="Click to remove">
+                      {ann.text}
+                    </div>
+                  ))}
+                  <div className="absolute bottom-2 right-2 rounded-md bg-foreground/70 px-2 py-0.5 text-xs text-background">
+                    Page {pageIdx + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {processing && <Progress value={progress} />}
+            <div className="flex flex-col items-center gap-2">
+              <Button size="lg" onClick={save} disabled={processing || annotations.length === 0} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+                {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : `Save PDF (${annotations.length} edit${annotations.length !== 1 ? "s" : ""})`}
+              </Button>
+              {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
+            </div>
+          </div>
+        )}
+      </div>
     </ToolLayout>
   );
 };
