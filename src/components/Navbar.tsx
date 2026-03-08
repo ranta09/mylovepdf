@@ -47,8 +47,13 @@ const Navbar = () => {
               <span className="text-2xl font-black tracking-tight text-primary">PDF</span>
             </span>
             <img
-              src={logoImg}
+              src="/favicon.png"
               alt="Magic PDF"
+              width={32}
+              height={32}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
               className="h-8 w-8 relative z-10 ml-1.5"
             />
           </div>
