@@ -45,22 +45,8 @@ const MergePdf = () => {
 
   return (
     <ToolLayout title="Merge PDF" description="Combine multiple PDF files into a single document" category="merge" icon={<Merge className="h-7 w-7" />}
-      metaTitle="Merge PDF — Combine PDF Files Online Free" metaDescription="Merge multiple PDF files into one document. Free, fast and secure online PDF merger." toolId="merge" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tool-merge">
-            <Merge className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Merge PDF</h1>
-            <p className="text-sm text-muted-foreground">Combine multiple PDF files into a single document</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Perfect for combining contracts, reports, or chapters. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
-          </div>
-        </div>
-      </div>
-      <div className="mt-5">
-        <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
-      </div>
+      metaTitle="Merge PDF — Combine PDF Files Online Free" metaDescription="Merge multiple PDF files into one document. Free, fast and secure online PDF merger." toolId="merge">
+      <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length >= 2 && (
         <div className="mt-6 flex flex-col items-center gap-2">
