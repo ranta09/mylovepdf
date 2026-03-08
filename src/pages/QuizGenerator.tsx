@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,6 @@ const QuizGenerator = () => {
     if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
       return await extractTextFromPdf(file);
     }
-    // For text-based files, read as text
     return await file.text();
   };
 
@@ -49,7 +48,6 @@ const QuizGenerator = () => {
     setShowAllAnswers(false);
 
     try {
-      // Extract text from all files
       const textParts = await Promise.all(files.map(extractTextFromFile));
       const text = textParts.join("\n\n--- Next Document ---\n\n");
       setProgress(50);
@@ -175,15 +173,7 @@ const QuizGenerator = () => {
       hideHeader
     >
       <div className="space-y-6">
-        <FileUpload
-          accept=".pdf,.txt,.md,.doc,.docx,.csv,.json,.xml,.html,.rtf"
-          multiple={true}
-          onFilesChange={setFiles}
-          files={files}
-          label="Upload study material (PDF, TXT, DOC, and more)"
-        />
-
-        {/* Instructions */}
+        {/* Instructions first */}
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
@@ -214,6 +204,15 @@ const QuizGenerator = () => {
           </div>
         </div>
 
+        {/* Upload below instructions */}
+        <FileUpload
+          accept=".pdf,.txt,.md,.doc,.docx,.csv,.json,.xml,.html,.rtf"
+          multiple={true}
+          onFilesChange={setFiles}
+          files={files}
+          label="Upload study material (PDF, TXT, DOC, and more)"
+        />
+
         {files.length > 0 && questions.length === 0 && (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
@@ -224,27 +223,14 @@ const QuizGenerator = () => {
               ))}
             </div>
 
-            {/* Question count slider */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Number of Questions</span>
                 <span className="text-sm font-bold text-primary">{questionCount}</span>
               </div>
-              <Slider
-                value={[questionCount]}
-                onValueChange={(v) => setQuestionCount(v[0])}
-                min={5}
-                max={30}
-                step={5}
-                className="w-full"
-              />
+              <Slider value={[questionCount]} onValueChange={(v) => setQuestionCount(v[0])} min={5} max={30} step={5} className="w-full" />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>5</span>
-                <span>10</span>
-                <span>15</span>
-                <span>20</span>
-                <span>25</span>
-                <span>30</span>
+                <span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span>
               </div>
             </div>
 
@@ -258,11 +244,8 @@ const QuizGenerator = () => {
 
         {questions.length > 0 && (
           <div className="space-y-4">
-            {/* Top action bar */}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-xl font-bold text-foreground">
-                Quiz — {questions.length} Questions
-              </h2>
+              <h2 className="font-display text-xl font-bold text-foreground">Quiz — {questions.length} Questions</h2>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={resetQuiz} className="rounded-xl">
                   <RotateCcw className="mr-1 h-4 w-4" /> New Quiz
@@ -277,21 +260,15 @@ const QuizGenerator = () => {
               </div>
             </div>
 
-            {/* Score display if all answered */}
             {Object.keys(selectedAnswers).length === questions.length && (
               <div className="rounded-2xl border border-primary bg-primary/5 p-5 text-center">
-                <p className="font-display text-2xl font-bold text-primary">
-                  Score: {getScore()} / {questions.length}
-                </p>
+                <p className="font-display text-2xl font-bold text-primary">Score: {getScore()} / {questions.length}</p>
               </div>
             )}
 
             {questions.map((q, i) => (
               <div key={i} className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
-                <p className="font-display text-sm font-semibold text-foreground">
-                  Q{i + 1}. {q.question}
-                </p>
-
+                <p className="font-display text-sm font-semibold text-foreground">Q{i + 1}. {q.question}</p>
                 {q.options.length > 0 && (
                   <div className="grid gap-2">
                     {q.options.map((opt, oi) => {
@@ -303,13 +280,10 @@ const QuizGenerator = () => {
                           key={oi}
                           onClick={() => selectAnswer(i, opt)}
                           className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left text-sm transition-all ${
-                            revealed && isCorrect
-                              ? "border-green-500 bg-green-50 text-green-800"
-                              : revealed && isSelected && !isCorrect
-                              ? "border-red-400 bg-red-50 text-red-700"
-                              : isSelected
-                              ? "border-primary bg-primary/5 text-foreground"
-                              : "border-border hover:border-primary/40"
+                            revealed && isCorrect ? "border-green-500 bg-green-50 text-green-800"
+                            : revealed && isSelected && !isCorrect ? "border-red-400 bg-red-50 text-red-700"
+                            : isSelected ? "border-primary bg-primary/5 text-foreground"
+                            : "border-border hover:border-primary/40"
                           }`}
                         >
                           {revealed && isCorrect && <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />}
@@ -320,13 +294,11 @@ const QuizGenerator = () => {
                     })}
                   </div>
                 )}
-
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" onClick={() => toggleAnswer(i)} className="text-xs">
                     {showAnswers[i] || showAllAnswers ? "Hide Answer" : "Show Answer"}
                   </Button>
                 </div>
-
                 {(showAnswers[i] || showAllAnswers) && (
                   <div className="rounded-xl bg-secondary/50 p-3 text-sm">
                     <p className="font-semibold text-foreground">Answer: {q.answer}</p>
