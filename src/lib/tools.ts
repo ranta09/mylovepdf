@@ -3,7 +3,8 @@ import {
   FileSpreadsheet, Presentation, Edit3, RotateCw, Droplets,
   Lock, Unlock, Hash, LayoutGrid, Wrench,
   Sparkles, BrainCircuit, MessageSquare, ScanSearch,
-  Trash2, FileOutput, PenTool, Crop, EyeOff, Layers, Languages
+  Trash2, FileOutput, PenTool, Crop, EyeOff, Layers, Languages,
+  Globe, FileCheck, GitCompare, ScanLine
 } from "lucide-react";
 
 export type ToolCategory = "merge" | "split" | "compress" | "convert" | "edit" | "protect" | "ai";
