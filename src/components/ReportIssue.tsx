@@ -1,25 +1,45 @@
 import { useState } from "react";
-import { MessageCircleWarning, ImagePlus, X } from "lucide-react";
+import { MessageCircleWarning, ImagePlus, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ReportIssue = () => {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [email, setEmail] = useState("");
   const [screenshots, setScreenshots] = useState<File[]>([]);
+  const [sending, setSending] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!text.trim() || !email.trim()) return;
-    toast({ title: "Feedback Sent", description: "Thank you! We'll look into it." });
-    setText("");
-    setEmail("");
-    setScreenshots([]);
-    setOpen(false);
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-report", {
+        body: {
+          email: email.trim(),
+          description: text.trim(),
+          screenshotCount: screenshots.length,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Report Sent ✅", description: "We've received your issue report. Thank you!" });
+      setText("");
+      setEmail("");
+      setScreenshots([]);
+      setOpen(false);
+    } catch (err) {
+      console.error("Failed to send report:", err);
+      toast({ title: "Failed to send", description: "Something went wrong. Please try again.", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleScreenshots = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,8 +116,8 @@ const ReportIssue = () => {
                 </div>
               )}
             </div>
-            <Button onClick={handleSubmit} disabled={!text.trim() || !email.trim()} className="w-full rounded-xl">
-              Submit Report
+            <Button onClick={handleSubmit} disabled={!text.trim() || !email.trim() || sending} className="w-full rounded-xl">
+              {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : "Submit Report"}
             </Button>
           </div>
         </DialogContent>
