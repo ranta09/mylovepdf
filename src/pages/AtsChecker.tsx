@@ -131,41 +131,9 @@ const AtsChecker = () => {
       metaTitle="Free ATS Resume Checker — Score & Optimize Your Resume | PDF Magic"
       metaDescription="Check your resume's ATS compatibility score. Get keyword analysis, formatting tips, and actionable suggestions to land more interviews."
       toolId="ai-ats"
-      hideHeader
     >
       <div className="space-y-6">
-        {/* Instructions first */}
-        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
-              <ScanSearch className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">ATS Resume Checker</h1>
-              <p className="text-sm text-muted-foreground">Make sure your resume beats the bots</p>
-            </div>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {[
-              { step: "1", text: "Upload your resume (PDF)" },
-              { step: "2", text: "Optionally paste a job description" },
-              { step: "3", text: "Get your ATS score & tips" },
-            ].map((s) => (
-              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
-                <span className="text-sm text-foreground">{s.text}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Most companies use ATS (Applicant Tracking Systems) to filter resumes before a human sees them. This tool checks your resume for formatting, keywords, skills, and structure to help you get past the screening. Your files are private and deleted after processing.
-            </p>
-          </div>
-        </div>
-
-        {/* Upload below instructions */}
+        {/* Upload */}
         <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your resume (PDF)" />
 
         {files.length > 0 && !result && (

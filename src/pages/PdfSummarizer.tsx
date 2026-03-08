@@ -121,41 +121,9 @@ const PdfSummarizer = () => {
       metaTitle="Summarize PDF Online — AI Notes Generator | PDF Magic"
       metaDescription="Upload any PDF and instantly get AI-powered summaries, bullet points, and key highlights. Free and fast."
       toolId="ai-summarizer"
-      hideHeader
     >
       <div className="space-y-6">
-        {/* Instructions first */}
-        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
-              <Wand2 className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">Summarize PDF with AI</h1>
-              <p className="text-sm text-muted-foreground">Get instant notes from any document</p>
-            </div>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {[
-              { step: "1", text: "Upload your PDF file" },
-              { step: "2", text: "Choose summary format" },
-              { step: "3", text: "Download or copy your notes" },
-            ].map((s) => (
-              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
-                <span className="text-sm text-foreground">{s.text}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Works great with research papers, textbooks, reports, articles, and any text-based PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.
-            </p>
-          </div>
-        </div>
-
-        {/* Upload below instructions */}
+        {/* Upload */}
         <FileUpload accept=".pdf" multiple={false} onFilesChange={handleFilesChange} files={files} label="Upload your PDF" />
 
         {files.length > 0 && !summary && (
