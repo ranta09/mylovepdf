@@ -54,7 +54,7 @@ const Navbar = () => {
               loading="eager"
               decoding="sync"
               fetchPriority="high"
-              className="h-8 w-8 relative z-10 ml-1.5"
+              className="h-8 w-8 relative z-10 ml-1.5 rounded-md bg-card/0 mix-blend-multiply dark:mix-blend-screen"
             />
           </div>
         </Link>
