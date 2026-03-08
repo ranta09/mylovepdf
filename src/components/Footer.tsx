@@ -36,38 +36,30 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground/50">
+        <div className="border-t border-border pt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <p className="text-xs text-muted-foreground/50 text-center md:text-left">
             {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
           </p>
-          <div className="flex items-center gap-5">
-            <div className="flex flex-wrap justify-center gap-5 text-xs text-muted-foreground/60">
-              <span className="flex items-center gap-1.5">🔒 {t.footerLocal}</span>
-              <span className="flex items-center gap-1.5">⚡ {t.footerNoSignup}</span>
-              <span className="flex items-center gap-1.5">💯 {t.footerFree}</span>
-            </div>
-            <div className="relative">
-              <select
-                value={lang}
-                onChange={e => setLang(e.target.value as any)}
-                className="appearance-none rounded-lg border border-border bg-muted px-3 py-1.5 pr-7 text-xs font-medium text-foreground cursor-pointer outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                {LANGUAGES.map(l => (
-                  <option key={l.code} value={l.code}>
-                    {l.flag} {l.label}
-                  </option>
-                ))}
-              </select>
-              <Globe className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground/50">
-            {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
-          </p>
-          <div className="flex flex-wrap justify-center gap-5 text-xs text-muted-foreground/60">
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground/60">
             <span className="flex items-center gap-1.5">🔒 {t.footerLocal}</span>
             <span className="flex items-center gap-1.5">⚡ {t.footerNoSignup}</span>
             <span className="flex items-center gap-1.5">💯 {t.footerFree}</span>
+          </div>
+
+          <div className="relative flex justify-center md:justify-end">
+            <select
+              value={lang}
+              onChange={e => setLang(e.target.value as any)}
+              className="appearance-none rounded-lg border border-border bg-muted px-3 py-1.5 pr-7 text-xs font-medium text-foreground cursor-pointer outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>
+                  {l.flag} {l.label}
+                </option>
+              ))}
+            </select>
+            <Globe className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
           </div>
         </div>
       </div>
