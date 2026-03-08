@@ -81,7 +81,7 @@ const TranslatePdf = () => {
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">Translate PDF</h1>
               <p className="text-sm text-muted-foreground">AI-powered document translation to any language</p>
-              <p className="mt-1 text-xs text-muted-foreground/70">◗ Translate any PDF into 20+ languages using AI. Works with research papers, contracts, articles, and more. Your files are private and deleted after processing.</p>
+              <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Translate any PDF into 20+ languages using AI. Works with research papers, contracts, articles, and more. Your files are private and deleted after processing.</span></div>
             </div>
           </div>
         </div>

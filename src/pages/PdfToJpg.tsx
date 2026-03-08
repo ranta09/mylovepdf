@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Image, Loader2 } from "lucide-react";
+import { Image, Loader2, Info } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -70,7 +70,7 @@ const PdfToJpg = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">PDF to JPG</h1>
             <p className="text-sm text-muted-foreground">Convert each PDF page into a high-quality JPG image</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with presentations, reports, brochures, and any PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with presentations, reports, brochures, and any PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
           </div>
         </div>
       </div>
