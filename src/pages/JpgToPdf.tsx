@@ -2,7 +2,6 @@ import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { FileImage, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import ToolHeader, { ToolSteps } from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -48,29 +47,17 @@ const JpgToPdf = () => {
 
   return (
     <ToolLayout title="JPG to PDF" description="Convert JPG and PNG images into a PDF document" category="convert" icon={<FileImage className="h-7 w-7" />}
-      metaTitle="JPG to PDF — Convert Images to PDF Online Free" metaDescription="Convert JPG and PNG images to PDF. Free online image to PDF converter." toolId="jpg-to-pdf" hideHeader>
-      <div className="space-y-6">
-        <ToolHeader
-          icon={<FileImage className="h-5 w-5 text-primary-foreground" />}
-          title="JPG to PDF"
-          subtitle="Convert images into a PDF document"
-          category="convert"
-          infoText="Upload JPG or PNG images and combine them into a single PDF. Each image becomes one page. Max file size: 100MB. Your files are private and automatically deleted."
-        />
-        <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select images to convert" />
-        <ToolSteps steps={[
-          { step: "1", text: "Upload your images" },
-          { step: "2", text: "Click convert" },
-          { step: "3", text: "Download your PDF" },
-        ]} category="convert" />
-        {processing && <Progress value={progress} className="h-2" />}
-        {files.length > 0 && (
-          <Button size="lg" onClick={convert} disabled={processing} className="w-full rounded-xl">
-            {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Converting…</> : `Convert ${files.length} image${files.length > 1 ? "s" : ""}`}
+      metaTitle="JPG to PDF — Convert Images to PDF Online Free" metaDescription="Convert JPG and PNG images to PDF. Free online image to PDF converter." toolId="jpg-to-pdf">
+      <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select images to convert" />
+      {processing && <Progress value={progress} className="mt-4" />}
+      {files.length > 0 && (
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : `Convert ${files.length} image${files.length > 1 ? "s" : ""}`}
           </Button>
-        )}
-        {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~3-10 seconds</p>}
-      </div>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-10 seconds</p>}
+        </div>
+      )}
     </ToolLayout>
   );
 };

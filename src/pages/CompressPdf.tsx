@@ -2,7 +2,6 @@ import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Minimize2, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import ToolHeader, { ToolSteps } from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -55,44 +54,32 @@ const CompressPdf = () => {
 
   return (
     <ToolLayout title="Compress PDF" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />}
-      metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress" hideHeader>
-      <div className="space-y-6">
-        <ToolHeader
-          icon={<Minimize2 className="h-5 w-5 text-primary-foreground" />}
-          title="Compress PDF"
-          subtitle="Reduce file size without losing quality"
-          category="compress"
-          infoText="Upload a PDF to reduce its file size by optimizing internal structure. Works great for email attachments and uploads. Max file size: 100MB. Your files are private and automatically deleted."
-        />
-        <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to compress" />
-        <ToolSteps steps={[
-          { step: "1", text: "Upload your PDF file" },
-          { step: "2", text: "Click compress" },
-          { step: "3", text: "Download smaller PDF" },
-        ]} category="compress" />
-        {processing && <Progress value={progress} className="h-2" />}
-        {files.length > 0 && !result && (
-          <Button size="lg" onClick={compress} disabled={processing} className="w-full rounded-xl">
-            {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Compressing…</> : "Compress PDF"}
+      metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress">
+      <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to compress" />
+      {processing && <Progress value={progress} className="mt-4" />}
+      {files.length > 0 && !result && (
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <Button size="lg" onClick={compress} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Compressing…</> : "Compress PDF"}
           </Button>
-        )}
-        {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~3-5 seconds</p>}
-        {result && (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
-              <p className="font-display text-2xl font-bold text-foreground">{reduction}% smaller</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {formatSize(result.original)} → {formatSize(result.compressed)}
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <Button variant="ghost" onClick={() => { setFiles([]); setResult(null); }} className="rounded-xl">
-                Compress Another PDF
-              </Button>
-            </div>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
+        </div>
+      )}
+      {result && (
+        <div className="mt-6 space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
+            <p className="font-display text-2xl font-bold text-foreground">{reduction}% smaller</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {formatSize(result.original)} → {formatSize(result.compressed)}
+            </p>
           </div>
-        )}
-      </div>
+          <div className="flex justify-center">
+            <Button variant="ghost" onClick={() => { setFiles([]); setResult(null); }} className="rounded-xl">
+              Compress Another PDF
+            </Button>
+          </div>
+        </div>
+      )}
     </ToolLayout>
   );
 };
