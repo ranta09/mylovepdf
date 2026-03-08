@@ -3,7 +3,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Sparkles, Copy, Download, FileText } from "lucide-react";
+import { Sparkles, Copy, Download, FileText, CheckCircle2, Info } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -41,7 +41,6 @@ const PdfSummarizer = () => {
       });
 
       setProgress(90);
-
       if (error) throw error;
       setSummary(data.summary);
       setProgress(100);
@@ -109,15 +108,47 @@ const PdfSummarizer = () => {
 
   return (
     <ToolLayout
-      title="PDF Notes Summarizer"
-      description="Upload a PDF and get AI-generated summarized notes instantly."
+      title="Summarize PDF"
+      description="Turn any PDF into concise notes, bullet points, or key highlights using AI."
       category="ai"
       icon={<Sparkles className="h-7 w-7" />}
-      metaTitle="PDF Notes Summarizer — AI Summary Generator | My Love PDF"
-      metaDescription="Upload any PDF and instantly get AI-powered summaries, bullet points, and key highlights."
+      metaTitle="Summarize PDF Online — AI Notes Generator | My Love PDF"
+      metaDescription="Upload any PDF and instantly get AI-powered summaries, bullet points, and key highlights. Free and fast."
+      hideHeader
     >
       <div className="space-y-6">
-        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload PDF to summarize" />
+        {/* Instructions */}
+        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">Summarize PDF with AI</h1>
+              <p className="text-sm text-muted-foreground">Get instant notes from any document</p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {[
+              { step: "1", text: "Upload your PDF file" },
+              { step: "2", text: "Choose summary format" },
+              { step: "3", text: "Download or copy your notes" },
+            ].map((s) => (
+              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
+                <span className="text-sm text-foreground">{s.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Works great with research papers, textbooks, reports, articles, and any text-based PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.
+            </p>
+          </div>
+        </div>
+
+        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your PDF" />
 
         {files.length > 0 && !summary && (
           <div className="space-y-4">
@@ -139,7 +170,7 @@ const PdfSummarizer = () => {
 
             <Button onClick={handleSummarize} disabled={processing} size="lg" className="w-full rounded-xl">
               <Sparkles className="mr-2 h-5 w-5" />
-              {processing ? "Summarizing…" : "Generate Summary"}
+              {processing ? "Summarizing…" : "Summarize Now"}
             </Button>
           </div>
         )}
@@ -160,10 +191,9 @@ const PdfSummarizer = () => {
                 <FileText className="mr-2 h-4 w-4" /> Download PDF
               </Button>
               <Button variant="ghost" onClick={() => { setSummary(""); setFiles([]); }} className="rounded-xl">
-                Process Another
+                Summarize Another
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">Your files are private and automatically deleted after processing.</p>
           </div>
         )}
       </div>

@@ -3,8 +3,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { BrainCircuit, Download, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
+import { BrainCircuit, Download, Eye, EyeOff, CheckCircle2, XCircle, Info } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -123,14 +122,46 @@ const QuizGenerator = () => {
 
   return (
     <ToolLayout
-      title="PDF Quiz Generator"
-      description="Upload study material and generate quiz questions automatically using AI."
+      title="AI Quiz Generator"
+      description="Create quizzes from any PDF — perfect for students, teachers, and exam prep."
       category="ai"
       icon={<BrainCircuit className="h-7 w-7" />}
-      metaTitle="PDF Quiz Generator — AI Study Tool | My Love PDF"
-      metaDescription="Upload lecture notes or study material and instantly generate MCQ, true/false, or short answer quizzes."
+      metaTitle="AI Quiz Generator from PDF — Create Practice Tests | My Love PDF"
+      metaDescription="Upload lecture notes or study material and instantly create MCQ, true/false, or short answer quizzes with AI."
+      hideHeader
     >
       <div className="space-y-6">
+        {/* Instructions */}
+        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+              <BrainCircuit className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">AI Quiz Generator</h1>
+              <p className="text-sm text-muted-foreground">Create practice tests from any document</p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {[
+              { step: "1", text: "Upload your study material" },
+              { step: "2", text: "Pick quiz type (MCQ, T/F, Short)" },
+              { step: "3", text: "Take the quiz or download it" },
+            ].map((s) => (
+              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
+                <span className="text-sm text-foreground">{s.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              Great for exam prep, revision, and self-testing. Works with lecture notes, textbooks, study guides, and any text-based PDF. Your files are private and deleted after processing.
+            </p>
+          </div>
+        </div>
+
         <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload study material (PDF)" />
 
         {files.length > 0 && questions.length === 0 && (
@@ -145,7 +176,7 @@ const QuizGenerator = () => {
             {processing && <Progress value={progress} className="h-2" />}
             <Button onClick={handleGenerate} disabled={processing} size="lg" className="w-full rounded-xl">
               <BrainCircuit className="mr-2 h-5 w-5" />
-              {processing ? "Generating…" : "Generate Quiz"}
+              {processing ? "Creating Quiz…" : "Generate Quiz"}
             </Button>
           </div>
         )}
@@ -230,7 +261,6 @@ const QuizGenerator = () => {
                 Generate Another Quiz
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">Your files are private and automatically deleted after processing.</p>
           </div>
         )}
       </div>
