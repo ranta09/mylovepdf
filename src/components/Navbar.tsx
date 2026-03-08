@@ -61,6 +61,14 @@ const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 md:flex">
+          {location.pathname !== "/" && (
+            <Link
+              to="/"
+              className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-secondary/60 cursor-pointer mr-1"
+            >
+              ← All Tools
+            </Link>
+          )}
           {navCategories.map(cat => {
             const Icon = cat.icon;
             return (
