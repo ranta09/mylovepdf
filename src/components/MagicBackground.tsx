@@ -22,7 +22,7 @@ const MagicBackground = () => {
 
   const initSparkles = useCallback((w: number, h: number) => {
     // Reduced count significantly for performance
-    const count = Math.min(Math.floor((w * h) / 12000), 150);
+    const count = Math.min(Math.floor((w * h) / 25000), 80);
     const sparkles: Sparkle[] = [];
     for (let i = 0; i < count; i++) {
       sparkles.push({
