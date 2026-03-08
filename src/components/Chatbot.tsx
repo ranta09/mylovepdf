@@ -154,14 +154,19 @@ const Chatbot = () => {
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
           >
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-xl bg-card border border-border shadow-card px-3 py-2 text-sm text-foreground whitespace-nowrap"
-            >
-              {t.chatbotHelp} 👋
-            </motion.div>
+            <AnimatePresence>
+              {showHelpText && (
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-xl bg-card border border-border shadow-card px-3 py-2 text-sm text-foreground whitespace-nowrap"
+                >
+                  {t.chatbotHelp} 👋
+                </motion.div>
+              )}
+            </AnimatePresence>
             <Button
               onClick={() => setOpen(true)}
               size="lg"
