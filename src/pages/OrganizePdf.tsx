@@ -115,7 +115,7 @@ const OrganizePdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Organize Pages</h1>
             <p className="text-sm text-muted-foreground">Rearrange or delete pages in your PDF</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with presentations, portfolios, and multi-page documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with presentations, portfolios, and multi-page documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

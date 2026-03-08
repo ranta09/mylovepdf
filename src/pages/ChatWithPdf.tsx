@@ -139,21 +139,16 @@ const ChatWithPdf = () => {
         {!documentText ? (
           <>
             {/* Header */}
-            <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
+            <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tool-ai">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tool-ai">
                   <MessageSquare className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div>
                   <h1 className="font-display text-xl font-bold text-foreground">Chat with PDF</h1>
                   <p className="text-sm text-muted-foreground">Talk to your document like a conversation</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">◗ Try asking: "What is the main idea?", "Summarize chapter 2", or "List the key takeaways". The AI answers only from your document. Files are private and deleted after use.</p>
                 </div>
-              </div>
-              <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
-                  Try asking: "What is the main idea?", "Summarize chapter 2", "Explain this concept", or "List the key takeaways". The AI answers only from your document. Files are private and deleted after use.
-                </p>
               </div>
             </div>
 

@@ -75,7 +75,7 @@ const PptToPdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">PowerPoint to PDF</h1>
             <p className="text-sm text-muted-foreground">Convert presentation slide images into a PDF document</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with exported slides, lecture materials, and visual presentations. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with exported slides, lecture materials, and visual presentations. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>

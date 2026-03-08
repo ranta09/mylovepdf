@@ -175,21 +175,16 @@ const QuizGenerator = () => {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 space-y-4">
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
               <BrainCircuit className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">AI Quiz Generator</h1>
               <p className="text-sm text-muted-foreground">Create practice tests from any document</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">◗ Upload multiple files at once. Supports PDF, TXT, DOC, CSV, HTML, and more. Great for exam prep, revision, and self-testing. Your files are private and deleted after processing.</p>
             </div>
-          </div>
-          <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Upload multiple files at once. Supports PDF, TXT, DOC, CSV, HTML, and more. Great for exam prep, revision, and self-testing. Your files are private and deleted after processing.
-            </p>
           </div>
         </div>
 

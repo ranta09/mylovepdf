@@ -74,8 +74,23 @@ const OcrPdf = () => {
       metaTitle="OCR PDF — Make Scanned PDFs Searchable Online Free"
       metaDescription="Convert scanned PDF documents into searchable, selectable text using OCR technology. Free online OCR for PDF files with no sign-up required."
       toolId="ocr-pdf"
+      hideHeader
     >
-      <FileUpload accept=".pdf" files={files} onFilesChange={(f) => { setFiles(f); setExtractedText(""); }} label="Select a scanned PDF" />
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <ScanLine className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">OCR PDF</h1>
+            <p className="text-sm text-muted-foreground">Extract text from scanned PDFs using text recognition</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with scanned documents, photographed pages, and image-based PDFs. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".pdf" files={files} onFilesChange={(f) => { setFiles(f); setExtractedText(""); }} label="Select a scanned PDF" />
+      </div>
 
       {processing && <Progress value={progress} className="mt-4" />}
 

@@ -70,7 +70,7 @@ const PdfToJpg = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">PDF to JPG</h1>
             <p className="text-sm text-muted-foreground">Convert each PDF page into a high-quality JPG image</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Works great with presentations, reports, brochures, and any PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">◗ Works great with presentations, reports, brochures, and any PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
           </div>
         </div>
       </div>
