@@ -30,6 +30,13 @@ import PdfSummarizer from "./pages/PdfSummarizer";
 import QuizGenerator from "./pages/QuizGenerator";
 import ChatWithPdf from "./pages/ChatWithPdf";
 import AtsChecker from "./pages/AtsChecker";
+import DeletePages from "./pages/DeletePages";
+import ExtractPages from "./pages/ExtractPages";
+import SignPdf from "./pages/SignPdf";
+import CropPdf from "./pages/CropPdf";
+import RedactPdf from "./pages/RedactPdf";
+import FlattenPdf from "./pages/FlattenPdf";
+import TranslatePdf from "./pages/TranslatePdf";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +73,13 @@ const App = () => (
             <Route path="/quiz-generator" element={<QuizGenerator />} />
             <Route path="/chat-with-pdf" element={<ChatWithPdf />} />
             <Route path="/ats-checker" element={<AtsChecker />} />
+            <Route path="/delete-pages" element={<DeletePages />} />
+            <Route path="/extract-pages" element={<ExtractPages />} />
+            <Route path="/sign-pdf" element={<SignPdf />} />
+            <Route path="/crop-pdf" element={<CropPdf />} />
+            <Route path="/redact-pdf" element={<RedactPdf />} />
+            <Route path="/flatten-pdf" element={<FlattenPdf />} />
+            <Route path="/translate-pdf" element={<TranslatePdf />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -2,7 +2,8 @@ import {
   Merge, Scissors, Minimize2, Image, FileImage, FileText,
   FileSpreadsheet, Presentation, Edit3, RotateCw, Droplets,
   Lock, Unlock, Hash, LayoutGrid, Wrench,
-  Sparkles, BrainCircuit, MessageSquare, ScanSearch
+  Sparkles, BrainCircuit, MessageSquare, ScanSearch,
+  Trash2, FileOutput, PenTool, Crop, EyeOff, Layers, Languages
 } from "lucide-react";
 
 export type ToolCategory = "merge" | "split" | "compress" | "convert" | "edit" | "protect" | "ai";
@@ -37,6 +38,12 @@ export const tools: PdfTool[] = [
   { id: "page-numbers", name: "Page Numbers", description: "Add page numbers to your PDF", icon: Hash, path: "/page-numbers", category: "edit", available: true },
   { id: "organize", name: "Organize Pages", description: "Rearrange, delete or add pages", icon: LayoutGrid, path: "/organize-pdf", category: "edit", available: true },
   { id: "repair", name: "Repair PDF", description: "Fix corrupted or broken PDFs", icon: Wrench, path: "/repair-pdf", category: "edit", available: true },
+  { id: "delete-pages", name: "Delete Pages", description: "Remove specific pages from your PDF", icon: Trash2, path: "/delete-pages", category: "edit", available: true },
+  { id: "extract-pages", name: "Extract Pages", description: "Extract specific pages into a new PDF", icon: FileOutput, path: "/extract-pages", category: "edit", available: true },
+  { id: "sign-pdf", name: "Sign PDF", description: "Draw or type your signature on PDF", icon: PenTool, path: "/sign-pdf", category: "edit", available: true },
+  { id: "crop-pdf", name: "Crop PDF", description: "Trim margins and crop PDF pages", icon: Crop, path: "/crop-pdf", category: "edit", available: true },
+  { id: "redact-pdf", name: "Redact PDF", description: "Black out sensitive information", icon: EyeOff, path: "/redact-pdf", category: "edit", available: true },
+  { id: "flatten-pdf", name: "Flatten PDF", description: "Flatten form fields and annotations", icon: Layers, path: "/flatten-pdf", category: "edit", available: true },
 ];
 
 export const aiTools: PdfTool[] = [
@@ -44,6 +51,7 @@ export const aiTools: PdfTool[] = [
   { id: "ai-quiz", name: "Quiz Generator", description: "Generate quizzes from study material with AI", icon: BrainCircuit, path: "/quiz-generator", category: "ai", available: true },
   { id: "ai-chat", name: "Chat with PDF", description: "Ask questions and chat with your document", icon: MessageSquare, path: "/chat-with-pdf", category: "ai", available: true },
   { id: "ai-ats", name: "ATS Resume Checker", description: "Get your resume ATS score and tips", icon: ScanSearch, path: "/ats-checker", category: "ai", available: true },
+  { id: "ai-translate", name: "Translate PDF", description: "AI-powered document translation", icon: Languages, path: "/translate-pdf", category: "ai", available: true },
 ];
 
 export const categoryColors: Record<ToolCategory, string> = {
