@@ -142,7 +142,7 @@ const QuizGenerator = () => {
       });
 
       const pdfBytes = await doc.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       saveAs(blob, "quiz.pdf");
     } catch (err: any) {
       toast({ title: "Download Error", description: err.message || "Failed to generate PDF.", variant: "destructive" });
