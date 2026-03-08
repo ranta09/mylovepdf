@@ -61,6 +61,14 @@ const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 md:flex">
+          {location.pathname !== "/" && (
+            <Link
+              to="/"
+              className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-secondary/60 cursor-pointer mr-1"
+            >
+              ← All Tools
+            </Link>
+          )}
           {navCategories.map(cat => {
             const Icon = cat.icon;
             return (
@@ -87,6 +95,15 @@ const Navbar = () => {
       {open && (
         <div className="border-t border-border bg-card px-6 py-4 md:hidden">
           <div className="flex flex-col gap-2">
+            {location.pathname !== "/" && (
+              <Link
+                to="/"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-secondary/60 cursor-pointer"
+              >
+                ← All Tools
+              </Link>
+            )}
             {navCategories.map(cat => {
               const Icon = cat.icon;
               return (
