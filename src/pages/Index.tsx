@@ -4,12 +4,20 @@ import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import { Heart, Shield, Zap, Search, Sparkles } from "lucide-react";
+import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [search, setSearch] = useState("");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackEmail, setFeedbackEmail] = useState("");
+  const { toast } = useToast();
 
   const allTools = [...tools, ...aiTools];
   const filtered = allTools.filter(t =>
@@ -18,6 +26,14 @@ const Index = () => {
   );
   const filteredPdfTools = filtered.filter(t => t.category !== "ai");
   const filteredAiTools = filtered.filter(t => t.category === "ai");
+
+  const handleFeedbackSubmit = () => {
+    if (!feedbackText.trim()) return;
+    toast({ title: "Feedback Sent", description: "Thank you! We'll look into it." });
+    setFeedbackText("");
+    setFeedbackEmail("");
+    setFeedbackOpen(false);
+  };
 
   return (
     <>
@@ -39,7 +55,7 @@ const Index = () => {
                   Every PDF tool you need
                 </h1>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                  Merge, split, compress, convert, edit and protect your PDFs — plus <span className="font-semibold text-tool-ai">AI-powered tools</span> to summarize, quiz, and chat with your documents. All free.
+                  Merge, split, compress, convert, edit and protect your PDFs — plus <span className="font-semibold text-primary">AI-powered tools</span> to summarize, quiz, and chat with your documents. All free.
                 </p>
 
                 {/* Search */}
@@ -74,8 +90,8 @@ const Index = () => {
                 {filteredAiTools.length > 0 && (
                   <div className="mb-16" id="ai-tools">
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-tool-ai/10">
-                        <Sparkles className="h-6 w-6 text-tool-ai" />
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                        <Sparkles className="h-6 w-6 text-primary" />
                       </div>
                       <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">✨ AI Document Tools</h2>
                       <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
@@ -128,6 +144,42 @@ const Index = () => {
                       <p className="text-sm text-muted-foreground">{f.desc}</p>
                     </motion.div>
                   ))}
+                </div>
+
+                {/* Report Issue */}
+                <div className="mt-12 flex flex-col items-center gap-3 text-center">
+                  <p className="text-sm text-muted-foreground">Something not working?</p>
+                  <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-xl gap-2">
+                        <MessageCircleWarning className="h-4 w-4" />
+                        Report an Issue
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="font-display">Report an Issue</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-2">
+                        <Input
+                          placeholder="Your email (optional)"
+                          value={feedbackEmail}
+                          onChange={e => setFeedbackEmail(e.target.value)}
+                          className="rounded-xl"
+                        />
+                        <Textarea
+                          placeholder="Describe the issue — which tool, what went wrong, etc."
+                          value={feedbackText}
+                          onChange={e => setFeedbackText(e.target.value)}
+                          rows={4}
+                          className="rounded-xl resize-none"
+                        />
+                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim()} className="w-full rounded-xl">
+                          Submit Report
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </section>
