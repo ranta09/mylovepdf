@@ -12,7 +12,7 @@ const Footer = () => (
           <span className="font-display text-lg font-bold text-foreground">My Love PDF</span>
         </div>
         <p className="max-w-md text-sm text-muted-foreground">
-          Every tool you need to work with PDFs in one place. Free, fast, and secure.
+          Every tool you need to work with PDFs — plus AI-powered tools to summarize, generate quizzes, and chat with your documents. Free, fast, and secure.
         </p>
         <p className="text-xs text-muted-foreground/60">
           Your files are automatically deleted after processing for privacy.
