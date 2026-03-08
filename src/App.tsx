@@ -41,6 +41,7 @@ import HtmlToPdf from "./pages/HtmlToPdf";
 import OcrPdf from "./pages/OcrPdf";
 import PdfToPdfa from "./pages/PdfToPdfa";
 import ComparePdf from "./pages/ComparePdf";
+import Chatbot from "./components/Chatbot";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="/compare-pdf" element={<ComparePdf />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Chatbot />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
