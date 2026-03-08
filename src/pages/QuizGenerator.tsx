@@ -174,7 +174,7 @@ const QuizGenerator = () => {
       hideHeader
     >
       <div className="space-y-6">
-        {/* Instructions first */}
+        {/* Header */}
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
@@ -185,18 +185,6 @@ const QuizGenerator = () => {
               <p className="text-sm text-muted-foreground">Create practice tests from any document</p>
             </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {[
-              { step: "1", text: "Upload your study material" },
-              { step: "2", text: "Pick quiz type & number of questions" },
-              { step: "3", text: "Take the quiz or download it" },
-            ].map((s) => (
-              <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{s.step}</span>
-                <span className="text-sm text-foreground">{s.text}</span>
-              </div>
-            ))}
-          </div>
           <div className="flex items-start gap-2 rounded-xl bg-card border border-border p-3">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">
@@ -205,7 +193,7 @@ const QuizGenerator = () => {
           </div>
         </div>
 
-        {/* Upload below instructions */}
+        {/* Upload */}
         <FileUpload
           accept=".pdf,.txt,.md,.doc,.docx,.csv,.json,.xml,.html,.rtf"
           multiple={true}
@@ -213,6 +201,20 @@ const QuizGenerator = () => {
           files={files}
           label="Upload study material (PDF, TXT, DOC, and more)"
         />
+
+        {/* Steps below upload */}
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[
+            { step: "1", text: "Upload your study material" },
+            { step: "2", text: "Pick quiz type & number of questions" },
+            { step: "3", text: "Take the quiz or download it" },
+          ].map((s) => (
+            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{s.step}</span>
+              <span className="text-sm text-foreground">{s.text}</span>
+            </div>
+          ))}
+        </div>
 
         {files.length > 0 && questions.length === 0 && (
           <div className="space-y-4">
