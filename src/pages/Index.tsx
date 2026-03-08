@@ -184,55 +184,24 @@ const Index = () => {
 
           {/* How It Works */}
           {!search && (
-            <section className="border-t border-border bg-secondary/20 py-16 overflow-hidden">
+            <section className="border-t border-border bg-secondary/20 py-16">
               <div className="container">
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="font-display text-2xl font-bold text-foreground text-center mb-2 md:text-3xl"
-                >
-                  How MagicPDF Works
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 }}
-                  className="text-center text-muted-foreground mb-12"
-                >
-                  Three simple steps to work with any PDF
-                </motion.p>
-
-                <div className="relative grid gap-8 md:grid-cols-3">
-                  {/* Connecting line */}
-                  <div className="absolute top-6 left-[16.6%] right-[16.6%] h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 hidden md:block" />
-
+                <h2 className="font-display text-2xl font-bold text-foreground text-center mb-2 md:text-3xl">How MagicPDF Works</h2>
+                <p className="text-center text-muted-foreground mb-10">Three simple steps to work with any PDF</p>
+                <div className="grid gap-8 md:grid-cols-3">
                   {[
-                    { step: "1", title: "Choose a Tool", desc: "Pick from 35+ PDF and AI tools — merge, split, compress, convert, edit, summarize, and more.", icon: "🛠️" },
-                    { step: "2", title: "Upload Your File", desc: "Drag and drop your PDF or document. All processing happens securely in your browser.", icon: "📄" },
-                    { step: "3", title: "Download Result", desc: "Get your processed file instantly. No waiting, no queues, no watermarks.", icon: "⬇️" },
+                    { step: "1", title: "Choose a Tool", desc: "Pick from 35+ PDF and AI tools — merge, split, compress, convert, edit, summarize, and more." },
+                    { step: "2", title: "Upload Your File", desc: "Drag and drop your PDF or document. All processing happens securely in your browser." },
+                    { step: "3", title: "Download Result", desc: "Get your processed file instantly. No waiting, no queues, no watermarks." },
                   ].map((s, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.2 + i * 0.15, duration: 0.5, type: "spring", stiffness: 100 }}
-                      className="relative flex flex-col items-center gap-4 text-center group"
+                    <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                      className="flex flex-col items-center gap-3 text-center"
                     >
-                      <motion.div
-                        className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-display text-xl font-bold shadow-elevated z-10"
-                        whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
-                        <span className="text-2xl">{s.icon}</span>
-                        <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-card text-xs font-bold text-primary border-2 border-primary shadow-card">
-                          {s.step}
-                        </span>
-                      </motion.div>
-                      <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{s.title}</h3>
-                      <p className="text-sm text-muted-foreground max-w-[250px]">{s.desc}</p>
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold">
+                        {s.step}
+                      </div>
+                      <h3 className="font-display text-lg font-semibold text-foreground">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground">{s.desc}</p>
                     </motion.div>
                   ))}
                 </div>
