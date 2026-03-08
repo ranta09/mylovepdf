@@ -1,9 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import logoImg from "@/assets/logo.png";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const navCategories = [
@@ -49,8 +47,13 @@ const Navbar = () => {
               <span className="text-2xl font-black tracking-tight text-primary">PDF</span>
             </span>
             <img
-              src={logoImg}
+              src="/favicon.png"
               alt="Magic PDF"
+              width={32}
+              height={32}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
               className="h-8 w-8 relative z-10 ml-1.5"
             />
           </div>
