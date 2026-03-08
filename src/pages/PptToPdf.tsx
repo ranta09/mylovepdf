@@ -66,7 +66,7 @@ const PptToPdf = () => {
 
   return (
     <ToolLayout title="PowerPoint to PDF" description="Convert presentation slide images into a PDF document" category="convert" icon={<Presentation className="h-7 w-7" />}
-      metaTitle="PowerPoint to PDF — Convert Slides to PDF Free" metaDescription="Convert presentation slides to PDF. Free online converter.">
+      metaTitle="PowerPoint to PDF — Convert Slides to PDF Free" metaDescription="Convert presentation slides to PDF. Free online converter." toolId="ppt-to-pdf">
       <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select slide images (JPG/PNG)" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (

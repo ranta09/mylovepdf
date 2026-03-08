@@ -58,7 +58,7 @@ const RedactPdf = () => {
 
   return (
     <ToolLayout title="Redact PDF" description="Black out sensitive information in your PDF" category="edit" icon={<EyeOff className="h-7 w-7" />}
-      metaTitle="Redact PDF — Black Out Text Online Free" metaDescription="Redact sensitive information from PDF files. Free online PDF redaction tool.">
+      metaTitle="Redact PDF — Black Out Text Online Free" metaDescription="Redact sensitive information from PDF files. Free online PDF redaction tool." toolId="redact-pdf">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to redact" />
       {files.length > 0 && (
         <div className="mt-6 space-y-4">

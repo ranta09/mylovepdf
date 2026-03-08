@@ -123,7 +123,7 @@ const SignPdf = () => {
 
   return (
     <ToolLayout title="Sign PDF" description="Draw or type your signature and place it on your PDF" category="edit" icon={<PenTool className="h-7 w-7" />}
-      metaTitle="Sign PDF — Add Signature Online Free" metaDescription="Sign PDF documents online for free. Draw or type your signature.">
+      metaTitle="Sign PDF — Add Signature Online Free" metaDescription="Sign PDF documents online for free. Draw or type your signature." toolId="sign-pdf">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to sign" />
       {files.length > 0 && (
         <div className="mt-6 space-y-6">

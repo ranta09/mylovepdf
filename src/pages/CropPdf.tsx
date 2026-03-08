@@ -56,7 +56,7 @@ const CropPdf = () => {
 
   return (
     <ToolLayout title="Crop PDF" description="Trim margins and crop PDF pages to a custom size" category="edit" icon={<Crop className="h-7 w-7" />}
-      metaTitle="Crop PDF — Trim Margins Online Free" metaDescription="Crop PDF pages and trim margins. Free online PDF cropping tool.">
+      metaTitle="Crop PDF — Trim Margins Online Free" metaDescription="Crop PDF pages and trim margins. Free online PDF cropping tool." toolId="crop-pdf">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to crop" />
       {files.length > 0 && (
         <div className="mt-6 space-y-4">
