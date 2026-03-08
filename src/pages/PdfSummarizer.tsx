@@ -4,6 +4,7 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles, Copy, Download, FileText, CheckCircle2, Info } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,11 @@ const PdfSummarizer = () => {
   const [summary, setSummary] = useState("");
   const [mode, setMode] = useState<SummaryMode>("short");
   const { toast } = useToast();
+
+  const handleFilesChange = (newFiles: File[]) => {
+    setFiles(newFiles);
+    if (summary) setSummary("");
+  };
 
   const handleSummarize = async () => {
     if (files.length === 0) return;
@@ -117,7 +123,7 @@ const PdfSummarizer = () => {
       hideHeader
     >
       <div className="space-y-6">
-        <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your PDF" />
+        <FileUpload accept=".pdf" multiple={false} onFilesChange={handleFilesChange} files={files} label="Upload your PDF" />
 
         {/* Instructions */}
         <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6 space-y-4">
@@ -178,7 +184,9 @@ const PdfSummarizer = () => {
         {summary && (
           <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{summary}</p>
+              <div className="prose prose-sm max-w-none text-foreground">
+                <ReactMarkdown>{summary}</ReactMarkdown>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={copyToClipboard} className="rounded-xl">
