@@ -106,7 +106,7 @@ const OrganizePdf = () => {
 
   return (
     <ToolLayout title="Organize Pages" description="Rearrange or delete pages in your PDF" category="edit" icon={<LayoutGrid className="h-7 w-7" />}
-      metaTitle="Organize PDF Pages — Rearrange Pages Free" metaDescription="Rearrange, reorder and delete PDF pages. Free online PDF organizer.">
+      metaTitle="Organize PDF Pages — Rearrange Pages Free" metaDescription="Rearrange, reorder and delete PDF pages. Free online PDF organizer." toolId="organize">
       <FileUpload accept=".pdf" files={files} onFilesChange={loadPages} label="Select a PDF to organize" />
       
       {loading && <p className="mt-4 text-center text-sm text-muted-foreground">Loading pages…</p>}

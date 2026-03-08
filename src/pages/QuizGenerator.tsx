@@ -170,6 +170,7 @@ const QuizGenerator = () => {
       icon={<BrainCircuit className="h-7 w-7" />}
       metaTitle="AI Quiz Generator — Create Practice Tests | PDF Magic"
       metaDescription="Upload study material and instantly create MCQ, true/false, or short answer quizzes with AI."
+      toolId="ai-quiz"
       hideHeader
     >
       <div className="space-y-6">

@@ -53,7 +53,7 @@ const PdfToWord = () => {
 
   return (
     <ToolLayout title="PDF to Word" description="Extract text from PDF and save as a Word document" category="convert" icon={<FileText className="h-7 w-7" />}
-      metaTitle="PDF to Word — Convert PDF to DOC Free" metaDescription="Convert PDF files to editable Word documents. Free online PDF to Word converter.">
+      metaTitle="PDF to Word — Convert PDF to DOC Free" metaDescription="Convert PDF files to editable Word documents. Free online PDF to Word converter." toolId="pdf-to-word">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (

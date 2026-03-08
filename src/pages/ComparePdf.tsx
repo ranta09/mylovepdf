@@ -49,6 +49,7 @@ const ComparePdf = () => {
       icon={<GitCompare className="h-8 w-8" />}
       metaTitle="Compare PDF — Side-by-Side PDF Comparison Online Free"
       metaDescription="Compare two PDF files side by side and easily spot differences between document versions. Free online PDF comparison tool with no sign-up."
+      toolId="compare-pdf"
     >
       <div className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-card">

@@ -55,7 +55,7 @@ const FlattenPdf = () => {
 
   return (
     <ToolLayout title="Flatten PDF" description="Flatten form fields and annotations into the PDF" category="edit" icon={<Layers className="h-7 w-7" />}
-      metaTitle="Flatten PDF — Remove Form Fields Online Free" metaDescription="Flatten PDF form fields and annotations. Free online tool.">
+      metaTitle="Flatten PDF — Remove Form Fields Online Free" metaDescription="Flatten PDF form fields and annotations. Free online tool." toolId="flatten-pdf">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to flatten" />
       {files.length > 0 && (
         <div className="mt-6 space-y-4">

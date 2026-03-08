@@ -54,7 +54,7 @@ const PdfToPpt = () => {
 
   return (
     <ToolLayout title="PDF to PowerPoint" description="Export PDF pages as slide images for presentations" category="convert" icon={<Presentation className="h-7 w-7" />}
-      metaTitle="PDF to PowerPoint — Convert PDF to Slides Free" metaDescription="Convert PDF pages to presentation slides. Free online PDF to PowerPoint converter.">
+      metaTitle="PDF to PowerPoint — Convert PDF to Slides Free" metaDescription="Convert PDF pages to presentation slides. Free online PDF to PowerPoint converter." toolId="pdf-to-ppt">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (

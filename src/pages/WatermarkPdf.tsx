@@ -61,7 +61,7 @@ const WatermarkPdf = () => {
 
   return (
     <ToolLayout title="Add Watermark" description="Stamp text on every page of your PDF" category="edit" icon={<Droplets className="h-7 w-7" />}
-      metaTitle="Add Watermark to PDF — Free Online Tool" metaDescription="Add watermark text to your PDF files. Free online watermark tool.">
+      metaTitle="Add Watermark to PDF — Free Online Tool" metaDescription="Add watermark text to your PDF files. Free online watermark tool." toolId="watermark">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
       {files.length > 0 && (
         <div className="mt-6 space-y-5">

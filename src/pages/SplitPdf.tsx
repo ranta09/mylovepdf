@@ -61,7 +61,7 @@ const SplitPdf = () => {
 
   return (
     <ToolLayout title="Split PDF" description="Extract specific pages from your PDF document" category="split" icon={<Scissors className="h-7 w-7" />}
-      metaTitle="Split PDF — Extract Pages Online Free" metaDescription="Split PDF files and extract pages. Free online PDF splitter tool.">
+      metaTitle="Split PDF — Extract Pages Online Free" metaDescription="Split PDF files and extract pages. Free online PDF splitter tool." toolId="split">
       <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to split" />
       {totalPages > 0 && (
         <div className="mt-6 space-y-4">

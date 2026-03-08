@@ -81,7 +81,7 @@ const ExcelToPdf = () => {
 
   return (
     <ToolLayout title="Excel to PDF" description="Convert CSV spreadsheet data into a PDF table" category="convert" icon={<FileSpreadsheet className="h-7 w-7" />}
-      metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free" metaDescription="Convert CSV and spreadsheet data to PDF tables. Free online converter.">
+      metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free" metaDescription="Convert CSV and spreadsheet data to PDF tables. Free online converter." toolId="excel-to-pdf">
       <FileUpload accept=".csv,.tsv,.txt" files={files} onFilesChange={setFiles} label="Select a CSV file to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (

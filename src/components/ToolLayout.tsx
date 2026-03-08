@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import toolFaqs from "@/lib/toolFaqs";
 
 interface ToolLayoutProps {
   title: string;
@@ -18,18 +20,31 @@ interface ToolLayoutProps {
   metaTitle?: string;
   metaDescription?: string;
   hideHeader?: boolean;
+  toolId?: string;
 }
 
-const ToolLayout = ({ title, description, category, icon, children, metaTitle, metaDescription, hideHeader }: ToolLayoutProps) => {
+const ToolLayout = ({ title, description, category, icon, children, metaTitle, metaDescription, hideHeader, toolId }: ToolLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const showBack = location.pathname !== "/";
+  const faqs = toolId ? toolFaqs[toolId] : undefined;
+
+  const faqJsonLd = faqs ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": { "@type": "Answer", "text": f.a },
+    })),
+  } : null;
 
   return (
     <>
       <Helmet>
         <title>{metaTitle || `${title} - PDF Magic`}</title>
         <meta name="description" content={metaDescription || description} />
+        {faqJsonLd && <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>}
       </Helmet>
       <div className="flex min-h-screen flex-col">
         <Navbar />
@@ -60,6 +75,29 @@ const ToolLayout = ({ title, description, category, icon, children, metaTitle, m
             {children}
             <ReportIssue />
           </section>
+
+          {/* Tool-specific FAQ */}
+          {faqs && faqs.length > 0 && (
+            <section className="border-t border-border bg-card py-12">
+              <div className="container max-w-3xl">
+                <h2 className="font-display text-xl font-bold text-foreground text-center mb-6 md:text-2xl">
+                  Frequently Asked Questions
+                </h2>
+                <Accordion type="single" collapsible className="space-y-2">
+                  {faqs.map((faq, i) => (
+                    <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border bg-secondary/30 px-5">
+                      <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline text-sm md:text-base">
+                        {faq.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground">
+                        {faq.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+            </section>
+          )}
         </main>
         <Footer />
       </div>

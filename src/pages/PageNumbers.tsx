@@ -55,7 +55,7 @@ const PageNumbers = () => {
 
   return (
     <ToolLayout title="Page Numbers" description="Add page numbers to every page of your PDF" category="edit" icon={<Hash className="h-7 w-7" />}
-      metaTitle="Add Page Numbers to PDF — Free Online Tool" metaDescription="Add page numbers to your PDF documents. Free online page numbering tool.">
+      metaTitle="Add Page Numbers to PDF — Free Online Tool" metaDescription="Add page numbers to your PDF documents. Free online page numbering tool." toolId="page-numbers">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
       {files.length > 0 && (
         <div className="mt-6 space-y-4">

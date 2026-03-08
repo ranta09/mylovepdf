@@ -110,7 +110,7 @@ const EditPdf = () => {
 
   return (
     <ToolLayout title="Edit PDF" description="Click on pages to add text annotations" category="edit" icon={<Edit3 className="h-7 w-7" />}
-      metaTitle="Edit PDF — Add Text to PDF Online Free" metaDescription="Add text annotations to your PDF files. Free online PDF editor.">
+      metaTitle="Edit PDF — Add Text to PDF Online Free" metaDescription="Add text annotations to your PDF files. Free online PDF editor." toolId="edit">
       <FileUpload accept=".pdf" files={files} onFilesChange={loadPreview} label="Select a PDF to edit" />
 
       {previews.length > 0 && (

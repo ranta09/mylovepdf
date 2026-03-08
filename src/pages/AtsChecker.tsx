@@ -130,6 +130,7 @@ const AtsChecker = () => {
       icon={<ScanSearch className="h-7 w-7" />}
       metaTitle="Free ATS Resume Checker — Score & Optimize Your Resume | PDF Magic"
       metaDescription="Check your resume's ATS compatibility score. Get keyword analysis, formatting tips, and actionable suggestions to land more interviews."
+      toolId="ai-ats"
       hideHeader
     >
       <div className="space-y-6">

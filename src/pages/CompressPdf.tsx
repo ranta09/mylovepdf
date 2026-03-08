@@ -50,7 +50,7 @@ const CompressPdf = () => {
 
   return (
     <ToolLayout title="Compress PDF" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />}
-      metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor.">
+      metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress">
       <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to compress" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && !result && (

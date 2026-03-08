@@ -70,7 +70,7 @@ const TranslatePdf = () => {
 
   return (
     <ToolLayout title="Translate PDF" description="AI-powered document translation to any language" category="ai" icon={<Languages className="h-7 w-7" />}
-      metaTitle="Translate PDF — AI Document Translation Free" metaDescription="Translate PDF documents to any language using AI. Free online tool.">
+      metaTitle="Translate PDF — AI Document Translation Free" metaDescription="Translate PDF documents to any language using AI. Free online tool." toolId="ai-translate">
       <div className="space-y-4 rounded-xl border border-border bg-card p-4 mb-6">
         <h3 className="font-semibold text-foreground">How to use</h3>
         <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">

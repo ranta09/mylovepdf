@@ -24,6 +24,7 @@ const OcrPdf = () => {
       icon={<ScanLine className="h-8 w-8" />}
       metaTitle="OCR PDF — Make Scanned PDFs Searchable Online Free"
       metaDescription="Convert scanned PDF documents into searchable, selectable text using OCR technology. Free online OCR for PDF files with no sign-up required."
+      toolId="ocr-pdf"
     >
       <div className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-card">

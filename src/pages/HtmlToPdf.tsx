@@ -36,6 +36,7 @@ const HtmlToPdf = () => {
       icon={<Globe className="h-8 w-8" />}
       metaTitle="HTML to PDF — Convert Webpages to PDF Online Free"
       metaDescription="Convert any webpage or HTML to PDF online for free. Enter a URL and download the page as a high-quality PDF document instantly."
+      toolId="html-to-pdf"
     >
       <div className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-card">

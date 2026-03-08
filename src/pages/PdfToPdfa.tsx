@@ -44,6 +44,7 @@ const PdfToPdfa = () => {
       icon={<FileCheck className="h-8 w-8" />}
       metaTitle="PDF to PDF/A — Convert PDF to Archival Format Free"
       metaDescription="Convert PDF files to PDF/A, the ISO-standardized format for long-term document archiving. Free online converter with no sign-up required."
+      toolId="pdf-to-pdfa"
     >
       <div className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-card">

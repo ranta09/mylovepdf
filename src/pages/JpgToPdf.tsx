@@ -47,7 +47,7 @@ const JpgToPdf = () => {
 
   return (
     <ToolLayout title="JPG to PDF" description="Convert JPG and PNG images into a PDF document" category="convert" icon={<FileImage className="h-7 w-7" />}
-      metaTitle="JPG to PDF — Convert Images to PDF Online Free" metaDescription="Convert JPG and PNG images to PDF. Free online image to PDF converter.">
+      metaTitle="JPG to PDF — Convert Images to PDF Online Free" metaDescription="Convert JPG and PNG images to PDF. Free online image to PDF converter." toolId="jpg-to-pdf">
       <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select images to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
