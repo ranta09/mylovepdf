@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { Globe, Loader2 } from "lucide-react";
+import { Globe, Loader2, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";

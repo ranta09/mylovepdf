@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { FileCheck, Loader2 } from "lucide-react";
+import { FileCheck, Loader2, Info } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
