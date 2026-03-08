@@ -3,7 +3,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Wand2, Copy, Download, FileText, Info } from "lucide-react";
+import { Wand2, Copy, Download, FileText, Info, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
@@ -177,9 +177,9 @@ const PdfSummarizer = () => {
             {processing && <Progress value={progress} className="h-2" />}
 
             <Button onClick={handleSummarize} disabled={processing} size="lg" className="w-full rounded-xl">
-              <Wand2 className="mr-2 h-5 w-5" />
-              {processing ? "Summarizing…" : "Summarize Now"}
+              {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Summarizing…</> : <><Wand2 className="mr-2 h-5 w-5" />Summarize Now</>}
             </Button>
+            {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~15-30 seconds</p>}
           </div>
         )}
 

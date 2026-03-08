@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
-import { RotateCw } from "lucide-react";
+import { RotateCw, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -55,10 +55,11 @@ const RotatePdf = () => {
             ))}
           </div>
           {processing && <Progress value={progress} />}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <Button size="lg" onClick={rotate} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? "Rotating…" : "Rotate PDF"}
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Rotating…</> : "Rotate PDF"}
             </Button>
+            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~2-3 seconds</p>}
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScanLine, Copy, Download } from "lucide-react";
+import { ScanLine, Copy, Download, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -80,10 +80,11 @@ const OcrPdf = () => {
       {processing && <Progress value={progress} className="mt-4" />}
 
       {files.length > 0 && !extractedText && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={handleProcess} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? "Extracting Text…" : "Apply OCR"}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Extracting Text…</> : "Apply OCR"}
           </Button>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~10-30 seconds</p>}
         </div>
       )}
 

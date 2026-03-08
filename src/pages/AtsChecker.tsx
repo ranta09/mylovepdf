@@ -4,7 +4,7 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
+import { ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle, Info, Loader2 } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -186,9 +186,9 @@ const AtsChecker = () => {
             {processing && <Progress value={progress} className="h-2" />}
 
             <Button onClick={handleAnalyze} disabled={processing} size="lg" className="w-full rounded-xl">
-              <ScanSearch className="mr-2 h-5 w-5" />
-              {processing ? "Analyzing Resume…" : "Check My Resume"}
+              {processing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Analyzing Resume…</> : <><ScanSearch className="mr-2 h-5 w-5" />Check My Resume</>}
             </Button>
+            {processing && <p className="text-xs text-center text-muted-foreground">Estimated time: ~15-30 seconds</p>}
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Scissors } from "lucide-react";
+import { Scissors, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -73,10 +73,11 @@ const SplitPdf = () => {
             <p className="mt-1 text-xs text-muted-foreground">Enter page numbers or ranges separated by commas</p>
           </div>
           {processing && <Progress value={progress} />}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <Button size="lg" onClick={split} disabled={processing || !pageRange} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? "Splitting…" : "Split PDF"}
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Splitting…</> : "Split PDF"}
             </Button>
+            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
           </div>
         </div>
       )}

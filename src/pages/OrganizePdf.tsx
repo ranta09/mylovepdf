@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { LayoutGrid, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { LayoutGrid, ArrowUp, ArrowDown, Trash2, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -135,10 +135,11 @@ const OrganizePdf = () => {
             ))}
           </div>
           {processing && <Progress value={progress} />}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <Button size="lg" onClick={save} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? "Saving…" : `Save ${pages.length} pages`}
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : `Save ${pages.length} pages`}
             </Button>
+            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
           </div>
         </div>
       )}
