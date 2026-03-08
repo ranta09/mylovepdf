@@ -3,9 +3,9 @@ import Navbar from "@/components/Navbar";
 import MagicBackground from "@/components/MagicBackground";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import { tools, aiTools, type ToolCategory } from "@/lib/tools";
+import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus, Merge, Scissors, Minimize2, ArrowLeftRight, Edit3, Lock } from "lucide-react";
+import { Heart, Shield, Zap, Search, Sparkles, MessageCircleWarning, ImagePlus } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-
-const categoryMeta: { id: ToolCategory; label: string; icon: typeof Merge; description: string }[] = [
-  { id: "ai", label: "AI Tools", icon: Sparkles, description: "Supercharge your documents with AI" },
-  { id: "merge", label: "Merge", icon: Merge, description: "Combine multiple PDFs into one" },
-  { id: "split", label: "Split", icon: Scissors, description: "Separate PDF pages into files" },
-  { id: "compress", label: "Compress", icon: Minimize2, description: "Reduce file size without losing quality" },
-  { id: "convert", label: "Convert", icon: ArrowLeftRight, description: "Convert between PDF and other formats" },
-  { id: "edit", label: "Edit", icon: Edit3, description: "Edit, annotate and modify your PDFs" },
-  { id: "protect", label: "Protect", icon: Lock, description: "Secure and unlock your PDF files" },
-];
 
 const Index = () => {
   const [search, setSearch] = useState("");
@@ -32,11 +22,13 @@ const Index = () => {
   const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const allTools = [...aiTools, ...tools];
+  const allTools = [...tools, ...aiTools];
   const filtered = allTools.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.description.toLowerCase().includes(search.toLowerCase())
   );
+  const filteredPdfTools = filtered.filter(t => t.category !== "ai");
+  const filteredAiTools = filtered.filter(t => t.category === "ai");
 
   const handleFeedbackSubmit = () => {
     if (!feedbackText.trim() || !feedbackEmail.trim()) return;
@@ -50,7 +42,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Magic PDF — AI-Powered PDF & Document Tools</title>
+        <title>PDF Magic — AI-Powered PDF & Document Tools</title>
         <meta name="description" content="Every tool you need to work with PDFs — plus AI-powered document tools. Merge, split, compress, convert, summarize, generate quizzes, chat with PDFs, and check resume ATS scores. Free, fast and secure." />
       </Helmet>
       <div className="relative flex min-h-screen flex-col">
@@ -61,13 +53,15 @@ const Index = () => {
           <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
             <div className="container relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <img src={logoImg} alt="Magic PDF" className="mx-auto mb-6 h-40 w-40" />
+                <img src={logoImg} alt="PDF Magic" className="mx-auto mb-6 h-40 w-40" />
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
                   Every PDF tool you need
                 </h1>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
                   Merge, split, compress, convert, edit and protect your PDFs — plus <span className="font-semibold text-primary">AI-powered tools</span> to summarize, quiz, and chat with your documents. All free.
                 </p>
+
+                {/* Search */}
                 <div className="mx-auto mt-8 max-w-md">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -84,7 +78,7 @@ const Index = () => {
             </div>
           </section>
 
-          {/* Category Sections */}
+          {/* Tools Grid */}
           <section className="container py-16">
             {search && filtered.length === 0 ? (
               <div className="py-12 text-center">
@@ -92,31 +86,44 @@ const Index = () => {
                 <p className="mt-2 text-sm text-muted-foreground">Try searching for "merge", "convert", or "summarize"</p>
               </div>
             ) : (
-              <div className="space-y-16">
-                {categoryMeta.map(cat => {
-                  const catTools = filtered.filter(t => t.category === cat.id);
-                  if (catTools.length === 0) return null;
-                  const CatIcon = cat.icon;
-                  return (
-                    <div key={cat.id} id={`category-${cat.id}`} className="scroll-mt-24">
-                      {!search && (
-                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
-                          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                            <CatIcon className="h-6 w-6 text-primary" />
-                          </div>
-                          <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">{cat.label}</h2>
-                          <p className="mt-2 text-muted-foreground">{cat.description}</p>
-                        </motion.div>
-                      )}
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                        {catTools.map((tool, i) => (
-                          <ToolCard key={tool.id} tool={tool} index={i} />
-                        ))}
-                      </div>
+              <>
+                {/* AI Tools FIRST */}
+                {filteredAiTools.length > 0 && (
+                  <div className="mb-16" id="ai-tools">
+                    {!search && (
+                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
+                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                          <Sparkles className="h-6 w-6 text-primary" />
+                        </div>
+                        <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
+                        <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
+                      </motion.div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
+                      {filteredAiTools.map((tool, i) => (
+                        <ToolCard key={tool.id} tool={tool} index={i} />
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                )}
+
+                {/* PDF Tools */}
+                {filteredPdfTools.length > 0 && (
+                  <>
+                    {!search && filteredAiTools.length > 0 && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 text-center">
+                        <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">All PDF Tools</h2>
+                        <p className="mt-2 text-muted-foreground">Everything you need to work with PDF files</p>
+                      </motion.div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                      {filteredPdfTools.map((tool, i) => (
+                        <ToolCard key={tool.id} tool={tool} index={i} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </section>
 
@@ -141,6 +148,8 @@ const Index = () => {
                     </motion.div>
                   ))}
                 </div>
+
+                {/* Report Issue */}
                 <div className="mt-12 flex flex-col items-center gap-3 text-center">
                   <p className="text-sm text-muted-foreground">Something not working?</p>
                   <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
@@ -156,18 +165,40 @@ const Index = () => {
                       </DialogHeader>
                       <div className="space-y-4 pt-2">
                         <div>
-                          <Input placeholder="Your email *" type="email" value={feedbackEmail} onChange={e => setFeedbackEmail(e.target.value)} className="rounded-xl" required />
+                          <Input
+                            placeholder="Your email *"
+                            type="email"
+                            value={feedbackEmail}
+                            onChange={e => setFeedbackEmail(e.target.value)}
+                            className="rounded-xl"
+                            required
+                          />
                           <p className="mt-1 text-xs text-muted-foreground">Required so we can follow up</p>
                         </div>
-                        <Textarea placeholder="Describe the issue — which tool, what went wrong, etc." value={feedbackText} onChange={e => setFeedbackText(e.target.value)} rows={4} className="rounded-xl resize-none" />
+                        <Textarea
+                          placeholder="Describe the issue — which tool, what went wrong, etc."
+                          value={feedbackText}
+                          onChange={e => setFeedbackText(e.target.value)}
+                          rows={4}
+                          className="rounded-xl resize-none"
+                        />
                         <div>
                           <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">
                             <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">{feedbackScreenshot ? feedbackScreenshot.name : "Attach a screenshot (optional)"}</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)} />
+                            <span className="text-sm text-muted-foreground">
+                              {feedbackScreenshot ? feedbackScreenshot.name : "Attach a screenshot (optional)"}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)}
+                            />
                           </label>
                         </div>
-                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">Submit Report</Button>
+                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">
+                          Submit Report
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
