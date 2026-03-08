@@ -36,11 +36,11 @@ const Navbar = () => {
             <motion.img
               src={logoImg}
               alt="PDF Magic"
-              className="h-14 w-14 relative z-10 -mr-3"
+              className="h-16 w-16 relative z-10 -mr-5 drop-shadow-lg"
               whileHover={{ rotate: 15, scale: 1.1 }}
             />
             <span
-              className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent relative z-0 pl-1"
+              className="text-[26px] font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent relative z-0 pl-2"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
             >
               Magic
