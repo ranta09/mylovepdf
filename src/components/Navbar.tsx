@@ -1,7 +1,8 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Heart, Menu, X, Wand2 } from "lucide-react";
+import { Menu, X, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import logoImg from "@/assets/logo.png";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -23,12 +24,10 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-hero">
-            <Heart className="h-5 w-5 fill-primary-foreground text-primary-foreground" />
-          </div>
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src={logoImg} alt="DocuMind" className="h-9 w-9 rounded-lg" />
           <span className="font-display text-xl font-bold text-foreground">
-            My Love PDF
+            DocuMind
           </span>
         </Link>
 
