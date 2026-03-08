@@ -38,7 +38,7 @@ const Navbar = () => {
               className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent relative z-0 pl-1"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
             >
-              Magic
+              My Love PDF
             </span>
           </motion.div>
         </Link>

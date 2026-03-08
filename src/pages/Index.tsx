@@ -42,7 +42,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>PDF Magic — AI-Powered PDF & Document Tools</title>
+        <title>My Love PDF — AI-Powered PDF & Document Tools</title>
         <meta name="description" content="Every tool you need to work with PDFs — plus AI-powered document tools. Merge, split, compress, convert, summarize, generate quizzes, chat with PDFs, and check resume ATS scores. Free, fast and secure." />
       </Helmet>
       <div className="relative flex min-h-screen flex-col">
