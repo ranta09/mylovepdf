@@ -38,25 +38,13 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center group relative">
-          <div className="flex items-center relative">
-            <span
-              className="relative z-10 flex items-baseline gap-0"
-              style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
-            >
-              <span className="text-2xl font-bold tracking-tight text-foreground">Magic</span>
-              <span className="text-2xl font-black tracking-tight text-primary">PDFs</span>
-            </span>
-            <img
-              src="/favicon.png"
-              alt="MagicPDFs"
-              width={32}
-              height={32}
-              loading="eager"
-              decoding="sync"
-              fetchPriority="high"
-              className="h-8 w-8 relative z-10 ml-1.5 rounded-md bg-card/0 mix-blend-multiply dark:mix-blend-screen"
-            />
-          </div>
+          <span
+            className="relative z-10 flex items-baseline gap-0"
+            style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
+          >
+            <span className="text-2xl font-bold tracking-tight text-foreground">Magic</span>
+            <span className="text-2xl font-black tracking-tight text-primary">PDFs</span>
+          </span>
         </Link>
 
         {/* Desktop */}
