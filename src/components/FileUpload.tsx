@@ -108,7 +108,12 @@ const FileUpload = ({ accept = ".pdf", multiple = true, maxSize = 100, onFilesCh
           <Upload className="h-7 w-7 text-primary" />
         </div>
         <p className="font-display text-lg font-semibold text-foreground mb-1">{label}</p>
-        <p className="text-sm text-muted-foreground mb-2">or drag and drop files here</p>
+        <p className="text-sm text-muted-foreground mb-1">or drag and drop files here</p>
+        <div className="flex items-center gap-1.5 mb-3">
+          <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            Supported: {formatAcceptedTypes()}
+          </span>
+        </div>
         <div className="flex items-center gap-3 mb-2">
           <label>
             <input type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
