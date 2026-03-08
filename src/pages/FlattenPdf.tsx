@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Layers } from "lucide-react";
+import { Layers, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -61,10 +61,11 @@ const FlattenPdf = () => {
         <div className="mt-6 space-y-4">
           <p className="text-sm text-muted-foreground">This will convert form fields and annotations into static content that can no longer be edited.</p>
           {processing && <Progress value={progress} />}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <Button size="lg" onClick={flatten} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? "Flattening…" : "Flatten PDF"}
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Flattening…</> : "Flatten PDF"}
             </Button>
+            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { Hash } from "lucide-react";
+import { Hash, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -70,10 +70,11 @@ const PageNumbers = () => {
             </Button>
           </div>
           {processing && <Progress value={progress} />}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <Button size="lg" onClick={addNumbers} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-              {processing ? "Adding…" : "Add Page Numbers"}
+              {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Adding…</> : "Add Page Numbers"}
             </Button>
+            {processing && <p className="text-xs text-muted-foreground">Estimated time: ~2-3 seconds</p>}
           </div>
         </div>
       )}
