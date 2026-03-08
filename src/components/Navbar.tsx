@@ -27,19 +27,18 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-20 items-center justify-between">
         <Link to="/" className="flex items-center gap-1 group">
-
           <motion.div
-            className="flex items-baseline gap-1"
+            className="flex items-center gap-1"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <span
-              className="text-2xl font-black tracking-tight text-foreground"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
-              PDF
-            </span>
+            <motion.img
+              src={logoImg}
+              alt="PDF Magic"
+              className="h-8 w-8"
+              whileHover={{ rotate: 15, scale: 1.1 }}
+            />
             <span
               className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
