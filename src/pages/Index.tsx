@@ -128,13 +128,11 @@ const Index = () => {
           {/* Hero */}
           <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
             <div className="container relative z-10 text-center">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <motion.img
+              <div>
+                <img
                   src={logoImg}
                   alt="MagicPDFs — Free Online PDF Tools"
                   className="mx-auto mb-6 h-24 w-24 relative"
-                  whileHover={{ scale: 1.15, rotate: [0, -8, 8, -4, 0] }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
                 />
                 <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
                   {t.heroTitle}
@@ -172,7 +170,7 @@ const Index = () => {
                     />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </section>
 
@@ -199,7 +197,7 @@ const Index = () => {
                   const Icon = cat.icon;
                   return (
                     <div key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-24">
-                      <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-6 flex items-center gap-3">
+                      <div className="mb-6 flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
@@ -210,7 +208,7 @@ const Index = () => {
                           </h2>
                           <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
                         </div>
-                      </motion.div>
+                      </div>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         {catTools.map((tool, i) => (
                           <ToolCard key={tool.id} tool={tool} index={i} />
@@ -237,7 +235,7 @@ const Index = () => {
                     { icon: Shield, title: t.whySecureTitle, desc: t.whySecureDesc },
                     { icon: Heart, title: t.whyFreeTitle, desc: t.whyFreeDesc },
                   ].map((f, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.1 }}
+                    <div key={i}
                       className="flex flex-col items-center gap-3 text-center"
                     >
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
@@ -245,7 +243,7 @@ const Index = () => {
                       </div>
                       <h3 className="font-display text-lg font-semibold text-foreground">{f.title}</h3>
                       <p className="text-sm text-muted-foreground">{f.desc}</p>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
 
