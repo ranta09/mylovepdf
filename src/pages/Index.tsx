@@ -2,19 +2,22 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import { tools } from "@/lib/tools";
+import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import { Heart, Shield, Zap, Search } from "lucide-react";
+import { Heart, Shield, Zap, Search, Sparkles } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
 
 const Index = () => {
   const [search, setSearch] = useState("");
 
-  const filtered = tools.filter(t =>
+  const allTools = [...tools, ...aiTools];
+  const filtered = allTools.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.description.toLowerCase().includes(search.toLowerCase())
   );
+  const filteredPdfTools = filtered.filter(t => t.category !== "ai");
+  const filteredAiTools = filtered.filter(t => t.category === "ai");
 
   return (
     <>
@@ -63,14 +66,35 @@ const Index = () => {
             {search && filtered.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-lg text-muted-foreground">No tools found for "{search}"</p>
-                <p className="mt-2 text-sm text-muted-foreground">Try searching for "merge", "convert", or "compress"</p>
+                <p className="mt-2 text-sm text-muted-foreground">Try searching for "merge", "convert", or "summarize"</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {filtered.map((tool, i) => (
-                  <ToolCard key={tool.id} tool={tool} index={i} />
-                ))}
-              </div>
+              <>
+                {filteredPdfTools.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {filteredPdfTools.map((tool, i) => (
+                      <ToolCard key={tool.id} tool={tool} index={i} />
+                    ))}
+                  </div>
+                )}
+
+                {filteredAiTools.length > 0 && (
+                  <div className="mt-16">
+                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-tool-ai/10">
+                        <Sparkles className="h-6 w-6 text-tool-ai" />
+                      </div>
+                      <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
+                      <p className="mt-2 text-muted-foreground">Supercharge your documents with AI-powered tools</p>
+                    </motion.div>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
+                      {filteredAiTools.map((tool, i) => (
+                        <ToolCard key={tool.id} tool={tool} index={i} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </section>
 

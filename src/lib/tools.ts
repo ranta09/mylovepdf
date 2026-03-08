@@ -1,10 +1,11 @@
 import {
   Merge, Scissors, Minimize2, Image, FileImage, FileText,
   FileSpreadsheet, Presentation, Edit3, RotateCw, Droplets,
-  Lock, Unlock, Hash, LayoutGrid, Wrench
+  Lock, Unlock, Hash, LayoutGrid, Wrench,
+  Sparkles, BrainCircuit, MessageSquare, ScanSearch
 } from "lucide-react";
 
-export type ToolCategory = "merge" | "split" | "compress" | "convert" | "edit" | "protect";
+export type ToolCategory = "merge" | "split" | "compress" | "convert" | "edit" | "protect" | "ai";
 
 export interface PdfTool {
   id: string;
@@ -38,6 +39,13 @@ export const tools: PdfTool[] = [
   { id: "repair", name: "Repair PDF", description: "Fix corrupted or broken PDFs", icon: Wrench, path: "/repair-pdf", category: "edit", available: true },
 ];
 
+export const aiTools: PdfTool[] = [
+  { id: "ai-summarizer", name: "PDF Summarizer", description: "AI-powered notes and summaries from any PDF", icon: Sparkles, path: "/pdf-summarizer", category: "ai", available: true },
+  { id: "ai-quiz", name: "Quiz Generator", description: "Generate quizzes from study material with AI", icon: BrainCircuit, path: "/quiz-generator", category: "ai", available: true },
+  { id: "ai-chat", name: "Chat with PDF", description: "Ask questions and chat with your document", icon: MessageSquare, path: "/chat-with-pdf", category: "ai", available: true },
+  { id: "ai-ats", name: "ATS Resume Checker", description: "Check resume ATS compatibility and get suggestions", icon: ScanSearch, path: "/ats-checker", category: "ai", available: true },
+];
+
 export const categoryColors: Record<ToolCategory, string> = {
   merge: "bg-tool-merge",
   split: "bg-tool-split",
@@ -45,6 +53,7 @@ export const categoryColors: Record<ToolCategory, string> = {
   convert: "bg-tool-convert",
   edit: "bg-tool-edit",
   protect: "bg-tool-protect",
+  ai: "bg-tool-ai",
 };
 
 export const categoryTextColors: Record<ToolCategory, string> = {
@@ -54,4 +63,5 @@ export const categoryTextColors: Record<ToolCategory, string> = {
   convert: "text-tool-convert",
   edit: "text-tool-edit",
   protect: "text-tool-protect",
+  ai: "text-tool-ai",
 };

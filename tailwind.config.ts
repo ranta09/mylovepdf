@@ -68,6 +68,7 @@ export default {
           convert: "hsl(var(--tool-convert))",
           edit: "hsl(var(--tool-edit))",
           protect: "hsl(var(--tool-protect))",
+          ai: "hsl(var(--tool-ai))",
         },
       },
       borderRadius: {
