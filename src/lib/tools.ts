@@ -45,6 +45,10 @@ export const tools: PdfTool[] = [
   { id: "crop-pdf", name: "Crop PDF", description: "Trim margins and crop PDF pages", icon: Crop, path: "/crop-pdf", category: "edit", available: true },
   { id: "redact-pdf", name: "Redact PDF", description: "Black out sensitive information", icon: EyeOff, path: "/redact-pdf", category: "edit", available: true },
   { id: "flatten-pdf", name: "Flatten PDF", description: "Flatten form fields and annotations", icon: Layers, path: "/flatten-pdf", category: "edit", available: true },
+  { id: "html-to-pdf", name: "HTML to PDF", description: "Convert any webpage URL to a PDF document", icon: Globe, path: "/html-to-pdf", category: "convert", available: true },
+  { id: "ocr-pdf", name: "OCR PDF", description: "Make scanned PDFs searchable with text recognition", icon: ScanLine, path: "/ocr-pdf", category: "edit", available: true },
+  { id: "pdf-to-pdfa", name: "PDF to PDF/A", description: "Convert PDF to PDF/A for long-term archiving", icon: FileCheck, path: "/pdf-to-pdfa", category: "convert", available: true },
+  { id: "compare-pdf", name: "Compare PDF", description: "Compare two PDFs side by side and spot differences", icon: GitCompare, path: "/compare-pdf", category: "edit", available: true },
 ];
 
 export const aiTools: PdfTool[] = [
