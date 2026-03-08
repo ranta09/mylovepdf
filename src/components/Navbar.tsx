@@ -26,40 +26,40 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container flex h-20 items-center justify-between">
-        <Link to="/" className="flex items-center gap-1.5 group">
-          {/* Spinning wand logo */}
+        <Link to="/" className="flex items-center gap-2 group">
           <motion.img
             src={logoImg}
             alt="PDF Magic"
-            className="h-12 w-12"
+            className="h-14 w-14"
             initial={{ rotate: -180, scale: 0 }}
             animate={{ rotate: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, duration: 0.8 }}
             whileHover={{ rotate: 15, scale: 1.1 }}
           />
 
-          {/* Text that fades in after wand animation */}
           <motion.div
-            className="flex items-center gap-0.5"
+            className="flex items-baseline gap-1"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
             <span
-              className="text-[22px] font-extrabold tracking-tight"
+              className="text-2xl font-black tracking-tight text-foreground"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              <span className="text-foreground">PDF</span>
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ml-[2px]">Magic</span>
+              PDF
             </span>
-
-            {/* Blinking sparkles */}
-            <motion.span
-              animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-              className="ml-0.5"
+            <span
+              className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
             >
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Magic
+            </span>
+            <motion.span
+              animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.15, 0.9] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
             </motion.span>
           </motion.div>
         </Link>
