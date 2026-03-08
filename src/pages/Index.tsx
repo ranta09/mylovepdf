@@ -22,8 +22,8 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>My Love PDF — Free Online PDF Tools</title>
-        <meta name="description" content="Every tool you need to work with PDFs. Merge, split, compress, convert, edit and protect your PDF files. Free, fast and secure." />
+        <title>My Love PDF — Free Online PDF & AI Document Tools</title>
+        <meta name="description" content="Every tool you need to work with PDFs — plus AI-powered document tools. Merge, split, compress, convert, summarize, generate quizzes, chat with PDFs, and check resume ATS scores. Free, fast and secure." />
       </Helmet>
       <div className="flex min-h-screen flex-col">
         <Navbar />
@@ -39,7 +39,7 @@ const Index = () => {
                   Every PDF tool you need
                 </h1>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                  Merge, split, compress, convert, edit and protect your PDF files. All in one place — free and easy to use.
+                  Merge, split, compress, convert, edit and protect your PDFs — plus <span className="font-semibold text-tool-ai">AI-powered tools</span> to summarize, quiz, and chat with your documents. All free.
                 </p>
 
                 {/* Search */}
@@ -48,7 +48,7 @@ const Index = () => {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="Search tools… e.g. merge, compress, convert"
+                      placeholder="Search tools… e.g. merge, summarize, quiz, ATS"
                       value={search}
                       onChange={e => setSearch(e.target.value)}
                       className="pl-10 rounded-xl border-border bg-card shadow-card h-12 text-sm"
@@ -70,22 +70,15 @@ const Index = () => {
               </div>
             ) : (
               <>
-                {filteredPdfTools.length > 0 && (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {filteredPdfTools.map((tool, i) => (
-                      <ToolCard key={tool.id} tool={tool} index={i} />
-                    ))}
-                  </div>
-                )}
-
+                {/* AI Tools FIRST */}
                 {filteredAiTools.length > 0 && (
-                  <div className="mt-16">
+                  <div className="mb-16">
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-tool-ai/10">
                         <Sparkles className="h-6 w-6 text-tool-ai" />
                       </div>
-                      <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
-                      <p className="mt-2 text-muted-foreground">Supercharge your documents with AI-powered tools</p>
+                      <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">✨ AI Document Tools</h2>
+                      <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
                     </motion.div>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
                       {filteredAiTools.map((tool, i) => (
@@ -93,6 +86,23 @@ const Index = () => {
                       ))}
                     </div>
                   </div>
+                )}
+
+                {/* PDF Tools */}
+                {filteredPdfTools.length > 0 && (
+                  <>
+                    {filteredAiTools.length > 0 && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 text-center">
+                        <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">All PDF Tools</h2>
+                        <p className="mt-2 text-muted-foreground">Everything you need to work with PDF files</p>
+                      </motion.div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                      {filteredPdfTools.map((tool, i) => (
+                        <ToolCard key={tool.id} tool={tool} index={i} />
+                      ))}
+                    </div>
+                  </>
                 )}
               </>
             )}
