@@ -1,9 +1,9 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Wand2, Sparkles } from "lucide-react";
+import { Menu, X, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import logoImg from "@/assets/logo.png";
+import AnimatedLogo from "@/components/AnimatedLogo";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
