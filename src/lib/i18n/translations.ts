@@ -32,7 +32,7 @@ const en = {
   tools: "tools",
 
   // How it works
-  howTitle: "How MagicPDF Works",
+  howTitle: "How MagicPDFs Works",
   howSubtitle: "Three simple steps to work with any PDF",
   step1Title: "Choose a Tool",
   step1Desc: "Pick from 35+ PDF and AI tools — merge, split, compress, convert, edit, summarize, and more.",
@@ -42,7 +42,7 @@ const en = {
   step3Desc: "Get your processed file instantly. No waiting, no queues, no watermarks.",
 
   // Why choose
-  whyTitle: "Why Choose MagicPDF?",
+  whyTitle: "Why Choose MagicPDFs?",
   whyFastTitle: "Lightning Fast",
   whyFastDesc: "Process files instantly in your browser. No waiting, no queues, no file size limits on most tools.",
   whySecureTitle: "100% Secure & Private",
@@ -64,17 +64,17 @@ const en = {
   // Footer
   footerEditOrganize: "Edit & Organize",
   footerEssentials: "Essentials",
-  footerRights: "© {year} MagicPDF. All rights reserved.",
+  footerRights: "© {year} MagicPDFs. All rights reserved.",
   footerLocal: "Processed locally",
   footerNoSignup: "No sign-up",
   footerFree: "100% free",
   language: "Language",
 
   // Chatbot
-  chatbotTitle: "MagicPDF Assistant",
+  chatbotTitle: "MagicPDFs Assistant",
   chatbotSubtitle: "Ask me anything about our tools",
   chatbotHelp: "How can I help you?",
-  chatbotWelcome: "Hi! 👋 I'm your MagicPDF assistant. I can help you find the right tool, explain features, or guide you through any task. What do you need help with?",
+  chatbotWelcome: "Hi! 👋 I'm your MagicPDFs assistant. I can help you find the right tool, explain features, or guide you through any task. What do you need help with?",
   chatbotPlaceholder: "Ask me anything...",
   chatbotQuick1: "What tools are available?",
   chatbotQuick2: "How do I merge PDFs?",
