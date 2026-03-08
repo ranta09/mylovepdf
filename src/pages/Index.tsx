@@ -91,13 +91,15 @@ const Index = () => {
                 {/* AI Tools FIRST */}
                 {filteredAiTools.length > 0 && (
                   <div className="mb-16" id="ai-tools">
-                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                        <Sparkles className="h-6 w-6 text-primary" />
-                      </div>
-                      <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
-                      <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
-                    </motion.div>
+                    {!search && (
+                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
+                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                          <Sparkles className="h-6 w-6 text-primary" />
+                        </div>
+                        <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
+                        <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
+                      </motion.div>
+                    )}
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
                       {filteredAiTools.map((tool, i) => (
                         <ToolCard key={tool.id} tool={tool} index={i} />
@@ -109,7 +111,7 @@ const Index = () => {
                 {/* PDF Tools */}
                 {filteredPdfTools.length > 0 && (
                   <>
-                    {filteredAiTools.length > 0 && (
+                    {!search && filteredAiTools.length > 0 && (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 text-center">
                         <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">All PDF Tools</h2>
                         <p className="mt-2 text-muted-foreground">Everything you need to work with PDF files</p>
