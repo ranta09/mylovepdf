@@ -53,8 +53,22 @@ const ProtectPdf = () => {
 
   return (
     <ToolLayout title="Protect PDF" description="Add password protection metadata to your PDF" category="protect" icon={<Lock className="h-7 w-7" />}
-      metaTitle="Protect PDF — Password Protect PDF Free" metaDescription="Add password protection to your PDF files. Free online PDF protection tool." toolId="protect">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" />
+      metaTitle="Protect PDF — Password Protect PDF Free" metaDescription="Add password protection to your PDF files. Free online PDF protection tool." toolId="protect" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <Lock className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Protect PDF</h1>
+            <p className="text-sm text-muted-foreground">Add password protection metadata to your PDF</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with sensitive contracts, financial documents, and confidential files. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" />
+      </div>
       {files.length > 0 && (
         <div className="mt-6 space-y-4">
           <div>

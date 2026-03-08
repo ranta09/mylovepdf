@@ -56,8 +56,21 @@ const ComparePdf = () => {
       metaTitle="Compare PDF — Side-by-Side PDF Comparison Online Free"
       metaDescription="Compare two PDF files side by side and easily spot differences between document versions. Free online PDF comparison tool with no sign-up."
       toolId="compare-pdf"
+      hideHeader
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <GitCompare className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Compare PDF</h1>
+            <p className="text-sm text-muted-foreground">Compare two PDF files side by side and spot differences</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with contract revisions, document versions, and legal comparisons. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
         <div>
           <p className="text-sm font-medium text-foreground mb-2">Document 1</p>
           <FileUpload accept=".pdf" onFilesChange={setFiles1} files={files1} label="Upload first PDF" />

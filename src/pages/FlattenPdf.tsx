@@ -55,8 +55,22 @@ const FlattenPdf = () => {
 
   return (
     <ToolLayout title="Flatten PDF" description="Flatten form fields and annotations into the PDF" category="edit" icon={<Layers className="h-7 w-7" />}
-      metaTitle="Flatten PDF — Remove Form Fields Online Free" metaDescription="Flatten PDF form fields and annotations. Free online tool." toolId="flatten-pdf">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to flatten" />
+      metaTitle="Flatten PDF — Remove Form Fields Online Free" metaDescription="Flatten PDF form fields and annotations. Free online tool." toolId="flatten-pdf" hideHeader>
+      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <Layers className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Flatten PDF</h1>
+            <p className="text-sm text-muted-foreground">Flatten form fields and annotations into the PDF</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">Works great with fillable forms, annotated documents, and interactive PDFs. Max file size: 100MB. Your files are private and automatically deleted after processing.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to flatten" />
+      </div>
       {files.length > 0 && (
         <div className="mt-6 space-y-4">
           <p className="text-sm text-muted-foreground">This will convert form fields and annotations into static content that can no longer be edited.</p>
