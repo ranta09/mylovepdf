@@ -75,6 +75,19 @@ const Index = () => {
   const { toast } = useToast();
   const { t, tt } = useLanguage();
 
+  useEffect(() => {
+    const lastTool = sessionStorage.getItem("lastVisitedTool");
+    if (lastTool) {
+      sessionStorage.removeItem("lastVisitedTool");
+      // Small delay to let cards render
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-tool-path="${lastTool}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+    }
+  }, []);
   const allTools = [...aiTools, ...tools];
   const filtered = allTools.filter(tool =>
     tool.name.toLowerCase().includes(search.toLowerCase()) ||
