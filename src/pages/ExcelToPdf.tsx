@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Loader2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -85,10 +85,11 @@ const ExcelToPdf = () => {
       <FileUpload accept=".csv,.tsv,.txt" files={files} onFilesChange={setFiles} label="Select a CSV file to convert" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? "Converting…" : "Convert to PDF"}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to PDF"}
           </Button>
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
         </div>
       )}
       <p className="mt-4 text-center text-xs text-muted-foreground">Upload a CSV file. For .xlsx files, export as CSV from Excel first.</p>
