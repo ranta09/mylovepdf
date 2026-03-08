@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
+import NeuralBackground from "@/components/NeuralBackground";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, aiTools } from "@/lib/tools";
@@ -48,6 +49,7 @@ const Index = () => {
         <main className="flex-1">
           {/* Hero */}
           <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
+            <NeuralBackground />
             <div className="container relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-hero shadow-elevated">
@@ -75,8 +77,6 @@ const Index = () => {
                 </div>
               </motion.div>
             </div>
-            <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/5 blur-3xl" />
           </section>
 
           {/* Tools Grid */}
