@@ -1,66 +1,113 @@
-import ToolLayout from "@/components/ToolLayout";
-import { ScanLine } from "lucide-react";
-import FileUpload from "@/components/FileUpload";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { ScanLine, Copy, Download } from "lucide-react";
+import * as pdfjsLib from "pdfjs-dist";
+import ToolLayout from "@/components/ToolLayout";
+import FileUpload from "@/components/FileUpload";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 const OcrPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
-  const { toast } = useToast();
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [extractedText, setExtractedText] = useState("");
 
   const handleProcess = async () => {
     if (files.length === 0) return;
-    toast({
-      title: "OCR Processing",
-      description: "OCR text recognition is being applied to your PDF. This feature uses browser-based text extraction.",
-    });
+    setProcessing(true);
+    setProgress(10);
+    setExtractedText("");
+
+    try {
+      const bytes = await files[0].arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item: any) => item.str).join(" ");
+        fullText += `--- Page ${i} ---\n${pageText}\n\n`;
+        setProgress(10 + Math.round((i / pdf.numPages) * 85));
+      }
+
+      if (!fullText.trim()) {
+        toast.error("No text could be extracted. The PDF may contain only images.");
+        setProcessing(false);
+        return;
+      }
+
+      setExtractedText(fullText);
+      setProgress(100);
+      toast.success(`Extracted text from ${pdf.numPages} page(s)!`);
+    } catch {
+      toast.error("Failed to process PDF");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(extractedText);
+    toast.success("Copied to clipboard!");
+  };
+
+  const downloadAsTxt = () => {
+    const blob = new Blob([extractedText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ocr-extracted.txt";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <ToolLayout
       title="OCR PDF"
-      description="Make scanned PDFs searchable by recognizing text with OCR technology. Extract text from image-based PDFs."
+      description="Extract text from scanned PDFs using text recognition technology."
       category="edit"
-      icon={<ScanLine className="h-8 w-8" />}
+      icon={<ScanLine className="h-7 w-7" />}
       metaTitle="OCR PDF — Make Scanned PDFs Searchable Online Free"
       metaDescription="Convert scanned PDF documents into searchable, selectable text using OCR technology. Free online OCR for PDF files with no sign-up required."
       toolId="ocr-pdf"
     >
-      <div className="space-y-6">
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
-          <h2 className="font-display text-lg font-semibold text-foreground mb-2">How to use OCR PDF</h2>
-          <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1 mb-6">
-            <li>Upload your scanned PDF document</li>
-            <li>Our OCR engine will recognize all text in the document</li>
-            <li>Download the searchable PDF with selectable text</li>
-          </ol>
-          <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} />
-          {files.length > 0 && (
-            <div className="mt-4">
-              <button
-                onClick={handleProcess}
-                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Apply OCR
-              </button>
-            </div>
-          )}
-        </div>
+      <FileUpload accept=".pdf" files={files} onFilesChange={(f) => { setFiles(f); setExtractedText(""); }} label="Select a scanned PDF" />
 
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
-          <h2 className="font-display text-lg font-semibold text-foreground mb-3">About OCR PDF</h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <h3 className="font-medium text-foreground">What is OCR?</h3>
-              <p className="text-muted-foreground mt-1">OCR (Optical Character Recognition) converts scanned images of text into machine-readable, searchable text you can copy and edit.</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-foreground">Which languages are supported?</h3>
-              <p className="text-muted-foreground mt-1">Our OCR engine supports all major Latin-based languages including English, Spanish, French, German, and more.</p>
+      {processing && <Progress value={progress} className="mt-4" />}
+
+      {files.length > 0 && !extractedText && (
+        <div className="mt-6 flex justify-center">
+          <Button size="lg" onClick={handleProcess} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+            {processing ? "Extracting Text…" : "Apply OCR"}
+          </Button>
+        </div>
+      )}
+
+      {extractedText && (
+        <div className="mt-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-display text-base font-semibold text-foreground">Extracted Text</h3>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={copyToClipboard} className="rounded-xl gap-1">
+                <Copy className="h-3.5 w-3.5" /> Copy
+              </Button>
+              <Button variant="outline" size="sm" onClick={downloadAsTxt} className="rounded-xl gap-1">
+                <Download className="h-3.5 w-3.5" /> Download TXT
+              </Button>
             </div>
           </div>
+          <div className="max-h-96 overflow-y-auto rounded-xl border border-border bg-secondary/30 p-4 text-sm text-foreground whitespace-pre-wrap">
+            {extractedText}
+          </div>
+          <Button variant="ghost" onClick={() => { setFiles([]); setExtractedText(""); }} className="rounded-xl">
+            Process Another PDF
+          </Button>
         </div>
-      </div>
+      )}
     </ToolLayout>
   );
 };

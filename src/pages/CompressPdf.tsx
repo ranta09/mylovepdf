@@ -13,6 +13,11 @@ const CompressPdf = () => {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<{ original: number; compressed: number } | null>(null);
 
+  const handleFilesChange = (newFiles: File[]) => {
+    setFiles(newFiles);
+    setResult(null);
+  };
+
   const compress = async () => {
     if (files.length === 0) return;
     setProcessing(true);
@@ -22,7 +27,6 @@ const CompressPdf = () => {
       const bytes = await files[0].arrayBuffer();
       setProgress(50);
       const doc = await PDFDocument.load(bytes);
-      // Re-save with object stream optimization (basic compression)
       const pdfBytes = await doc.save({ useObjectStreams: true });
       setProgress(90);
       const compressed = pdfBytes.length;
@@ -51,7 +55,7 @@ const CompressPdf = () => {
   return (
     <ToolLayout title="Compress PDF" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />}
       metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress">
-      <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to compress" />
+      <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to compress" />
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && !result && (
         <div className="mt-6 flex justify-center">
@@ -61,11 +65,18 @@ const CompressPdf = () => {
         </div>
       )}
       {result && (
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-center shadow-card">
-          <p className="font-display text-2xl font-bold text-foreground">{reduction}% smaller</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {formatSize(result.original)} → {formatSize(result.compressed)}
-          </p>
+        <div className="mt-6 space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
+            <p className="font-display text-2xl font-bold text-foreground">{reduction}% smaller</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {formatSize(result.original)} → {formatSize(result.compressed)}
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <Button variant="ghost" onClick={() => { setFiles([]); setResult(null); }} className="rounded-xl">
+              Compress Another PDF
+            </Button>
+          </div>
         </div>
       )}
     </ToolLayout>

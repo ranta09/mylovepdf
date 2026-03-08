@@ -14,7 +14,6 @@ const HtmlToPdf = () => {
     if (!url.trim()) return;
     setLoading(true);
     try {
-      // Open print dialog for the URL - browser-based approach
       const printWindow = window.open(url, '_blank');
       if (printWindow) {
         toast({ title: "Page Opened", description: "Use your browser's Print → Save as PDF to convert the page." });
@@ -33,7 +32,7 @@ const HtmlToPdf = () => {
       title="HTML to PDF"
       description="Convert any webpage to a PDF document. Enter the URL and save the page as PDF."
       category="convert"
-      icon={<Globe className="h-8 w-8" />}
+      icon={<Globe className="h-7 w-7" />}
       metaTitle="HTML to PDF — Convert Webpages to PDF Online Free"
       metaDescription="Convert any webpage or HTML to PDF online for free. Enter a URL and download the page as a high-quality PDF document instantly."
       toolId="html-to-pdf"
@@ -53,24 +52,11 @@ const HtmlToPdf = () => {
               value={url}
               onChange={e => setUrl(e.target.value)}
               className="rounded-xl"
+              onKeyDown={(e) => e.key === "Enter" && handleConvert()}
             />
             <Button onClick={handleConvert} disabled={loading || !url.trim()} className="rounded-xl shrink-0">
               {loading ? "Opening…" : "Convert to PDF"}
             </Button>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
-          <h2 className="font-display text-lg font-semibold text-foreground mb-3">Frequently Asked Questions</h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <h3 className="font-medium text-foreground">Can I convert any website to PDF?</h3>
-              <p className="text-muted-foreground mt-1">Yes, you can convert any publicly accessible webpage to PDF using this tool.</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-foreground">Is the conversion free?</h3>
-              <p className="text-muted-foreground mt-1">Absolutely! This tool is 100% free with no limits or sign-ups required.</p>
-            </div>
           </div>
         </div>
       </div>

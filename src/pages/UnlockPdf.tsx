@@ -21,6 +21,7 @@ const UnlockPdf = () => {
     try {
       const bytes = await files[0].arrayBuffer();
       setProgress(40);
+      // Load with ignoreEncryption to bypass restrictions
       const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
       setProgress(70);
       const pdfBytes = await doc.save();
