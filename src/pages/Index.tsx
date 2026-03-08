@@ -95,7 +95,7 @@ const Index = () => {
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                         <Sparkles className="h-6 w-6 text-primary" />
                       </div>
-                      <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">✨ AI Document Tools</h2>
+                      <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">AI Document Tools</h2>
                       <p className="mt-2 text-muted-foreground">Supercharge your documents with AI — summarize, quiz, chat & more</p>
                     </motion.div>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
