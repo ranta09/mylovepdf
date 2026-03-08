@@ -42,7 +42,7 @@ const ToolLayout = ({ title, description, category, icon, children, metaTitle, m
   return (
     <>
       <Helmet>
-        <title>{metaTitle || `${title} - PDF Magic`}</title>
+        <title>{metaTitle || `${title} - MagicPDFs`}</title>
         <meta name="description" content={metaDescription || description} />
         {faqJsonLd && <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>}
       </Helmet>

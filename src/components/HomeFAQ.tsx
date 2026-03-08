@@ -2,12 +2,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const faqs = [
   {
-    q: "What is MagicPDF?",
-    a: "MagicPDF is a free online PDF toolkit that lets you merge, split, compress, convert, edit, protect, and work with PDF files. It also includes AI-powered tools like PDF Summarizer, Quiz Generator, Chat with PDF, ATS Resume Checker, and PDF Translator — all completely free."
+    q: "What is MagicPDFs?",
+    a: "MagicPDFs is a free online PDF toolkit that lets you merge, split, compress, convert, edit, protect, and work with PDF files. It also includes AI-powered tools like PDF Summarizer, Quiz Generator, Chat with PDF, ATS Resume Checker, and PDF Translator — all completely free."
   },
   {
-    q: "Is MagicPDF really free?",
-    a: "Yes! All tools on MagicPDF are 100% free with no hidden limits, no sign-ups, and no watermarks. You can use every tool as many times as you want."
+    q: "Is MagicPDFs really free?",
+    a: "Yes! All tools on MagicPDFs are 100% free with no hidden limits, no sign-ups, and no watermarks. You can use every tool as many times as you want."
   },
   {
     q: "Are my files safe and secure?",
@@ -23,11 +23,11 @@ const faqs = [
   },
   {
     q: "Can I convert PDF to Word, Excel, or PowerPoint?",
-    a: "Yes! MagicPDF supports converting PDFs to Word (.docx), Excel (.csv), PowerPoint (.pptx), and JPG images. You can also convert these formats back to PDF."
+    a: "Yes! MagicPDFs supports converting PDFs to Word (.docx), Excel (.csv), PowerPoint (.pptx), and JPG images. You can also convert these formats back to PDF."
   },
   {
     q: "What AI tools are available?",
-    a: "MagicPDF offers 5 AI-powered tools: PDF Summarizer (get instant summaries), Quiz Generator (create quizzes from documents), Chat with PDF (ask questions about your document), ATS Resume Checker (check your resume score), and Translate PDF (translate documents to other languages)."
+    a: "MagicPDFs offers 5 AI-powered tools: PDF Summarizer (get instant summaries), Quiz Generator (create quizzes from documents), Chat with PDF (ask questions about your document), ATS Resume Checker (check your resume score), and Translate PDF (translate documents to other languages)."
   },
   {
     q: "How do I add a password to a PDF?",
@@ -55,15 +55,15 @@ const faqs = [
   },
   {
     q: "Do I need to create an account?",
-    a: "No! MagicPDF requires no sign-up or account creation. All tools are available immediately — just visit the tool page and start working with your PDFs."
+    a: "No! MagicPDFs requires no sign-up or account creation. All tools are available immediately — just visit the tool page and start working with your PDFs."
   },
   {
     q: "What file size limits are there?",
     a: "Most tools support files up to 100MB. For AI-powered tools, the limit is 20MB per file. There are no limits on the number of files you can process."
   },
   {
-    q: "Does MagicPDF work on mobile devices?",
-    a: "Yes! MagicPDF is fully responsive and works on smartphones, tablets, and desktop computers. All tools are accessible from any modern web browser."
+    q: "Does MagicPDFs work on mobile devices?",
+    a: "Yes! MagicPDFs is fully responsive and works on smartphones, tablets, and desktop computers. All tools are accessible from any modern web browser."
   },
 ];
 
@@ -74,7 +74,7 @@ const HomeFAQ = () => (
         Frequently Asked Questions
       </h2>
       <p className="text-center text-muted-foreground mb-8">
-        Everything you need to know about MagicPDF
+        Everything you need to know about MagicPDFs
       </p>
       <Accordion type="single" collapsible className="space-y-2">
         {faqs.map((faq, i) => (
