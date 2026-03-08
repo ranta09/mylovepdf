@@ -69,6 +69,8 @@ async function streamChat({
 }
 
 const Chatbot = () => {
+  const { t } = useLanguage();
+  const QUICK_PROMPTS = [t.chatbotQuick1, t.chatbotQuick2, t.chatbotQuick3, t.chatbotQuick4];
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
