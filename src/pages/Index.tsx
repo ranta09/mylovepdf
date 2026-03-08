@@ -109,9 +109,14 @@ const Index = () => {
                   {t.heroTitle}
                 </h1>
                 <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                  {tt("heroDesc", { ai: "" }).split("{ai}")[0]}
-                  <span className="font-semibold text-primary">{t.heroAi}</span>
-                  {tt("heroDesc", { ai: "" }).split("").slice(1).join("") || ""}
+                  {(() => {
+                    const parts = t.heroDesc.split("{ai}");
+                    return <>
+                      {parts[0]}
+                      <span className="font-semibold text-primary">{t.heroAi}</span>
+                      {parts[1] || ""}
+                    </>;
+                  })()}
                 </p>
 
                 {/* Trust Badges */}
