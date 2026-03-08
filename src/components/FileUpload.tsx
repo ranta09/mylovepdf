@@ -16,19 +16,64 @@ interface FileUploadProps {
 const FileUpload = ({ accept = ".pdf", multiple = false, maxSize = 100, onFilesChange, files, label = "Select files" }: FileUploadProps) => {
   const [dragging, setDragging] = useState(false);
 
+  const acceptedExtensions = accept.split(",").map(s => s.trim().toLowerCase());
+
+  const isAcceptedFile = (file: File) => {
+    return acceptedExtensions.some(ext => {
+      if (ext.startsWith(".")) return file.name.toLowerCase().endsWith(ext);
+      if (ext.includes("*")) return file.type.startsWith(ext.replace("*", ""));
+      return file.type === ext;
+    });
+  };
+
+  const addFiles = useCallback((newFiles: File[]) => {
+    const valid = newFiles.filter(f => f.size <= maxSize * 1024 * 1024);
+    if (valid.length < newFiles.length) {
+      toast.error(`Some files exceeded the ${maxSize}MB limit`);
+    }
+    if (valid.length === 0) return;
+    onFilesChange(multiple ? [...files, ...valid] : valid.slice(0, 1));
+  }, [files, maxSize, multiple, onFilesChange]);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
-    const dropped = Array.from(e.dataTransfer.files).filter(f => f.size <= maxSize * 1024 * 1024);
-    onFilesChange(multiple ? [...files, ...dropped] : dropped.slice(0, 1));
-  }, [files, maxSize, multiple, onFilesChange]);
+    addFiles(Array.from(e.dataTransfer.files));
+  }, [addFiles]);
 
   const handleSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const selected = Array.from(e.target.files).filter(f => f.size <= maxSize * 1024 * 1024);
-    onFilesChange(multiple ? [...files, ...selected] : selected.slice(0, 1));
+    addFiles(Array.from(e.target.files));
     e.target.value = "";
-  }, [files, maxSize, multiple, onFilesChange]);
+  }, [addFiles]);
+
+  // Paste handler
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const pastedFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) pastedFiles.push(file);
+        }
+      }
+      if (pastedFiles.length > 0) {
+        e.preventDefault();
+        const accepted = pastedFiles.filter(isAcceptedFile);
+        if (accepted.length === 0) {
+          toast.error("Pasted file type is not supported here");
+          return;
+        }
+        addFiles(accepted);
+        toast.success(`${accepted.length} file(s) pasted`);
+      }
+    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [addFiles, acceptedExtensions]);
 
   const removeFile = (index: number) => {
     onFilesChange(files.filter((_, i) => i !== index));
@@ -57,14 +102,20 @@ const FileUpload = ({ accept = ".pdf", multiple = false, maxSize = 100, onFilesC
           <Upload className="h-7 w-7 text-primary" />
         </div>
         <p className="font-display text-lg font-semibold text-foreground mb-1">{label}</p>
-        <p className="text-sm text-muted-foreground mb-4">or drag and drop files here</p>
-        <label>
-          <input type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
-          <Button asChild variant="default" size="lg" className="cursor-pointer rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-            <span>Browse files</span>
-          </Button>
-        </label>
-        <p className="mt-3 text-xs text-muted-foreground">Max {maxSize}MB per file</p>
+        <p className="text-sm text-muted-foreground mb-2">or drag and drop files here</p>
+        <div className="flex items-center gap-3 mb-2">
+          <label>
+            <input type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
+            <Button asChild variant="default" size="lg" className="cursor-pointer rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+              <span>Browse files</span>
+            </Button>
+          </label>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clipboard className="h-3.5 w-3.5" />
+          <span>You can also paste files with Ctrl+V / ⌘+V</span>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">Max {maxSize}MB per file</p>
       </div>
 
       {files.length > 0 && (
