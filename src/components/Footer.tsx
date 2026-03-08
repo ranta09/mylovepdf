@@ -36,30 +36,31 @@ const Footer = () => {
           ))}
         </div>
 
-        {/* Language Selector */}
-        <div className="border-t border-border pt-6 pb-4 flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Globe className="h-4 w-4" />
-            <span className="font-medium">{t.language}</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {LANGUAGES.map(l => (
-              <button
-                key={l.code}
-                onClick={() => setLang(l.code)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  lang === l.code
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-              >
-                {l.flag} {l.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground/50">
+            {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
+          </p>
+          <div className="flex items-center gap-5">
+            <div className="flex flex-wrap justify-center gap-5 text-xs text-muted-foreground/60">
+              <span className="flex items-center gap-1.5">🔒 {t.footerLocal}</span>
+              <span className="flex items-center gap-1.5">⚡ {t.footerNoSignup}</span>
+              <span className="flex items-center gap-1.5">💯 {t.footerFree}</span>
+            </div>
+            <div className="relative">
+              <select
+                value={lang}
+                onChange={e => setLang(e.target.value as any)}
+                className="appearance-none rounded-lg border border-border bg-muted px-3 py-1.5 pr-7 text-xs font-medium text-foreground cursor-pointer outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                {LANGUAGES.map(l => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.label}
+                  </option>
+                ))}
+              </select>
+              <Globe className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground/50">
             {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
           </p>
