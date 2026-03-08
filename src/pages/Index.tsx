@@ -67,16 +67,16 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>MagicPDF — Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
+        <title>MagicPDFs — Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
         <meta name="description" content="Every tool you need to work with PDFs — completely free. Merge, split, compress, convert, edit, protect PDFs. Plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker & translator. No sign-up required." />
         <meta name="keywords" content="PDF tools, merge PDF, split PDF, compress PDF, PDF to Word, PDF to JPG, edit PDF, AI PDF summarizer, PDF quiz generator, chat with PDF, ATS resume checker, translate PDF, free PDF tools, online PDF editor, convert PDF" />
         <link rel="canonical" href="https://mylovepdf.lovable.app" />
-        <meta property="og:title" content="MagicPDF — Free Online PDF & AI Document Tools" />
+        <meta property="og:title" content="MagicPDFs — Free Online PDF & AI Document Tools" />
         <meta property="og:description" content="35+ free PDF tools: merge, split, compress, convert, edit, protect. Plus AI summarizer, quiz generator, chat & ATS checker. No sign-up." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://mylovepdf.lovable.app" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="MagicPDF — Free Online PDF & AI Document Tools" />
+        <meta name="twitter:title" content="MagicPDFs — Free Online PDF & AI Document Tools" />
         <meta name="twitter:description" content="35+ free PDF tools with AI. Merge, split, compress, convert, summarize, chat, quiz & more." />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         
