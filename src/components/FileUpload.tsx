@@ -13,10 +13,16 @@ interface FileUploadProps {
   label?: string;
 }
 
-const FileUpload = ({ accept = ".pdf", multiple = false, maxSize = 100, onFilesChange, files, label = "Select files" }: FileUploadProps) => {
+const FileUpload = ({ accept = ".pdf", multiple = true, maxSize = 100, onFilesChange, files, label = "Select files" }: FileUploadProps) => {
   const [dragging, setDragging] = useState(false);
 
   const acceptedExtensions = accept.split(",").map(s => s.trim().toLowerCase());
+
+  const formatAcceptedTypes = () => {
+    return acceptedExtensions
+      .map(ext => ext.replace(".", "").toUpperCase())
+      .join(", ");
+  };
 
   const isAcceptedFile = (file: File) => {
     return acceptedExtensions.some(ext => {
