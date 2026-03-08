@@ -33,7 +33,7 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <img src={logoImg} alt="My Love PDF logo" className="h-14 w-14 object-contain" />
+            <img src={logoImg} alt="My Love PDF logo" className="h-20 w-20 object-contain -my-4" />
             <span
               className="text-2xl font-black tracking-tight text-foreground relative z-0 pl-1.5"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}
