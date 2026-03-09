@@ -4,10 +4,11 @@ import {
   Lock, Unlock, Hash, LayoutGrid, Wrench,
   Sparkles, BrainCircuit, MessageSquare, ScanSearch,
   Trash2, FileOutput, PenTool, Crop, EyeOff, Layers, Languages,
-  Globe, FileCheck, GitCompare, ScanLine
+  Globe, FileCheck, GitCompare, ScanLine,
+  Eraser, ImageDown, Move, CropIcon
 } from "lucide-react";
 
-export type ToolCategory = "merge" | "split" | "compress" | "convert" | "edit" | "protect" | "ai";
+export type ToolCategory = "merge" | "split" | "compress" | "convert" | "edit" | "protect" | "ai" | "image";
 
 export interface PdfTool {
   id: string;
@@ -59,6 +60,13 @@ export const aiTools: PdfTool[] = [
   { id: "ai-translate", name: "Translate PDF", description: "AI-powered document translation", icon: Languages, path: "/translate-pdf", category: "ai", available: true },
 ];
 
+export const imageTools: PdfTool[] = [
+  { id: "remove-bg", name: "Remove Background", description: "AI-powered background removal from images", icon: Eraser, path: "/remove-background", category: "image", available: true },
+  { id: "compress-image", name: "Compress Image", description: "Reduce image file size without losing quality", icon: ImageDown, path: "/compress-image", category: "image", available: true },
+  { id: "resize-image", name: "Resize Image", description: "Resize images by pixels or percentage", icon: Move, path: "/resize-image", category: "image", available: true },
+  { id: "crop-image", name: "Crop Image", description: "Crop images with custom dimensions", icon: CropIcon, path: "/crop-image", category: "image", available: true },
+];
+
 export const categoryColors: Record<ToolCategory, string> = {
   merge: "bg-tool-merge",
   split: "bg-tool-split",
@@ -67,6 +75,7 @@ export const categoryColors: Record<ToolCategory, string> = {
   edit: "bg-tool-edit",
   protect: "bg-tool-protect",
   ai: "bg-tool-ai",
+  image: "bg-tool-image",
 };
 
 export const categoryTextColors: Record<ToolCategory, string> = {
@@ -77,4 +86,5 @@ export const categoryTextColors: Record<ToolCategory, string> = {
   edit: "text-tool-edit",
   protect: "text-tool-protect",
   ai: "text-tool-ai",
+  image: "text-tool-image",
 };
