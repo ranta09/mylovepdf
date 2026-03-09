@@ -105,12 +105,12 @@ const Navbar = () => {
           className="hidden md:block absolute left-0 right-0 top-full z-50 border-b border-border bg-card shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
         >
           <div className="container py-6">
-            <div className="columns-3 lg:columns-4 xl:columns-5 gap-6 [column-fill:auto]">
+            <div className="grid grid-cols-4 lg:grid-cols-7 gap-6">
               {categoryMeta.map(cat => {
                 const catTools = groupedTools[cat.id] || [];
                 if (catTools.length === 0) return null;
                 return (
-                  <div key={cat.id} className="break-inside-avoid mb-5 flex flex-col gap-1">
+                  <div key={cat.id} className="flex flex-col gap-1">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                       {cat.label}
                     </h4>
