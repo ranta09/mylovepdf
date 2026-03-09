@@ -5,21 +5,21 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { tools, aiTools, type PdfTool, type ToolCategory } from "@/lib/tools";
 
-const categoryMeta: { id: ToolCategory; label: string }[] = [
+const categoryMeta: { id: ToolCategory; label: string; extraCategories?: ToolCategory[] }[] = [
   { id: "ai", label: "AI PDF" },
-  { id: "compress", label: "Compress" },
+  { id: "compress", label: "Compress", extraCategories: ["split"] },
   { id: "convert", label: "Convert" },
   { id: "merge", label: "Organize" },
   { id: "edit", label: "View & Edit" },
   { id: "protect", label: "Protect & Sign" },
-  { id: "split", label: "Split" },
 ];
 
 const allTools = [...aiTools, ...tools];
 
 const groupedTools: Record<string, PdfTool[]> = {};
 categoryMeta.forEach(cat => {
-  groupedTools[cat.id] = allTools.filter(t => t.category === cat.id);
+  const cats: ToolCategory[] = [cat.id, ...(cat.extraCategories || [])];
+  groupedTools[cat.id] = allTools.filter(t => cats.includes(t.category));
 });
 
 const Navbar = () => {
