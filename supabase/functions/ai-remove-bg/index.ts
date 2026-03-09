@@ -28,8 +28,6 @@ serve(async (req) => {
 
     console.log("Processing background removal for:", filename);
 
-    // Use Gemini vision model to generate a mask description, then use image generation
-    // For actual bg removal, we use the Gemini image model
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -75,23 +73,46 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("AI response received");
+    console.log("AI response structure:", JSON.stringify({
+      hasChoices: !!data.choices,
+      choiceCount: data.choices?.length,
+      contentType: typeof data.choices?.[0]?.message?.content,
+      isArray: Array.isArray(data.choices?.[0]?.message?.content),
+    }));
 
-    // Check if the response contains an image
     const choice = data.choices?.[0]?.message;
     let resultImage: string | null = null;
 
     if (choice?.content) {
-      // Check for inline image in content
       if (Array.isArray(choice.content)) {
+        console.log("Content parts:", JSON.stringify(choice.content.map((p: any) => ({ type: p.type, hasUrl: !!p.image_url?.url, textLen: p.text?.length }))));
         for (const part of choice.content) {
+          // Check for image_url type
           if (part.type === "image_url" && part.image_url?.url) {
             resultImage = part.image_url.url;
             break;
           }
+          // Check for inline_data (Gemini native format)
+          if (part.type === "image" && part.source?.data) {
+            resultImage = `data:${part.source.media_type || "image/png"};base64,${part.source.data}`;
+            break;
+          }
+          // Check inline_data directly
+          if (part.inline_data) {
+            resultImage = `data:${part.inline_data.mime_type || "image/png"};base64,${part.inline_data.data}`;
+            break;
+          }
+          // Check if text contains base64
+          if (part.type === "text" && part.text) {
+            const base64Match = part.text.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+            if (base64Match) {
+              resultImage = base64Match[0];
+              break;
+            }
+          }
         }
       } else if (typeof choice.content === "string") {
-        // Check if the content contains a base64 image
+        console.log("Content string length:", choice.content.length, "first 200 chars:", choice.content.substring(0, 200));
         const base64Match = choice.content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
         if (base64Match) {
           resultImage = base64Match[0];
@@ -99,8 +120,13 @@ serve(async (req) => {
       }
     }
 
+    // Also check for image in the top-level response (some models put it there)
+    if (!resultImage && data.choices?.[0]?.message?.image) {
+      resultImage = data.choices[0].message.image;
+    }
+
     if (!resultImage) {
-      // If no image was returned, return an error
+      console.error("Full response data:", JSON.stringify(data).substring(0, 2000));
       throw new Error("AI could not process the image for background removal. Please try with a different image.");
     }
 
