@@ -3,24 +3,57 @@ import { Menu, X, LayoutGrid, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { tools, aiTools, type PdfTool, type ToolCategory } from "@/lib/tools";
-
-const categoryMeta: { id: ToolCategory; label: string; extraCategories?: ToolCategory[] }[] = [
-  { id: "ai", label: "AI PDF" },
-  { id: "compress", label: "Compress", extraCategories: ["split"] },
-  { id: "convert", label: "Convert" },
-  { id: "merge", label: "Organize" },
-  { id: "edit", label: "View & Edit" },
-  { id: "protect", label: "Protect & Sign" },
-];
+import { tools, aiTools, type PdfTool } from "@/lib/tools";
 
 const allTools = [...aiTools, ...tools];
+const byId = (id: string) => allTools.find(t => t.id === id)!;
 
-const groupedTools: Record<string, PdfTool[]> = {};
-categoryMeta.forEach(cat => {
-  const cats: ToolCategory[] = [cat.id, ...(cat.extraCategories || [])];
-  groupedTools[cat.id] = allTools.filter(t => cats.includes(t.category));
-});
+// Columns matching the reference layout, with optional sub-headers
+interface MenuColumn {
+  sections: { label: string; toolIds: string[] }[];
+}
+
+const megaColumns: MenuColumn[] = [
+  {
+    sections: [
+      { label: "Compress", toolIds: ["compress"] },
+      { label: "Split", toolIds: ["split"] },
+      { label: "AI PDF", toolIds: ["ai-summarizer", "ai-quiz", "ai-chat", "ai-ats", "ai-translate"] },
+    ],
+  },
+  {
+    sections: [
+      { label: "Organize", toolIds: ["merge", "split", "rotate", "delete-pages", "extract-pages", "organize"] },
+    ],
+  },
+  {
+    sections: [
+      {
+        label: "View & Edit",
+        toolIds: ["edit", "page-numbers", "crop-pdf", "redact-pdf", "watermark", "repair", "compare-pdf"],
+      },
+    ],
+  },
+  {
+    sections: [
+      { label: "Convert from PDF", toolIds: ["pdf-to-word", "pdf-to-excel", "pdf-to-ppt", "pdf-to-jpg"] },
+    ],
+  },
+  {
+    sections: [
+      {
+        label: "Convert to PDF",
+        toolIds: ["word-to-pdf", "excel-to-pdf", "ppt-to-pdf", "jpg-to-pdf", "ocr-pdf", "html-to-pdf", "pdf-to-pdfa"],
+      },
+    ],
+  },
+  {
+    sections: [
+      { label: "Sign", toolIds: ["sign-pdf"] },
+      { label: "Protect", toolIds: ["unlock", "protect", "flatten-pdf"] },
+    ],
+  },
+];
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
