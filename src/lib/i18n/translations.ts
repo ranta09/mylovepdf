@@ -384,7 +384,7 @@ const pt: TranslationKeys = {
   step1Title: "Escolha uma ferramenta", step1Desc: "Escolha entre 35+ ferramentas PDF e IA.", step2Title: "Envie seu arquivo", step2Desc: "Arraste e solte seu PDF. Processamento seguro no navegador.", step3Title: "Baixe o resultado", step3Desc: "Obtenha seu arquivo processado instantaneamente.",
   whyTitle: "Por que escolher MagicDOCX?", whyFastTitle: "Ultra rápido", whyFastDesc: "Processe arquivos instantaneamente no navegador.", whySecureTitle: "100% seguro e privado", whySecureDesc: "Arquivos processados localmente, nunca armazenados.", whyFreeTitle: "Completamente grátis para sempre", whyFreeDesc: "Todas as ferramentas são gratuitas sem limites ocultos.",
   reportIssue: "Reportar problema", somethingNotWorking: "Algo não funciona?",
-  catAi: "Ferramentas IA", catConvert: "Converter", catEdit: "Editar", catMerge: "Mesclar", catSplit: "Dividir", catCompress: "Comprimir", catProtect: "Proteger",
+  catAi: "Ferramentas IA", catConvert: "Converter", catEdit: "Editar", catMerge: "Mesclar", catSplit: "Dividir", catCompress: "Comprimir", catProtect: "Proteger", catImage: "Ferramentas de Imagem",
   footerEditOrganize: "Editar e organizar", footerEssentials: "Essenciais",
   footerRights: "© {year} MagicDOCX. Todos os direitos reservados.", footerLocal: "Processado localmente", footerNoSignup: "Sem cadastro", footerFree: "100% grátis", language: "Idioma",
   chatbotTitle: "Assistente MagicDOCX", chatbotSubtitle: "Pergunte sobre nossas ferramentas", chatbotHelp: "Como posso ajudar?", chatbotWelcome: "Olá! 👋 Sou seu assistente MagicDOCX. Como posso ajudar?", chatbotPlaceholder: "Pergunte qualquer coisa...",
@@ -402,6 +402,7 @@ const pt: TranslationKeys = {
   "tool.pdf-to-pdfa": "PDF para PDF/A", "tool.compare-pdf": "Comparar PDF",
   "tool.ai-summarizer": "Resumo de PDF", "tool.ai-quiz": "Gerador de quiz", "tool.ai-chat": "Chat com PDF",
   "tool.ai-ats": "Verificador ATS", "tool.ai-translate": "Traduzir PDF",
+  "tool.remove-bg": "Remover Fundo", "tool.compress-image": "Comprimir Imagem", "tool.resize-image": "Redimensionar Imagem", "tool.crop-image": "Cortar Imagem",
 };
 
 const ko: TranslationKeys = {
@@ -415,7 +416,7 @@ const ko: TranslationKeys = {
   step1Title: "도구 선택", step1Desc: "35개 이상의 PDF 및 AI 도구 중 선택.", step2Title: "파일 업로드", step2Desc: "PDF를 드래그 앤 드롭. 브라우저에서 안전하게 처리.", step3Title: "결과 다운로드", step3Desc: "처리된 파일을 즉시 받으세요.",
   whyTitle: "왜 MagicDOCX인가?", whyFastTitle: "초고속", whyFastDesc: "브라우저에서 즉시 파일 처리.", whySecureTitle: "100% 안전하고 비공개", whySecureDesc: "파일은 로컬에서 처리되며 서버에 저장되지 않습니다.", whyFreeTitle: "영원히 완전 무료", whyFreeDesc: "모든 도구가 숨겨진 제한 없이 무료.",
   reportIssue: "문제 신고", somethingNotWorking: "문제가 있나요?",
-  catAi: "AI 도구", catConvert: "변환", catEdit: "편집", catMerge: "병합", catSplit: "분할", catCompress: "압축", catProtect: "보호",
+  catAi: "AI 도구", catConvert: "변환", catEdit: "편집", catMerge: "병합", catSplit: "분할", catCompress: "압축", catProtect: "보호", catImage: "이미지 도구",
   footerEditOrganize: "편집 및 정리", footerEssentials: "필수 도구",
   footerRights: "© {year} MagicDOCX. All rights reserved.", footerLocal: "로컬 처리", footerNoSignup: "가입 불필요", footerFree: "100% 무료", language: "언어",
   chatbotTitle: "MagicDOCX 도우미", chatbotSubtitle: "도구에 대해 물어보세요", chatbotHelp: "도움이 필요하신가요?", chatbotWelcome: "안녕하세요! 👋 MagicDOCX 도우미입니다. 무엇을 도와드릴까요?", chatbotPlaceholder: "무엇이든 물어보세요...",
@@ -433,6 +434,7 @@ const ko: TranslationKeys = {
   "tool.pdf-to-pdfa": "PDF→PDF/A", "tool.compare-pdf": "PDF 비교",
   "tool.ai-summarizer": "PDF 요약", "tool.ai-quiz": "퀴즈 생성기", "tool.ai-chat": "PDF와 채팅",
   "tool.ai-ats": "ATS 이력서 검사", "tool.ai-translate": "PDF 번역",
+  "tool.remove-bg": "배경 제거", "tool.compress-image": "이미지 압축", "tool.resize-image": "이미지 크기 조정", "tool.crop-image": "이미지 자르기",
 };
 
 const ru: TranslationKeys = {
