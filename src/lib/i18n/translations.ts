@@ -466,6 +466,7 @@ const ru: TranslationKeys = {
   "tool.pdf-to-pdfa": "PDF в PDF/A", "tool.compare-pdf": "Сравнить PDF",
   "tool.ai-summarizer": "Резюме PDF", "tool.ai-quiz": "Генератор тестов", "tool.ai-chat": "Чат с PDF",
   "tool.ai-ats": "Проверка ATS", "tool.ai-translate": "Перевод PDF",
+  "tool.remove-bg": "Удалить фон", "tool.compress-image": "Сжать изображение", "tool.resize-image": "Изменить размер", "tool.crop-image": "Обрезать изображение",
 };
 
 const it: TranslationKeys = {
@@ -479,7 +480,7 @@ const it: TranslationKeys = {
   step1Title: "Scegli uno strumento", step1Desc: "Scegli tra 35+ strumenti PDF e IA.", step2Title: "Carica il file", step2Desc: "Trascina e rilascia il tuo PDF. Elaborazione sicura nel browser.", step3Title: "Scarica il risultato", step3Desc: "Ottieni il file elaborato istantaneamente.",
   whyTitle: "Perché scegliere MagicDOCX?", whyFastTitle: "Velocissimo", whyFastDesc: "Elabora file istantaneamente nel browser.", whySecureTitle: "100% sicuro e privato", whySecureDesc: "I file sono elaborati localmente e mai archiviati.", whyFreeTitle: "Completamente gratuito per sempre", whyFreeDesc: "Tutti gli strumenti sono gratuiti senza limiti nascosti.",
   reportIssue: "Segnala un problema", somethingNotWorking: "Qualcosa non funziona?",
-  catAi: "Strumenti IA", catConvert: "Convertire", catEdit: "Modificare", catMerge: "Unire", catSplit: "Dividere", catCompress: "Comprimere", catProtect: "Proteggere",
+  catAi: "Strumenti IA", catConvert: "Convertire", catEdit: "Modificare", catMerge: "Unire", catSplit: "Dividere", catCompress: "Comprimere", catProtect: "Proteggere", catImage: "Strumenti Immagine",
   footerEditOrganize: "Modifica e organizza", footerEssentials: "Essenziali",
   footerRights: "© {year} MagicDOCX. Tutti i diritti riservati.", footerLocal: "Elaborato localmente", footerNoSignup: "Senza registrazione", footerFree: "100% gratis", language: "Lingua",
   chatbotTitle: "Assistente MagicDOCX", chatbotSubtitle: "Chiedi dei nostri strumenti", chatbotHelp: "Come posso aiutarti?", chatbotWelcome: "Ciao! 👋 Sono il tuo assistente MagicDOCX. Come posso aiutarti?", chatbotPlaceholder: "Chiedi qualsiasi cosa...",
@@ -497,6 +498,7 @@ const it: TranslationKeys = {
   "tool.pdf-to-pdfa": "PDF in PDF/A", "tool.compare-pdf": "Confronta PDF",
   "tool.ai-summarizer": "Riassunto PDF", "tool.ai-quiz": "Generatore quiz", "tool.ai-chat": "Chat con PDF",
   "tool.ai-ats": "Controllo ATS", "tool.ai-translate": "Traduci PDF",
+  "tool.remove-bg": "Rimuovi Sfondo", "tool.compress-image": "Comprimi Immagine", "tool.resize-image": "Ridimensiona Immagine", "tool.crop-image": "Ritaglia Immagine",
 };
 
 export const translations: Record<LangCode, TranslationKeys> = {
