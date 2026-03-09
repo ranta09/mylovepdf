@@ -2,8 +2,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const faqs = [
   {
-    q: "What is MagicPDFs?",
-    a: "MagicPDFs is a free online PDF toolkit that lets you merge, split, compress, convert, edit, protect, and work with PDF files. It also includes AI-powered tools like PDF Summarizer, Quiz Generator, Chat with PDF, ATS Resume Checker, and PDF Translator — all completely free."
+    q: "What is MagicDOCX?",
+    a: "MagicDOCX is a free online PDF toolkit that lets you merge, split, compress, convert, edit, protect, and work with PDF files. It also includes AI-powered tools like PDF Summarizer, Quiz Generator, Chat with PDF, ATS Resume Checker, and PDF Translator — all completely free."
   },
   {
     q: "Is MagicPDFs really free?",
