@@ -36,9 +36,6 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
       {tool.category === "ai" && (
         <Badge className="absolute left-3 top-3 text-[10px] bg-primary text-primary-foreground border-0">AI</Badge>
       )}
-      {tool.category === "image" && (
-        <Badge className="absolute left-3 top-3 text-[10px] bg-tool-image text-primary-foreground border-0">NEW</Badge>
-      )}
     </motion.div>
   );
 

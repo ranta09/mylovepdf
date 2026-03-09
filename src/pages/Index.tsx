@@ -4,10 +4,10 @@ import MagicBackground from "@/components/MagicBackground";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 
-import { tools, aiTools, imageTools } from "@/lib/tools";
+import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
 import HowItWorks from "@/components/HowItWorks";
-import { Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, Image } from "lucide-react";
+import { Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const categoryMeta = [
   { id: "ai", labelKey: "catAi" as const, icon: Wand2, filter: (t: any) => t.category === "ai" },
-  { id: "image", labelKey: "catImage" as const, icon: Image, filter: (t: any) => t.category === "image" },
   { id: "convert", labelKey: "catConvert" as const, icon: FileText, filter: (t: any) => t.category === "convert" },
   { id: "edit", labelKey: "catEdit" as const, icon: Edit3, filter: (t: any) => t.category === "edit" },
   { id: "merge", labelKey: "catMerge" as const, icon: Merge, filter: (t: any) => t.category === "merge" },
@@ -89,7 +88,7 @@ const Index = () => {
       });
     }
   }, []);
-  const allTools = [...aiTools, ...imageTools, ...tools];
+  const allTools = [...aiTools, ...tools];
   const filtered = allTools.filter(tool =>
     tool.name.toLowerCase().includes(search.toLowerCase()) ||
     tool.description.toLowerCase().includes(search.toLowerCase())
@@ -207,7 +206,7 @@ const Index = () => {
                         <div>
                           <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
                             {t[cat.labelKey]}
-                            {(cat.id === "ai" || cat.id === "image") && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
+                            {cat.id === "ai" && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
                           </h2>
                           <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
                         </div>

@@ -42,10 +42,6 @@ import HtmlToPdf from "./pages/HtmlToPdf";
 import OcrPdf from "./pages/OcrPdf";
 import PdfToPdfa from "./pages/PdfToPdfa";
 import ComparePdf from "./pages/ComparePdf";
-import RemoveBackground from "./pages/RemoveBackground";
-import CompressImage from "./pages/CompressImage";
-import ResizeImage from "./pages/ResizeImage";
-import CropImage from "./pages/CropImage";
 import Chatbot from "./components/Chatbot";
 
 const queryClient = new QueryClient();
@@ -95,10 +91,6 @@ const App = () => (
             <Route path="/ocr-pdf" element={<OcrPdf />} />
             <Route path="/pdf-to-pdfa" element={<PdfToPdfa />} />
             <Route path="/compare-pdf" element={<ComparePdf />} />
-            <Route path="/remove-background" element={<RemoveBackground />} />
-            <Route path="/compress-image" element={<CompressImage />} />
-            <Route path="/resize-image" element={<ResizeImage />} />
-            <Route path="/crop-image" element={<CropImage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Chatbot />
