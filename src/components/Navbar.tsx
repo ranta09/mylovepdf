@@ -18,7 +18,8 @@ const allTools = [...aiTools, ...tools];
 
 const groupedTools: Record<string, PdfTool[]> = {};
 categoryMeta.forEach(cat => {
-  groupedTools[cat.id] = allTools.filter(t => t.category === cat.id);
+  const cats: ToolCategory[] = [cat.id, ...(cat.extraCategories || [])];
+  groupedTools[cat.id] = allTools.filter(t => cats.includes(t.category));
 });
 
 const Navbar = () => {
