@@ -60,6 +60,7 @@ const en = {
   catSplit: "Split",
   catCompress: "Compress",
   catProtect: "Protect",
+  catImage: "Image Tools",
 
   // Footer
   footerEditOrganize: "Edit & Organize",
@@ -119,6 +120,10 @@ const en = {
   "tool.ai-chat": "Chat with PDF",
   "tool.ai-ats": "ATS Resume Checker",
   "tool.ai-translate": "Translate PDF",
+  "tool.remove-bg": "Remove Background",
+  "tool.compress-image": "Compress Image",
+  "tool.resize-image": "Resize Image",
+  "tool.crop-image": "Crop Image",
 };
 
 const hi: TranslationKeys = {
