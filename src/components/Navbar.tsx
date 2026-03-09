@@ -51,7 +51,7 @@ const Navbar = () => {
               </span>
             </span>
             <span className="text-2xl font-bold tracking-tight text-foreground">c</span>
-            <span className="text-2xl font-black tracking-tight text-primary">PDFs</span>
+            <span className="text-2xl font-black tracking-tight text-primary">DOCX</span>
           </span>
         </Link>
 

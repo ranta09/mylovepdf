@@ -28,14 +28,14 @@ serve(async (req) => {
 
     const htmlBody = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1a1a1a;">🐛 New Issue Report — MagicPDFs</h2>
+        <h2 style="color: #1a1a1a;">🐛 New Issue Report — MagicDOCX</h2>
         <hr style="border: 1px solid #eee;" />
         <p><strong>From:</strong> ${email}</p>
         <p><strong>Screenshots attached:</strong> ${screenshotCount || 0}</p>
         <h3 style="color: #333;">Description</h3>
         <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${description}</div>
         <hr style="border: 1px solid #eee; margin-top: 24px;" />
-        <p style="color: #888; font-size: 12px;">Sent from MagicPDFs Report an Issue</p>
+        <p style="color: #888; font-size: 12px;">Sent from MagicDOCX Report an Issue</p>
       </div>
     `;
 
@@ -46,7 +46,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "MagicPDFs <onboarding@resend.dev>",
+        from: "MagicDOCX <onboarding@resend.dev>",
         to: ["rishu.ranta09@gmail.com"],
         subject: `🐛 Issue Report from ${email}`,
         html: htmlBody,
