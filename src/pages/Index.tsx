@@ -30,7 +30,7 @@ const categoryMeta = [
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "MagicPDFs",
+  "name": "MagicDOCX",
   "url": "https://mylovepdf.lovable.app",
   "description": "Free online PDF tools — merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker and translator.",
   "applicationCategory": "Productivity",
@@ -42,7 +42,7 @@ const jsonLd = {
 const sitelinksJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "MagicPDFs",
+  "name": "MagicDOCX",
   "url": "https://mylovepdf.lovable.app",
   "potentialAction": {
     "@type": "SearchAction",
@@ -106,16 +106,16 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>MagicPDFs — Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
+        <title>MagicDOCX — Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
         <meta name="description" content="Every tool you need to work with PDFs — completely free. Merge, split, compress, convert, edit, protect PDFs. Plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker & translator. No sign-up required." />
         <meta name="keywords" content="PDF tools, merge PDF, split PDF, compress PDF, PDF to Word, PDF to JPG, edit PDF, AI PDF summarizer, PDF quiz generator, chat with PDF, ATS resume checker, translate PDF, free PDF tools, online PDF editor, convert PDF" />
         <link rel="canonical" href="https://mylovepdf.lovable.app" />
-        <meta property="og:title" content="MagicPDFs — Free Online PDF & AI Document Tools" />
+        <meta property="og:title" content="MagicDOCX — Free Online PDF & AI Document Tools" />
         <meta property="og:description" content="35+ free PDF tools: merge, split, compress, convert, edit, protect. Plus AI summarizer, quiz generator, chat & ATS checker. No sign-up." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://mylovepdf.lovable.app" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="MagicPDFs — Free Online PDF & AI Document Tools" />
+        <meta name="twitter:title" content="MagicDOCX — Free Online PDF & AI Document Tools" />
         <meta name="twitter:description" content="35+ free PDF tools with AI. Merge, split, compress, convert, summarize, chat, quiz & more." />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(sitelinksJsonLd)}</script>
@@ -131,7 +131,7 @@ const Index = () => {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <motion.img
                   src={logoImg}
-                  alt="MagicPDFs — Free Online PDF Tools"
+                  alt="MagicDOCX — Free Online PDF Tools"
                   className="mx-auto mb-6 h-24 w-24 relative"
                   whileHover={{ scale: 1.15, rotate: [0, -8, 8, -4, 0] }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
