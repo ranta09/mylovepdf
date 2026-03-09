@@ -207,7 +207,7 @@ const Index = () => {
                         <div>
                           <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
                             {t[cat.labelKey]}
-                            {cat.id === "ai" && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
+                            {(cat.id === "ai" || cat.id === "image") && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
                           </h2>
                           <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
                         </div>
