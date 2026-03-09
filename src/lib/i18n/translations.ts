@@ -448,7 +448,7 @@ const ru: TranslationKeys = {
   step1Title: "Выберите инструмент", step1Desc: "Выбирайте из 35+ PDF и ИИ инструментов.", step2Title: "Загрузите файл", step2Desc: "Перетащите PDF. Обработка происходит безопасно в браузере.", step3Title: "Скачайте результат", step3Desc: "Получите обработанный файл мгновенно.",
   whyTitle: "Почему MagicDOCX?", whyFastTitle: "Молниеносно быстро", whyFastDesc: "Обрабатывайте файлы мгновенно в браузере.", whySecureTitle: "100% безопасно и приватно", whySecureDesc: "Файлы обрабатываются локально и никогда не хранятся.", whyFreeTitle: "Полностью бесплатно навсегда", whyFreeDesc: "Все инструменты бесплатны без скрытых ограничений.",
   reportIssue: "Сообщить о проблеме", somethingNotWorking: "Что-то не работает?",
-  catAi: "ИИ инструменты", catConvert: "Конвертировать", catEdit: "Редактировать", catMerge: "Объединить", catSplit: "Разделить", catCompress: "Сжать", catProtect: "Защитить",
+  catAi: "ИИ инструменты", catConvert: "Конвертировать", catEdit: "Редактировать", catMerge: "Объединить", catSplit: "Разделить", catCompress: "Сжать", catProtect: "Защитить", catImage: "Инструменты изображений",
   footerEditOrganize: "Редактировать и упорядочить", footerEssentials: "Основные",
   footerRights: "© {year} MagicDOCX. Все права защищены.", footerLocal: "Локальная обработка", footerNoSignup: "Без регистрации", footerFree: "100% бесплатно", language: "Язык",
   chatbotTitle: "Помощник MagicDOCX", chatbotSubtitle: "Спросите о наших инструментах", chatbotHelp: "Чем могу помочь?", chatbotWelcome: "Привет! 👋 Я помощник MagicDOCX. Чем могу помочь?", chatbotPlaceholder: "Задайте вопрос...",
