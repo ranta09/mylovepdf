@@ -104,8 +104,8 @@ const Navbar = () => {
           ref={megaRef}
           className="hidden md:block absolute left-0 right-0 top-full z-50 border-b border-border bg-card shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
         >
-          <div className="container py-4">
-            <div className="grid grid-cols-4 lg:grid-cols-7 gap-2">
+          <div className="container py-6">
+            <div className="grid grid-cols-4 lg:grid-cols-7 gap-6">
               {categoryMeta.map(cat => {
                 const catTools = groupedTools[cat.id] || [];
                 if (catTools.length === 0) return null;
