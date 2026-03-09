@@ -138,31 +138,35 @@ const Navbar = () => {
           className="hidden md:block absolute left-0 right-0 top-full z-50 border-b border-border bg-card shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
         >
           <div className="container py-6">
-            <div className="flex flex-wrap gap-x-3 gap-y-4">
-              {categoryMeta.map(cat => {
-                const catTools = groupedTools[cat.id] || [];
-                if (catTools.length === 0) return null;
-                return (
-                  <div key={cat.id} className="flex flex-col gap-1">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                      {cat.label}
-                    </h4>
-                    {catTools.map(tool => {
-                      const Icon = tool.icon;
-                      return (
-                        <Link
-                          key={tool.id}
-                          to={tool.path}
-                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/80 hover:bg-secondary/60 hover:text-foreground transition-colors group"
-                        >
-                          <Icon className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
-                          <span className="truncate text-xs font-medium">{tool.name}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+            <div className="flex flex-wrap gap-x-6 gap-y-4">
+              {megaColumns.map((col, ci) => (
+                <div key={ci} className="flex flex-col gap-4">
+                  {col.sections.map((sec) => {
+                    const sectionTools = sec.toolIds.map(id => byId(id)).filter(Boolean);
+                    if (sectionTools.length === 0) return null;
+                    return (
+                      <div key={sec.label} className="flex flex-col gap-1">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                          {sec.label}
+                        </h4>
+                        {sectionTools.map(tool => {
+                          const Icon = tool.icon;
+                          return (
+                            <Link
+                              key={tool.id}
+                              to={tool.path}
+                              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/80 hover:bg-secondary/60 hover:text-foreground transition-colors group"
+                            >
+                              <Icon className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                              <span className="truncate text-xs font-medium">{tool.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -171,32 +175,34 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="border-t border-border bg-card px-4 py-4 md:hidden max-h-[80vh] overflow-y-auto">
-          {categoryMeta.map(cat => {
-            const catTools = groupedTools[cat.id] || [];
-            if (catTools.length === 0) return null;
-            return (
-              <div key={cat.id} className="mb-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2">
-                  {cat.label}
-                </h4>
-                <div className="flex flex-col gap-0.5">
-                  {catTools.map(tool => {
-                    const Icon = tool.icon;
-                    return (
-                      <Link
-                        key={tool.id}
-                        to={tool.path}
-                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {tool.name}
-                      </Link>
-                    );
-                  })}
+          {megaColumns.map((col, ci) =>
+            col.sections.map((sec) => {
+              const sectionTools = sec.toolIds.map(id => byId(id)).filter(Boolean);
+              if (sectionTools.length === 0) return null;
+              return (
+                <div key={`${ci}-${sec.label}`} className="mb-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2">
+                    {sec.label}
+                  </h4>
+                  <div className="flex flex-col gap-0.5">
+                    {sectionTools.map(tool => {
+                      const Icon = tool.icon;
+                      return (
+                        <Link
+                          key={tool.id}
+                          to={tool.path}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          {tool.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       )}
     </nav>
