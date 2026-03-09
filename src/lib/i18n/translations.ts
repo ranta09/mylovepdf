@@ -352,7 +352,7 @@ const ar: TranslationKeys = {
   step1Title: "اختر أداة", step1Desc: "اختر من بين أكثر من 35 أداة PDF وذكاء اصطناعي.", step2Title: "ارفع ملفك", step2Desc: "اسحب وأفلت ملف PDF. تتم المعالجة بأمان في متصفحك.", step3Title: "حمّل النتيجة", step3Desc: "احصل على ملفك المعالج فوراً.",
   whyTitle: "لماذا تختار MagicDOCX؟", whyFastTitle: "سريع كالبرق", whyFastDesc: "عالج الملفات فوراً في متصفحك.", whySecureTitle: "آمن وخاص 100%", whySecureDesc: "تتم معالجة الملفات محلياً ولا تُخزن أبداً.", whyFreeTitle: "مجاني بالكامل للأبد", whyFreeDesc: "جميع الأدوات مجانية بدون قيود مخفية.",
   reportIssue: "الإبلاغ عن مشكلة", somethingNotWorking: "هل هناك مشكلة؟",
-  catAi: "أدوات AI", catConvert: "تحويل", catEdit: "تعديل", catMerge: "دمج", catSplit: "تقسيم", catCompress: "ضغط", catProtect: "حماية",
+  catAi: "أدوات AI", catConvert: "تحويل", catEdit: "تعديل", catMerge: "دمج", catSplit: "تقسيم", catCompress: "ضغط", catProtect: "حماية", catImage: "أدوات الصور",
   footerEditOrganize: "تعديل وتنظيم", footerEssentials: "الأساسيات",
   footerRights: "© {year} MagicDOCX. جميع الحقوق محفوظة.", footerLocal: "معالجة محلية", footerNoSignup: "بدون تسجيل", footerFree: "مجاني 100%", language: "اللغة",
   chatbotTitle: "مساعد MagicDOCX", chatbotSubtitle: "اسأل عن أدواتنا", chatbotHelp: "كيف يمكنني مساعدتك؟", chatbotWelcome: "مرحباً! 👋 أنا مساعد MagicDOCX. كيف يمكنني مساعدتك؟", chatbotPlaceholder: "اسأل أي شيء...",
