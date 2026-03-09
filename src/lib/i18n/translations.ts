@@ -155,7 +155,7 @@ const hi: TranslationKeys = {
   whyFreeDesc: "सभी 35+ टूल्स बिना किसी छिपी सीमा, बिना साइन-अप, और बिना वॉटरमार्क के मुफ्त हैं।",
   reportIssue: "समस्या रिपोर्ट करें",
   somethingNotWorking: "कुछ काम नहीं कर रहा?",
-  catAi: "AI टूल्स", catConvert: "कन्वर्ट", catEdit: "एडिट", catMerge: "मर्ज", catSplit: "स्प्लिट", catCompress: "कंप्रेस", catProtect: "प्रोटेक्ट",
+  catAi: "AI टूल्स", catConvert: "कन्वर्ट", catEdit: "एडिट", catMerge: "मर्ज", catSplit: "स्प्लिट", catCompress: "कंप्रेस", catProtect: "प्रोटेक्ट", catImage: "इमेज टूल्स",
   footerEditOrganize: "एडिट और व्यवस्थित", footerEssentials: "आवश्यक",
   footerRights: "© {year} MagicDOCX. सर्वाधिकार सुरक्षित।",
   footerLocal: "स्थानीय रूप से प्रोसेस", footerNoSignup: "साइन-अप नहीं", footerFree: "100% मुफ्त",
@@ -177,6 +177,7 @@ const hi: TranslationKeys = {
   "tool.pdf-to-pdfa": "PDF से PDF/A", "tool.compare-pdf": "PDF तुलना करें",
   "tool.ai-summarizer": "PDF सारांशकर्ता", "tool.ai-quiz": "क्विज़ जनरेटर", "tool.ai-chat": "PDF से चैट",
   "tool.ai-ats": "ATS रिज़्यूमे चेकर", "tool.ai-translate": "PDF अनुवाद करें",
+  "tool.remove-bg": "बैकग्राउंड हटाएं", "tool.compress-image": "इमेज कंप्रेस", "tool.resize-image": "इमेज रिसाइज़", "tool.crop-image": "इमेज क्रॉप",
 };
 
 const es: TranslationKeys = {
