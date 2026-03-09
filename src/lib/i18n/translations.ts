@@ -370,6 +370,7 @@ const ar: TranslationKeys = {
   "tool.pdf-to-pdfa": "PDF إلى PDF/A", "tool.compare-pdf": "مقارنة PDF",
   "tool.ai-summarizer": "ملخص PDF", "tool.ai-quiz": "مولد الاختبارات", "tool.ai-chat": "الدردشة مع PDF",
   "tool.ai-ats": "فاحص ATS", "tool.ai-translate": "ترجمة PDF",
+  "tool.remove-bg": "إزالة الخلفية", "tool.compress-image": "ضغط الصورة", "tool.resize-image": "تغيير حجم الصورة", "tool.crop-image": "قص الصورة",
 };
 
 const pt: TranslationKeys = {
