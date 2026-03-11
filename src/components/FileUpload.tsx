@@ -1,8 +1,11 @@
-import { useCallback, useState, useEffect } from "react";
-import { Upload, X, FileText, Image as ImageIcon, Clipboard } from "lucide-react";
+import { useCallback, useState, useEffect, useRef } from "react";
+import { Upload, X, FileText, Image as ImageIcon, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { useGlobalUpload } from "./GlobalUploadContext";
+import { detectFileType } from "@/lib/fileDetection";
 
 interface FileUploadProps {
   accept?: string;
@@ -13,45 +16,105 @@ interface FileUploadProps {
   label?: string;
 }
 
-const FileUpload = ({ accept = ".pdf", multiple = true, maxSize = 100, onFilesChange, files, label = "Select files" }: FileUploadProps) => {
+const FileUpload = ({
+  accept = ".pdf",
+  multiple = true,
+  maxSize = 100,
+  onFilesChange,
+  files,
+  label = "Select files",
+}: FileUploadProps) => {
   const [dragging, setDragging] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const globalUploadContext = useGlobalUpload();
 
   const acceptedExtensions = accept.split(",").map(s => s.trim().toLowerCase());
 
-  const formatAcceptedTypes = () => {
-    return acceptedExtensions
-      .map(ext => ext.replace(".", "").toUpperCase())
-      .join(", ");
-  };
+  const formatAcceptedTypes = () =>
+    acceptedExtensions.map(ext => ext.replace(".", "").toUpperCase()).join(", ");
 
   const isAcceptedFile = (file: File) => {
+    const { extension } = detectFileType(file);
     return acceptedExtensions.some(ext => {
-      if (ext.startsWith(".")) return file.name.toLowerCase().endsWith(ext);
+      const cleanExt = ext.replace(".", "").toLowerCase();
+      if (cleanExt === extension) return true;
       if (ext.includes("*")) return file.type.startsWith(ext.replace("*", ""));
       return file.type === ext;
     });
   };
 
-  const addFiles = useCallback((newFiles: File[]) => {
-    const valid = newFiles.filter(f => f.size <= maxSize * 1024 * 1024);
-    if (valid.length < newFiles.length) {
-      toast.error(`Some files exceeded the ${maxSize}MB limit`);
+  const addFiles = useCallback(
+    (newFiles: File[]) => {
+      const valid = newFiles.filter(f => f.size <= maxSize * 1024 * 1024);
+      if (valid.length < newFiles.length) toast.error(`Some files exceeded the ${maxSize}MB limit`);
+      if (valid.length === 0) return;
+
+      console.log("=== TOOL UPLOAD SUCCESS ===");
+      console.log(`Added ${valid.length} valid files to tool state.`);
+      valid.forEach((f, idx) => console.log(`Tool File ${idx + 1}: ${f.name}`));
+
+      onFilesChange(multiple ? [...files, ...valid] : valid.slice(0, 1));
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1400);
+    },
+    [files, maxSize, multiple, onFilesChange]
+  );
+
+  // Auto-Hydrate from Global Files (Tool Context)
+  // This will pick up any drops or pastes captured by GlobalDropOverlay
+  useEffect(() => {
+    try {
+      if (globalUploadContext?.globalFiles && globalUploadContext.globalFiles.length > 0) {
+        console.log("=== TOOL HYDRATION ===");
+        console.log("Global files found:", globalUploadContext.globalFiles.length);
+
+        const validGlobalFiles = globalUploadContext.globalFiles.filter(isAcceptedFile);
+        console.log(`Accepted ${validGlobalFiles.length} / ${globalUploadContext.globalFiles.length} files for this tool`);
+
+        if (validGlobalFiles.length > 0) {
+          addFiles(validGlobalFiles);
+          toast.success(`${validGlobalFiles.length} file(s) assigned automatically`);
+        } else {
+          toast.error(`The tool requires ${formatAcceptedTypes()} files. Please upload a compatible file.`);
+        }
+
+        // CRITICAL: Clear immediately to prevent cross-contamination or suggestions showing
+        globalUploadContext.clearGlobalFiles();
+      }
+    } catch (e) {
+      // Ignore context errors
     }
-    if (valid.length === 0) return;
-    onFilesChange(multiple ? [...files, ...valid] : valid.slice(0, 1));
-  }, [files, maxSize, multiple, onFilesChange]);
+  }, [globalUploadContext?.globalFiles, addFiles]); // React to any new global files
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    addFiles(Array.from(e.dataTransfer.files));
-  }, [addFiles]);
+  // Sync accepted types with global context so the DropOverlay knows what to accept
+  useEffect(() => {
+    try {
+      if (globalUploadContext?.setAcceptedTypes) {
+        globalUploadContext.setAcceptedTypes(acceptedExtensions);
+      }
+    } catch (e) {
+      // Ignore if context is unavailable
+    }
+  }, [accept, globalUploadContext?.setAcceptedTypes]);
 
-  const handleSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    addFiles(Array.from(e.target.files));
-    e.target.value = "";
-  }, [addFiles]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      addFiles(Array.from(e.dataTransfer.files));
+    },
+    [addFiles]
+  );
+
+  const handleSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files) return;
+      addFiles(Array.from(e.target.files));
+      e.target.value = "";
+    },
+    [addFiles]
+  );
 
   // Paste handler
   useEffect(() => {
@@ -69,10 +132,7 @@ const FileUpload = ({ accept = ".pdf", multiple = true, maxSize = 100, onFilesCh
       if (pastedFiles.length > 0) {
         e.preventDefault();
         const accepted = pastedFiles.filter(isAcceptedFile);
-        if (accepted.length === 0) {
-          toast.error("Pasted file type is not supported here");
-          return;
-        }
+        if (accepted.length === 0) { toast.error("Pasted file type is not supported here"); return; }
         addFiles(accepted);
         toast.success(`${accepted.length} file(s) pasted`);
       }
@@ -81,9 +141,7 @@ const FileUpload = ({ accept = ".pdf", multiple = true, maxSize = 100, onFilesCh
     return () => window.removeEventListener("paste", handlePaste);
   }, [addFiles, acceptedExtensions]);
 
-  const removeFile = (index: number) => {
-    onFilesChange(files.filter((_, i) => i !== index));
-  };
+  const removeFile = (index: number) => onFilesChange(files.filter((_, i) => i !== index));
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
@@ -96,54 +154,81 @@ const FileUpload = ({ accept = ".pdf", multiple = true, maxSize = 100, onFilesCh
   return (
     <div className="w-full space-y-4">
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
+        onClick={() => inputRef.current?.click()}
         className={cn(
-          "relative flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all duration-200",
-          dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/40 hover:bg-secondary/50"
+          "relative flex min-h-[300px] w-full cursor-pointer flex-col items-center justify-center rounded-[2rem] p-10 text-center transition-all duration-300",
+          dragging
+            ? "bg-primary/10 scale-[1.01] shadow-card-hover"
+            : "bg-transparent hover:bg-primary/5 shadow-sm"
         )}
       >
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
-          <Upload className="h-7 w-7 text-primary" />
+        {/* Icon */}
+        <AnimatePresence mode="wait">
+          {justAdded && files.length > 0 ? (
+            <motion.div key="success" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 18 }}
+              className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-green-500/10 text-green-500">
+              <CheckCircle className="h-10 w-10" />
+            </motion.div>
+          ) : (
+            <motion.div key="upload" initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              className={cn(
+                "mb-6 flex h-20 w-20 items-center justify-center rounded-2xl transition-colors duration-300",
+                dragging ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
+              )}>
+              <motion.div animate={dragging ? { y: [0, -4, 0] } : {}} transition={{ duration: 0.6, repeat: Infinity }}>
+                <Upload className="h-10 w-10 text-primary" />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <p className="font-display text-2xl font-bold text-foreground mb-2">
+          {dragging ? "Release to upload" : "Upload your Files"}
+        </p>
+        <p className="text-sm text-muted-foreground mb-6">
+          <span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.
+        </p>
+
+        {/* Formats Display exactly like Landing Page */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+          {acceptedExtensions.map(ext => (
+            <span key={ext} className="inline-flex items-center gap-1 rounded-full bg-background/60 px-3 py-1 text-[11px] font-bold tracking-wider text-muted-foreground shadow-sm">
+              <FileText className="h-3 w-3" />
+              {ext.replace(".", "").toUpperCase()}
+            </span>
+          ))}
         </div>
-        <p className="font-display text-lg font-semibold text-foreground mb-1">{label}</p>
-        <p className="text-sm text-muted-foreground mb-1">or drag and drop files here</p>
-        <div className="flex items-center gap-1.5 mb-3">
-          <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-            Supported: {formatAcceptedTypes()}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 mb-2">
-          <label>
-            <input type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
-            <Button asChild variant="default" size="lg" className="cursor-pointer rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-              <span>Browse files</span>
-            </Button>
-          </label>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clipboard className="h-3.5 w-3.5" />
-          <span>You can also paste files with Ctrl+V / ⌘+V</span>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">Max {maxSize}MB per file</p>
+
+        <input ref={inputRef} type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
       </div>
 
+      {/* File list */}
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card"
+            >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                {isImage(file) ? <ImageIcon className="h-5 w-5 text-muted-foreground" /> : <FileText className="h-5 w-5 text-primary" />}
+                {isImage(file)
+                  ? <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  : <FileText className="h-5 w-5 text-primary" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
                 <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => removeFile(i)} className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon" onClick={() => removeFile(i)} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive">
                 <X className="h-4 w-4" />
               </Button>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}

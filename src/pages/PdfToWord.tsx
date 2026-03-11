@@ -3,8 +3,8 @@ import * as pdfjsLib from "pdfjs-dist";
 import { FileText, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import ProcessingView from "@/components/ProcessingView";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -12,39 +12,55 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 const PdfToWord = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [results, setResults] = useState<ProcessingResult[]>([]);
   const [progress, setProgress] = useState(0);
 
   const convert = async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(10);
+    setProgress(0);
+
+    const newResults: ProcessingResult[] = [];
+    const totalFiles = files.length;
+
     try {
-      const bytes = await files[0].arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-      let fullText = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items
-          .map((item: any) => item.str)
-          .join(" ");
-        fullText += `--- Page ${i} ---\n\n${pageText}\n\n`;
-        setProgress(10 + Math.round((i / pdf.numPages) * 80));
+      for (let f = 0; f < totalFiles; f++) {
+        const file = files[f];
+        const bytes = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        let fullText = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items
+            .map((item: any) => item.str)
+            .join(" ");
+          fullText += `--- Page ${i} ---\n\n${pageText}\n\n`;
+
+          // Calculate progress across all files and pages
+          const currentFileProgress = (i / pdf.numPages);
+          const overallProgress = ((f + currentFileProgress) / totalFiles) * 100;
+          setProgress(Math.round(overallProgress));
+        }
+
+        // Create a .doc file (plain text in HTML format for Word compatibility)
+        const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Converted Document</title></head><body>${fullText.split("\n").map(line => `<p>${line}</p>`).join("")}</body></html>`;
+        const blob = new Blob([html], { type: "application/msword" });
+        const url = URL.createObjectURL(blob);
+
+        newResults.push({
+          file: blob,
+          url,
+          filename: file.name.replace(/\.pdf$/i, ".doc")
+        });
       }
-      setProgress(95);
-      // Create a .doc file (plain text in HTML format for Word compatibility)
-      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Converted Document</title></head><body>${fullText.split("\n").map(line => `<p>${line}</p>`).join("")}</body></html>`;
-      const blob = new Blob([html], { type: "application/msword" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "converted.doc";
-      a.click();
-      URL.revokeObjectURL(url);
+
+      setResults(newResults);
       setProgress(100);
-      toast.success("PDF converted to Word document!");
+      toast.success(`${totalFiles} file(s) converted to Word!`);
     } catch {
-      toast.error("Failed to convert PDF to Word");
+      toast.error("Failed to convert PDF(s) to Word");
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -67,17 +83,28 @@ const PdfToWord = () => {
         </div>
       </div>
       <div className="mt-5">
-        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
+        {results.length === 0 ? (
+          <>
+            <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} multiple label="Select PDFs to convert" />
+            <ProcessingView
+              files={files}
+              processing={processing}
+              progress={progress}
+              onProcess={convert}
+              buttonText="Convert to Word"
+              processingText="Converting..."
+            />
+          </>
+        ) : (
+          <ResultView
+            results={results}
+            onReset={() => {
+              setFiles([]);
+              setResults([]);
+            }}
+          />
+        )}
       </div>
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length > 0 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to Word"}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~5-15 seconds</p>}
-        </div>
-      )}
     </ToolLayout>
   );
 };

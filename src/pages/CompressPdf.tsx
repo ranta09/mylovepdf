@@ -3,46 +3,64 @@ import { PDFDocument } from "pdf-lib";
 import { Minimize2, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import ProcessingView from "@/components/ProcessingView";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 
 const CompressPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<{ original: number; compressed: number } | null>(null);
+  const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [stats, setStats] = useState<{ original: number; compressed: number } | null>(null);
 
   const handleFilesChange = (newFiles: File[]) => {
     setFiles(newFiles);
-    setResult(null);
+    setResults([]);
+    setStats(null);
   };
 
   const compress = async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(20);
-    try {
-      const original = files[0].size;
-      const bytes = await files[0].arrayBuffer();
-      setProgress(50);
-      const doc = await PDFDocument.load(bytes);
-      const pdfBytes = await doc.save({ useObjectStreams: true });
-      setProgress(90);
-      const compressed = pdfBytes.length;
-      setResult({ original, compressed });
-      setProgress(100);
+    setProgress(0);
 
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "compressed.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("PDF compressed!");
+    const newResults: ProcessingResult[] = [];
+    let totalOriginal = 0;
+    let totalCompressed = 0;
+    const totalFiles = files.length;
+
+    try {
+      for (let f = 0; f < totalFiles; f++) {
+        const file = files[f];
+        totalOriginal += file.size;
+
+        const bytes = await file.arrayBuffer();
+        setProgress(Math.round(((f + 0.3) / totalFiles) * 100));
+
+        const doc = await PDFDocument.load(bytes);
+        const pdfBytes = await doc.save({ useObjectStreams: true });
+
+        setProgress(Math.round(((f + 0.9) / totalFiles) * 100));
+
+        totalCompressed += pdfBytes.length;
+
+        const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+
+        newResults.push({
+          file: blob,
+          url,
+          filename: file.name.replace(/\.pdf$/i, "_compressed.pdf")
+        });
+      }
+
+      setStats({ original: totalOriginal, compressed: totalCompressed });
+      setResults(newResults);
+      setProgress(100);
+      toast.success(`Compressed ${totalFiles} PDF(s)!`);
     } catch {
-      toast.error("Failed to compress PDF");
+      toast.error("Failed to compress PDF(s)");
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -50,7 +68,7 @@ const CompressPdf = () => {
   };
 
   const formatSize = (b: number) => (b / (1024 * 1024)).toFixed(2) + " MB";
-  const reduction = result ? Math.max(0, Math.round((1 - result.compressed / result.original) * 100)) : 0;
+  const reduction = stats ? Math.max(0, Math.round((1 - stats.compressed / stats.original) * 100)) : 0;
 
   return (
     <ToolLayout title="Compress PDF" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />}
@@ -68,32 +86,40 @@ const CompressPdf = () => {
         </div>
       </div>
       <div className="mt-5">
-        <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF to compress" />
+        {results.length === 0 ? (
+          <>
+            <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} multiple label="Select PDFs to compress" />
+            <ProcessingView
+              files={files}
+              processing={processing}
+              progress={progress}
+              onProcess={compress}
+              buttonText="Compress PDFs"
+              processingText="Compressing..."
+              estimateText="Estimated time: ~3-5 seconds per file"
+            />
+          </>
+        ) : (
+          <div className="mt-6 space-y-4">
+            {stats && (
+              <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card max-w-2xl mx-auto">
+                <p className="font-display text-2xl font-bold text-foreground">{reduction}% smaller</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {formatSize(stats.original)} → {formatSize(stats.compressed)}
+                </p>
+              </div>
+            )}
+            <ResultView
+              results={results}
+              onReset={() => {
+                setFiles([]);
+                setResults([]);
+                setStats(null);
+              }}
+            />
+          </div>
+        )}
       </div>
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length > 0 && !result && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={compress} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Compressing…</> : "Compress PDF"}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
-        </div>
-      )}
-      {result && (
-        <div className="mt-6 space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
-            <p className="font-display text-2xl font-bold text-foreground">{reduction}% smaller</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {formatSize(result.original)} → {formatSize(result.compressed)}
-            </p>
-          </div>
-          <div className="flex justify-center">
-            <Button variant="ghost" onClick={() => { setFiles([]); setResult(null); }} className="rounded-xl">
-              Compress Another PDF
-            </Button>
-          </div>
-        </div>
-      )}
     </ToolLayout>
   );
 };

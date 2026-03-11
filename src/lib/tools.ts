@@ -27,10 +27,11 @@ export const tools: PdfTool[] = [
   { id: "jpg-to-pdf", name: "JPG to PDF", description: "Convert images into a PDF document", icon: FileImage, path: "/jpg-to-pdf", category: "convert", available: true },
   { id: "pdf-to-word", name: "PDF to Word", description: "Extract text from PDF as a document", icon: FileText, path: "/pdf-to-word", category: "convert", available: true },
   { id: "word-to-pdf", name: "Word to PDF", description: "Convert text documents to PDF", icon: FileText, path: "/word-to-pdf", category: "convert", available: true },
-  { id: "pdf-to-ppt", name: "PDF to PowerPoint", description: "Convert PDF pages to presentation slides", icon: Presentation, path: "/pdf-to-ppt", category: "convert", available: true },
-  { id: "ppt-to-pdf", name: "PowerPoint to PDF", description: "Convert presentations to PDF", icon: Presentation, path: "/ppt-to-pdf", category: "convert", available: true },
+  { id: "pdf-to-ppt", name: "PDF to PPT", description: "Convert PDF pages to presentation slides", icon: Presentation, path: "/pdf-to-ppt", category: "convert", available: true },
+  { id: "ppt-to-pdf", name: "PPT to PDF", description: "Convert presentations to PDF", icon: Presentation, path: "/ppt-to-pdf", category: "convert", available: true },
   { id: "pdf-to-excel", name: "PDF to Excel", description: "Extract tables from PDF to CSV", icon: FileSpreadsheet, path: "/pdf-to-excel", category: "convert", available: true },
   { id: "excel-to-pdf", name: "Excel to PDF", description: "Convert spreadsheet data to PDF", icon: FileSpreadsheet, path: "/excel-to-pdf", category: "convert", available: true },
+  { id: "excel-to-ppt", name: "Excel to PPT", description: "Smart generator to convert spreadsheet data into a PowerPoint presentation", icon: Presentation, path: "/excel-to-ppt", category: "convert", available: true },
   { id: "edit", name: "Edit PDF", description: "Add text, shapes and annotations", icon: Edit3, path: "/edit-pdf", category: "edit", available: true },
   { id: "rotate", name: "Rotate PDF", description: "Rotate PDF pages to any angle", icon: RotateCw, path: "/rotate-pdf", category: "edit", available: true },
   { id: "watermark", name: "Add Watermark", description: "Stamp text or images on your PDF", icon: Droplets, path: "/add-watermark", category: "edit", available: true },
@@ -52,11 +53,31 @@ export const tools: PdfTool[] = [
 ];
 
 export const aiTools: PdfTool[] = [
-  { id: "ai-summarizer", name: "PDF Summarizer", description: "AI-powered notes and summaries from any PDF", icon: Sparkles, path: "/pdf-summarizer", category: "ai", available: true },
-  { id: "ai-quiz", name: "Quiz Generator", description: "Generate quizzes from study material with AI", icon: BrainCircuit, path: "/quiz-generator", category: "ai", available: true },
-  { id: "ai-chat", name: "Chat with PDF", description: "Ask questions and chat with your document", icon: MessageSquare, path: "/chat-with-pdf", category: "ai", available: true },
-  { id: "ai-ats", name: "ATS Resume Checker", description: "Get your resume ATS score and tips", icon: ScanSearch, path: "/ats-checker", category: "ai", available: true },
-  { id: "ai-translate", name: "Translate PDF", description: "AI-powered document translation", icon: Languages, path: "/translate-pdf", category: "ai", available: true },
+  {
+    id: "ai-summarizer", name: "PDF Summarizer", description: "Instantly create concise summaries of long PDF documents.",
+    icon: BrainCircuit,
+    path: "/pdf-summarizer", category: "ai", available: true
+  },
+  {
+    id: "ai-quiz", name: "Quiz Generator", description: "Generate multiple-choice or short-answer quizzes from any PDF.",
+    icon: LayoutGrid, // Updated icon since Quiz isn't exported, use LayoutGrid as a placeholder
+    path: "/quiz-generator", category: "ai", available: true
+  },
+  {
+    id: "ai-chat", name: "Chat with PDF", description: "Interact with your PDF using an AI assistant.",
+    icon: MessageSquare,
+    path: "/chat-with-pdf", category: "ai", available: true
+  },
+  {
+    id: "ai-ats", name: "ATS Resume Checker", description: "Check your resume against ATS systems and get a score.",
+    icon: ScanSearch,
+    path: "/ats-checker", category: "ai", available: true
+  },
+  {
+    id: "ai-translate", name: "Translate PDF", description: "Translate PDF documents to over 100 languages.",
+    icon: Languages,
+    path: "/translate-pdf", category: "ai", available: true
+  },
 ];
 
 export const categoryColors: Record<ToolCategory, string> = {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ScanLine, Copy, Download, Loader2, Info } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
+import { createWorker } from "tesseract.js";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,16 @@ const OcrPdf = () => {
   const handleProcess = async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(10);
+    setProgress(5);
     setExtractedText("");
+
+    const worker = await createWorker("eng", 1, {
+      logger: (m) => {
+        if (m.status === "recognizing text") {
+          setProgress(10 + Math.round(m.progress * 85));
+        }
+      },
+    });
 
     try {
       const bytes = await files[0].arrayBuffer();
@@ -28,24 +37,34 @@ const OcrPdf = () => {
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(" ");
-        fullText += `--- Page ${i} ---\n${pageText}\n\n`;
-        setProgress(10 + Math.round((i / pdf.numPages) * 85));
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        if (!context) continue;
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        const { data: { text } } = await worker.recognize(canvas);
+
+        fullText += `--- Page ${i} ---\n${text}\n\n`;
       }
 
       if (!fullText.trim()) {
-        toast.error("No text could be extracted. The PDF may contain only images.");
+        toast.error("No text could be recognized. Try another document.");
         setProcessing(false);
         return;
       }
 
       setExtractedText(fullText);
       setProgress(100);
-      toast.success(`Extracted text from ${pdf.numPages} page(s)!`);
-    } catch {
-      toast.error("Failed to process PDF");
+      toast.success(`OCR complete for ${pdf.numPages} page(s)!`);
+    } catch (error) {
+      console.error("OCR error:", error);
+      toast.error("Failed to process PDF with OCR");
     } finally {
+      await worker.terminate();
       setProcessing(false);
     }
   };
@@ -97,9 +116,9 @@ const OcrPdf = () => {
       {files.length > 0 && !extractedText && (
         <div className="mt-6 flex flex-col items-center gap-2">
           <Button size="lg" onClick={handleProcess} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Extracting Text…</> : "Apply OCR"}
+            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Running OCR…</> : "Apply OCR"}
           </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~10-30 seconds</p>}
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~10-30 seconds per page</p>}
         </div>
       )}
 

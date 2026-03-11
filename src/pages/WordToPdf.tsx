@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import mammoth from "mammoth";
 import { FileText, Loader2, Info } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -17,26 +18,39 @@ const WordToPdf = () => {
     setProcessing(true);
     setProgress(10);
     try {
-      const text = await files[0].text();
+      const arrayBuffer = await files[0].arrayBuffer();
       setProgress(30);
+
+      let text = "";
+      if (files[0].name.endsWith(".docx")) {
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        text = result.value;
+      } else {
+        text = await files[0].text();
+      }
+
+      setProgress(50);
       const doc = await PDFDocument.create();
       const font = await doc.embedFont(StandardFonts.Helvetica);
-      const fontSize = 12;
+      const fontSize = 11;
       const margin = 50;
-      const pageWidth = 595;
-      const pageHeight = 842;
+      const pageWidth = 595.28; // A4
+      const pageHeight = 841.89;
       const maxWidth = pageWidth - margin * 2;
-      const lineHeight = fontSize * 1.5;
-      
+      const lineHeight = fontSize * 1.4;
+
       const lines: string[] = [];
       const paragraphs = text.split("\n");
+
       for (const para of paragraphs) {
-        if (para.trim() === "") {
+        if (!para.trim()) {
           lines.push("");
           continue;
         }
+
         const words = para.split(" ");
         let currentLine = "";
+
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
           const width = font.widthOfTextAtSize(testLine, fontSize);
@@ -50,33 +64,36 @@ const WordToPdf = () => {
         if (currentLine) lines.push(currentLine);
       }
 
-      setProgress(50);
       const linesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
       for (let i = 0; i < lines.length; i += linesPerPage) {
         const page = doc.addPage([pageWidth, pageHeight]);
         const pageLines = lines.slice(i, i + linesPerPage);
         pageLines.forEach((line, idx) => {
-          page.drawText(line, {
-            x: margin,
-            y: pageHeight - margin - idx * lineHeight,
-            size: fontSize,
-            font,
-          });
+          if (line.trim()) {
+            page.drawText(line, {
+              x: margin,
+              y: pageHeight - margin - idx * lineHeight,
+              size: fontSize,
+              font,
+              color: rgb(0.1, 0.1, 0.1),
+            });
+          }
         });
+        setProgress(50 + Math.round((i / lines.length) * 40));
       }
 
-      setProgress(80);
       const pdfBytes = await doc.save();
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "converted.pdf";
+      a.download = files[0].name.replace(/\.[^/.]+$/, "") + ".pdf";
       a.click();
       URL.revokeObjectURL(url);
       setProgress(100);
       toast.success("Document converted to PDF!");
-    } catch {
+    } catch (error) {
+      console.error("Conversion error:", error);
       toast.error("Failed to convert to PDF");
     } finally {
       setProcessing(false);
@@ -85,7 +102,7 @@ const WordToPdf = () => {
   };
 
   return (
-    <ToolLayout title="Word to PDF" description="Convert text documents to PDF format" category="convert" icon={<FileText className="h-7 w-7" />}
+    <ToolLayout title="Word to PDF" description="Convert Word and text documents to PDF format" category="convert" icon={<FileText className="h-7 w-7" />}
       metaTitle="Word to PDF — Convert Documents to PDF Free" metaDescription="Convert Word and text documents to PDF. Free online document to PDF converter." toolId="word-to-pdf" hideHeader>
       <div className="rounded-2xl border border-border bg-secondary/30 p-6">
         <div className="flex items-center gap-3">
@@ -94,13 +111,13 @@ const WordToPdf = () => {
           </div>
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Word to PDF</h1>
-            <p className="text-sm text-muted-foreground">Convert text documents to PDF format</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with essays, letters, resumes, and text documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
+            <p className="text-sm text-muted-foreground">Convert Word and text documents to PDF format</p>
+            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Supports .docx and .txt files. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
           </div>
         </div>
       </div>
       <div className="mt-5">
-        <FileUpload accept=".txt,.doc,.docx,.rtf" files={files} onFilesChange={setFiles} label="Select a document to convert" />
+        <FileUpload accept=".docx,.txt" files={files} onFilesChange={setFiles} label="Select a document to convert" />
       </div>
       {processing && <Progress value={progress} className="mt-4" />}
       {files.length > 0 && (
@@ -108,12 +125,13 @@ const WordToPdf = () => {
           <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
             {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to PDF"}
           </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~5 seconds</p>}
+          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~5-10 seconds</p>}
         </div>
       )}
-      <p className="mt-4 text-center text-xs text-muted-foreground">Supports .txt files. For complex .docx formatting, some layout may be simplified.</p>
+      <p className="mt-4 text-center text-xs text-muted-foreground">For complex .docx formatting, layout is simplified for best compatibility.</p>
     </ToolLayout>
   );
 };
 
 export default WordToPdf;
+

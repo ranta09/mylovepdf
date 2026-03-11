@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
-import MagicBackground from "@/components/MagicBackground";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
+import HeroUpload from "@/components/HeroUpload";
 
 import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
-import HowItWorks from "@/components/HowItWorks";
-import { Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus, Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle } from "lucide-react";
-import logoImg from "@/assets/logo.png";
+import {
+  Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus,
+  Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X
+} from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,21 +52,6 @@ const sitelinksJsonLd = {
   }
 };
 
-const siteNavigationJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    { "@type": "SiteNavigationElement", "name": "Edit PDF", "description": "Free online PDF Editor. Easily edit documents and add text, shapes and annotations.", "url": "https://mylovepdf.lovable.app/edit-pdf" },
-    { "@type": "SiteNavigationElement", "name": "JPG to PDF", "description": "Convert JPG images to PDF in seconds. Easily adjust orientation and margins.", "url": "https://mylovepdf.lovable.app/jpg-to-pdf" },
-    { "@type": "SiteNavigationElement", "name": "PDF to Word Converter", "description": "Convert PDF to editable Word documents for free.", "url": "https://mylovepdf.lovable.app/pdf-to-word" },
-    { "@type": "SiteNavigationElement", "name": "Merge PDF files", "description": "Combine PDFs in the order you want with the easiest PDF merger.", "url": "https://mylovepdf.lovable.app/merge-pdf" },
-    { "@type": "SiteNavigationElement", "name": "Compress PDF files", "description": "Compress PDF file to get the same PDF quality but less filesize.", "url": "https://mylovepdf.lovable.app/compress-pdf" },
-    { "@type": "SiteNavigationElement", "name": "PDF to JPG", "description": "Convert each PDF page into a JPG or extract all images contained in a PDF.", "url": "https://mylovepdf.lovable.app/pdf-to-jpg" },
-    { "@type": "SiteNavigationElement", "name": "PDF Summarizer", "description": "AI-powered notes and summaries from any PDF document.", "url": "https://mylovepdf.lovable.app/pdf-summarizer" },
-    { "@type": "SiteNavigationElement", "name": "ATS Resume Checker", "description": "Get your resume ATS score and improvement tips with AI.", "url": "https://mylovepdf.lovable.app/ats-checker" },
-  ]
-};
-
-
 const Index = () => {
   const [search, setSearch] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -79,15 +65,13 @@ const Index = () => {
     const lastTool = sessionStorage.getItem("lastVisitedTool");
     if (lastTool) {
       sessionStorage.removeItem("lastVisitedTool");
-      // Small delay to let cards render
       requestAnimationFrame(() => {
         const el = document.querySelector(`[data-tool-path="${lastTool}"]`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     }
   }, []);
+
   const allTools = [...aiTools, ...tools];
   const filtered = allTools.filter(tool =>
     tool.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -115,106 +99,151 @@ const Index = () => {
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://mylovepdf.lovable.app" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="MagicDOCX — Free Online PDF & AI Document Tools" />
-        <meta name="twitter:description" content="35+ free PDF tools with AI. Merge, split, compress, convert, summarize, chat, quiz & more." />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(sitelinksJsonLd)}</script>
-        <script type="application/ld+json">{JSON.stringify(siteNavigationJsonLd)}</script>
       </Helmet>
-      <div className="relative flex min-h-screen flex-col">
-        <MagicBackground />
+
+      <div className="relative flex min-h-screen flex-col bg-background">
         <Navbar />
         <main className="flex-1">
-          {/* Hero */}
-          <section className="relative overflow-hidden border-b border-border bg-secondary/30 py-20 md:py-28">
+
+          {/* ─── HERO ─── */}
+          <section className="relative overflow-hidden py-16 md:py-24">
+            {/* Subtle gradient blobs */}
+            <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full opacity-30 blur-3xl"
+              style={{ background: "radial-gradient(ellipse at center, hsl(217 91% 72%) 0%, transparent 70%)" }} />
+
             <div className="container relative z-10 text-center">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <motion.img
-                  src={logoImg}
-                  alt="MagicDOCX — Free Online PDF Tools"
-                  className="mx-auto mb-6 h-24 w-24 relative"
-                  whileHover={{ scale: 1.15, rotate: [0, -8, 8, -4, 0] }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                />
-                <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
-                  {t.heroTitle}
-                </h1>
-                <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                  {(() => {
-                    const parts = t.heroDesc.split("{ai}");
-                    return <>
-                      {parts[0]}
-                      <span className="font-semibold text-primary">{t.heroAi}</span>
-                      {parts[1] || ""}
-                    </>;
-                  })()}
+              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                {/* Headline */}
+                <h2 className="font-display mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-foreground md:text-6xl md:leading-tight mb-4">
+                  Drop your file anywhere to start
+                </h2>
+                <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+                  We'll detect the file and suggest the right tool <span className="text-primary font-semibold">instantly</span>.
                 </p>
 
-                {/* Trust Badges */}
-                <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-primary" /> {t.trustTools}</span>
-                  <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-primary" /> {t.trustSecure}</span>
-                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5 text-primary" /> {t.trustNoSignup}</span>
-                  <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" /> {t.trustBrowser}</span>
+                {/* Large Upload Zone */}
+                <div className="mb-10">
+                  <HeroUpload />
                 </div>
 
-                {/* Search */}
-                <div className="mx-auto mt-8 max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder={t.searchPlaceholder}
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      className="pl-10 rounded-xl border-border bg-card shadow-card h-12 text-sm"
-                      aria-label="Search PDF tools"
-                    />
-                  </div>
+                {/* Trust Badges */}
+                <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-4 md:gap-8 mt-10 opacity-80">
+                  {[
+                    { label: "35+ Free Tools", icon: <Zap className="h-4 w-4" /> },
+                    { label: "100% Secure", icon: <Shield className="h-4 w-4" /> },
+                    { label: "No Sign-up Required", icon: <CheckCircle className="h-4 w-4" /> },
+                    { label: "Browser-based Processing", icon: <Globe className="h-4 w-4" /> },
+                  ].map((badge, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + i * 0.08 }}
+                      className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <span className="text-primary/70">{badge.icon}</span>
+                      {badge.label}
+                    </motion.div>
+                  ))}
                 </div>
               </motion.div>
             </div>
           </section>
 
-          {/* Category Sections */}
-          <section className="container py-16">
+
+
+          <section id="search-tools" className="scroll-mt-24 border-t border-border bg-secondary/40 py-10 transition-all duration-300">
+            <div className="container">
+              <div className="mx-auto max-w-4xl">
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input
+                    type="text"
+                    placeholder={search ? t.searchPlaceholder : "Search for any tool (e.g. merge, compress, chat, translate...)"}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="h-14 pl-12 pr-4 rounded-2xl border-border bg-card shadow-lg text-base focus-visible:ring-primary/20 transition-all"
+                    aria-label="Search PDF tools"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Popular Tags */}
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 px-1">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Popular:</span>
+                  {[
+                    { label: "Merge PDF", query: "merge" },
+                    { label: "Compress", query: "compress" },
+                    { label: "PDF to Word", query: "word" },
+                    { label: "AI Summarizer", query: "summarizer" },
+                    { label: "Chat with PDF", query: "chat" },
+                    { label: "Scan OCR", query: "ocr" }
+                  ].map((tag) => (
+                    <button
+                      key={tag.query}
+                      onClick={() => setSearch(tag.query)}
+                      className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
+                    >
+                      {tag.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ─── TOOLS ─── */}
+          <section className="container py-14">
             {search ? (
               filtered.length === 0 ? (
-                <div className="py-12 text-center">
+                <div className="py-16 text-center">
                   <p className="text-lg text-muted-foreground">{tt("noToolsFound", { query: search })}</p>
                   <p className="mt-2 text-sm text-muted-foreground">{t.trySearching}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {filtered.map((tool, i) => (
-                    <ToolCard key={tool.id} tool={tool} index={i} />
-                  ))}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                  {filtered.map((tool, i) => <ToolCard key={tool.id} tool={tool} index={i} />)}
                 </div>
               )
             ) : (
-              <div className="space-y-16">
+              <div className="space-y-14">
                 {categoryMeta.map(cat => {
                   const catTools = allTools.filter(cat.filter);
                   if (catTools.length === 0) return null;
                   const Icon = cat.icon;
                   return (
                     <div key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-24">
-                      <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-6 flex items-center gap-3">
+                      <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="mb-6 flex items-center gap-3"
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
                         <div>
                           <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
                             {t[cat.labelKey]}
-                            {cat.id === "ai" && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">NEW</span>}
+                            {cat.id === "ai" && (
+                              <span className="rounded-full bg-gradient-to-r from-violet-500 to-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white">NEW</span>
+                            )}
                           </h2>
                           <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
                         </div>
                       </motion.div>
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                        {catTools.map((tool, i) => (
-                          <ToolCard key={tool.id} tool={tool} index={i} />
-                        ))}
+
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                        {catTools.map((tool, i) => <ToolCard key={tool.id} tool={tool} index={i} />)}
                       </div>
                     </div>
                   );
@@ -223,10 +252,9 @@ const Index = () => {
             )}
           </section>
 
-          {/* How It Works */}
-          {!search && <HowItWorks />}
+          {/* ─── HOW IT WORKS (Removed per design) ─── */}
 
-          {/* Features */}
+          {/* ─── WHY US ─── */}
           {!search && (
             <section className="border-t border-border bg-secondary/30 py-16">
               <div className="container">
@@ -237,8 +265,13 @@ const Index = () => {
                     { icon: Shield, title: t.whySecureTitle, desc: t.whySecureDesc },
                     { icon: Heart, title: t.whyFreeTitle, desc: t.whyFreeDesc },
                   ].map((f, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.1 }}
-                      className="flex flex-col items-center gap-3 text-center"
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.1 + i * 0.1 }}
+                      className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-8 text-center shadow-card"
                     >
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                         <f.icon className="h-6 w-6 text-primary" />
@@ -264,19 +297,15 @@ const Index = () => {
                         <DialogTitle className="font-display">{t.reportIssue}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 pt-2">
-                        <div>
-                          <Input placeholder="Your email *" type="email" value={feedbackEmail} onChange={e => setFeedbackEmail(e.target.value)} className="rounded-xl" required />
-                        </div>
+                        <Input placeholder="Your email *" type="email" value={feedbackEmail} onChange={e => setFeedbackEmail(e.target.value)} className="rounded-xl" required />
                         <Textarea placeholder="Describe the issue…" value={feedbackText} onChange={e => setFeedbackText(e.target.value)} rows={4} className="rounded-xl resize-none" />
-                        <div>
-                          <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">
-                            <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {feedbackScreenshot ? feedbackScreenshot.name : "Attach a screenshot (optional)"}
-                            </span>
-                            <input type="file" accept="image/*" className="hidden" onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)} />
-                          </label>
-                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">
+                          <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {feedbackScreenshot ? feedbackScreenshot.name : "Attach a screenshot (optional)"}
+                          </span>
+                          <input type="file" accept="image/*" className="hidden" onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)} />
+                        </label>
                         <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">Submit</Button>
                       </div>
                     </DialogContent>
