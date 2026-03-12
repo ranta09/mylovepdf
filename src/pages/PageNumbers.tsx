@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { Hash, Loader2, Info } from "lucide-react";
+import { Hash, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -56,18 +57,11 @@ const PageNumbers = () => {
   return (
     <ToolLayout title="Page Numbers" description="Add page numbers to every page of your PDF" category="edit" icon={<Hash className="h-7 w-7" />}
       metaTitle="Add Page Numbers to PDF — Free Online Tool" metaDescription="Add page numbers to your PDF documents. Free online page numbering tool." toolId="page-numbers" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <Hash className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Page Numbers</h1>
-            <p className="text-sm text-muted-foreground">Add page numbers to every page of your PDF</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with manuscripts, dissertations, reports, and booklets. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Page Numbers"
+        description="Add page numbers to your PDF document"
+        icon={<Hash className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF" />
       </div>

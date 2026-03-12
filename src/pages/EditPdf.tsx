@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Edit3, Loader2, Info } from "lucide-react";
+import { Edit3, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ const EditPdf = () => {
       const doc = await PDFDocument.load(bytes);
       const font = await doc.embedFont(StandardFonts.Helvetica);
       const pages = doc.getPages();
-      
+
       setProgress(40);
       annotations.forEach(ann => {
         if (ann.page >= pages.length) return;
@@ -111,18 +112,11 @@ const EditPdf = () => {
   return (
     <ToolLayout title="Edit PDF" description="Click on pages to add text annotations" category="edit" icon={<Edit3 className="h-7 w-7" />}
       metaTitle="Edit PDF — Add Text to PDF Online Free" metaDescription="Add text annotations to your PDF files. Free online PDF editor." toolId="edit" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <Edit3 className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Edit PDF</h1>
-            <p className="text-sm text-muted-foreground">Click on pages to add text annotations</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with forms, letters, contracts, and any document needing annotations. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Edit PDF"
+        description="Add text, images, and shapes to your PDF"
+        icon={<Edit3 className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={loadPreview} label="Select a PDF to edit" />
       </div>

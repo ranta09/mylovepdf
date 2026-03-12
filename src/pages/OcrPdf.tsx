@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ScanLine, Copy, Download, Loader2, Info } from "lucide-react";
+import { ScanLine, Copy, Download, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
 import { createWorker } from "tesseract.js";
 import ToolLayout from "@/components/ToolLayout";
@@ -95,18 +96,11 @@ const OcrPdf = () => {
       toolId="ocr-pdf"
       hideHeader
     >
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <ScanLine className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">OCR PDF</h1>
-            <p className="text-sm text-muted-foreground">Extract text from scanned PDFs using text recognition</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with scanned documents, photographed pages, and image-based PDFs. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="OCR PDF"
+        description="Extract text from scanned PDFs using text recognition"
+        icon={<ScanLine className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={(f) => { setFiles(f); setExtractedText(""); }} label="Select a scanned PDF" />
       </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
-import { EyeOff, Loader2, Info } from "lucide-react";
+import { EyeOff, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -59,18 +60,11 @@ const RedactPdf = () => {
   return (
     <ToolLayout title="Redact PDF" description="Black out sensitive information in your PDF" category="edit" icon={<EyeOff className="h-7 w-7" />}
       metaTitle="Redact PDF — Black Out Text Online Free" metaDescription="Redact sensitive information from PDF files. Free online PDF redaction tool." toolId="redact-pdf" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <EyeOff className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Redact PDF</h1>
-            <p className="text-sm text-muted-foreground">Black out sensitive information in your PDF</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with legal documents, medical records, and confidential files. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Redact PDF"
+        description="Black out sensitive information in your PDF"
+        icon={<EyeOff className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to redact" />
       </div>

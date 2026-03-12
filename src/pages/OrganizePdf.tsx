@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { LayoutGrid, ArrowUp, ArrowDown, Trash2, Loader2, Info } from "lucide-react";
+import { LayoutGrid, ArrowUp, ArrowDown, Trash2, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ const OrganizePdf = () => {
       const bytes = await files[0].arrayBuffer();
       const srcDoc = await PDFDocument.load(bytes);
       const newDoc = await PDFDocument.create();
-      
+
       for (let i = 0; i < pages.length; i++) {
         const [copied] = await newDoc.copyPages(srcDoc, [pages[i].index]);
         newDoc.addPage(copied);
@@ -107,24 +108,17 @@ const OrganizePdf = () => {
   return (
     <ToolLayout title="Organize Pages" description="Rearrange or delete pages in your PDF" category="edit" icon={<LayoutGrid className="h-7 w-7" />}
       metaTitle="Organize PDF Pages — Rearrange Pages Free" metaDescription="Rearrange, reorder and delete PDF pages. Free online PDF organizer." toolId="organize" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <LayoutGrid className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Organize Pages</h1>
-            <p className="text-sm text-muted-foreground">Rearrange or delete pages in your PDF</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with presentations, portfolios, and multi-page documents. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Organize Pages"
+        description="Drag and drop to rearrange pages in your PDF"
+        icon={<LayoutGrid className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={loadPages} label="Select a PDF to organize" />
       </div>
-      
+
       {loading && <p className="mt-4 text-center text-sm text-muted-foreground">Loading pages…</p>}
-      
+
       {pages.length > 0 && (
         <div className="mt-6 space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

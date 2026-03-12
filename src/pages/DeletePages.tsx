@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Trash2, Loader2, Info } from "lucide-react";
+import { Trash2, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -67,18 +68,11 @@ const DeletePages = () => {
   return (
     <ToolLayout title="Delete PDF Pages" description="Remove specific pages from your PDF document" category="edit" icon={<Trash2 className="h-7 w-7" />}
       metaTitle="Delete PDF Pages — Remove Pages Online Free" metaDescription="Delete specific pages from PDF files. Free online tool." toolId="delete-pages" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <Trash2 className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Delete PDF Pages</h1>
-            <p className="text-sm text-muted-foreground">Remove specific pages from your PDF document</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with multi-page documents, reports, and contracts. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Delete PDF Pages"
+        description="Remove unwanted pages from your PDF document"
+        icon={<Trash2 className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} label="Select a PDF" />
       </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Languages, Copy, Download, Loader2, Info } from "lucide-react";
+import { Languages, Copy, Download, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -73,35 +74,15 @@ const TranslatePdf = () => {
       metaTitle="Translate PDF — AI Document Translation Free" metaDescription="Translate PDF documents to any language using AI. Free online tool." toolId="ai-translate" hideHeader>
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tool-ai">
-              <Languages className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">Translate PDF</h1>
-              <p className="text-sm text-muted-foreground">AI-powered document translation to any language</p>
-              <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Translate any PDF into 20+ languages using AI. Works with research papers, contracts, articles, and more. Your files are private and deleted after processing.</span></div>
-            </div>
-          </div>
-        </div>
+        <ToolHeader
+          title="Translate PDF"
+          description="AI-powered document translation to any language"
+          icon={<Languages className="h-5 w-5 text-primary-foreground" />}
+        />
 
         {/* Upload */}
         <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to translate" />
 
-        {/* Steps below upload */}
-        <div className="grid gap-2 sm:grid-cols-3">
-          {[
-            { step: "1", text: "Upload your PDF document" },
-            { step: "2", text: "Select the target language" },
-            { step: "3", text: "Get your translated text" },
-          ].map((s) => (
-            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
-              <span className="text-sm text-foreground">{s.text}</span>
-            </div>
-          ))}
-        </div>
         {files.length > 0 && (
           <div className="space-y-4">
             <div>

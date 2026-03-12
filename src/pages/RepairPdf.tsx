@@ -25,7 +25,7 @@ const RepairPdf = () => {
       // Clean up by re-saving with proper structure
       const pdfBytes = await doc.save({ useObjectStreams: true });
       setProgress(90);
-      
+
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -54,7 +54,7 @@ const RepairPdf = () => {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Repair PDF</h1>
             <p className="text-sm text-muted-foreground">Fix corrupted or broken PDF files by re-serializing the structure</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with damaged downloads, broken attachments, and corrupted files. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
+            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with damaged downloads, broken attachments, and corrupted files. Max file size: 100MB.</span></div>
           </div>
         </div>
       </div>

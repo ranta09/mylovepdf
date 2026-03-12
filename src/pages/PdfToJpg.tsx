@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
-import { Image, Loader2, Info } from "lucide-react";
+import { Image, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -62,18 +63,11 @@ const PdfToJpg = () => {
   return (
     <ToolLayout title="PDF to JPG" description="Convert each PDF page into a high-quality JPG image" category="convert" icon={<Image className="h-7 w-7" />}
       metaTitle="PDF to JPG — Convert PDF Pages to Images Free" metaDescription="Convert PDF pages to JPG images. Free online PDF to image converter." toolId="pdf-to-jpg" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <Image className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">PDF to JPG</h1>
-            <p className="text-sm text-muted-foreground">Convert each PDF page into a high-quality JPG image</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with presentations, reports, brochures, and any PDF. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="PDF to JPG"
+        description="Extract every page from your PDF into a JPG image"
+        icon={<Image className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
       </div>

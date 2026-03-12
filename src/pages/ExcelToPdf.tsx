@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as XLSX from "xlsx";
-import { FileSpreadsheet, Loader2, Info } from "lucide-react";
+import { FileSpreadsheet, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -88,18 +89,11 @@ const ExcelToPdf = () => {
   return (
     <ToolLayout title="Excel to PDF" description="Convert spreadsheets into a PDF table" category="convert" icon={<FileSpreadsheet className="h-7 w-7" />}
       metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free" metaDescription="Convert Excel and spreadsheet data to PDF tables. Free online converter." toolId="excel-to-pdf" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <FileSpreadsheet className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Excel to PDF</h1>
-            <p className="text-sm text-muted-foreground">Convert spreadsheets into a PDF table</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Supports .xlsx, .xls, and .csv files. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Excel to PDF"
+        description="Convert XLSX and XLS spreadsheets to PDF"
+        icon={<FileSpreadsheet className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".xlsx,.xls,.csv" files={files} onFilesChange={setFiles} label="Select a spreadsheet to convert" />
       </div>

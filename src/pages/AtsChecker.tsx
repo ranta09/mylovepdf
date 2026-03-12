@@ -4,7 +4,8 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle, Info, Loader2 } from "lucide-react";
+import { ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle, Info, Loader2, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -135,35 +136,15 @@ const AtsChecker = () => {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-tool-ai/20 bg-tool-ai/5 p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tool-ai">
-              <ScanSearch className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">ATS Resume Checker</h1>
-              <p className="text-sm text-muted-foreground">Make sure your resume beats the bots</p>
-              <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Most companies use ATS to filter resumes before a human sees them. This tool checks formatting, keywords, skills, and structure. Your files are private and deleted after processing.</span></div>
-            </div>
-          </div>
-        </div>
+        <ToolHeader
+          title="ATS Resume Checker"
+          description="Make sure your resume beats the bots"
+          icon={<ScanSearch className="h-5 w-5 text-primary-foreground" />}
+        />
 
         {/* Upload */}
         <FileUpload accept=".pdf" multiple={false} onFilesChange={setFiles} files={files} label="Upload your resume (PDF)" />
 
-        {/* Steps below upload */}
-        <div className="grid gap-2 sm:grid-cols-3">
-          {[
-            { step: "1", text: "Upload your resume (PDF)" },
-            { step: "2", text: "Optionally paste a job description" },
-            { step: "3", text: "Get your ATS score & tips" },
-          ].map((s) => (
-            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tool-ai text-xs font-bold text-primary-foreground">{s.step}</span>
-              <span className="text-sm text-foreground">{s.text}</span>
-            </div>
-          ))}
-        </div>
 
         {files.length > 0 && !result && (
           <div className="space-y-4">

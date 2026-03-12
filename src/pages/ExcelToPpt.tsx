@@ -1,7 +1,7 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import pptxgen from "pptxgenjs";
-import { Presentation, Loader2, Info } from "lucide-react";
+import { Presentation, Loader2, Info, FileText } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -114,7 +114,7 @@ const ExcelToPpt = () => {
 
                         // Format table data suitable for pptxgen
                         const tableData = [
-                            headers.map(h => ({ text: h, options: { bold: true, fill: "F1F5F9", color: "333333" } }))
+                            headers.map(h => ({ text: h, options: { bold: true, fill: { color: "F1F5F9" }, color: "333333" } }))
                         ];
 
                         // Process up to 10 rows to fit on a slide
@@ -196,7 +196,7 @@ const ExcelToPpt = () => {
                                 ];
 
                                 // Determine chart type based on data size
-                                const chartType = labels.length > 6 ? pptx.charts.BAR : pptx.charts.PIE;
+                                const chartType = labels.length > 6 ? pptx.ChartType.bar : pptx.ChartType.pie;
 
                                 chartSlide.addChart(chartType, chartData, {
                                     x: 0.5, y: 1.2, w: "90%", h: "80%",

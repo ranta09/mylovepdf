@@ -25,7 +25,7 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
       <motion.div
         className={cn(
           "flex h-14 w-14 items-center justify-center rounded-xl text-primary-foreground transition-transform",
-          categoryColors[tool.category]
+          tool.bgClass || categoryColors[tool.category]
         )}
         whileHover={tool.available ? { scale: 1.12, rotate: [0, -6, 6, -3, 0] } : undefined}
         transition={{ duration: 0.4 }}

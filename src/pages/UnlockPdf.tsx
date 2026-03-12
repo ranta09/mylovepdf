@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Unlock, Loader2, Info } from "lucide-react";
+import { Unlock, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -45,18 +46,11 @@ const UnlockPdf = () => {
   return (
     <ToolLayout title="Unlock PDF" description="Remove restrictions from protected PDF files" category="protect" icon={<Unlock className="h-7 w-7" />}
       metaTitle="Unlock PDF — Remove PDF Password Free" metaDescription="Remove password protection from PDF files. Free online PDF unlocker." toolId="unlock" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <Unlock className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Unlock PDF</h1>
-            <p className="text-sm text-muted-foreground">Remove restrictions from protected PDF files</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with password-protected documents and restricted PDFs. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Unlock PDF"
+        description="Remove password protection from your PDF"
+        icon={<Unlock className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a protected PDF" />
       </div>

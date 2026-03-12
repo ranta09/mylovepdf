@@ -1,11 +1,12 @@
 import { useCallback, useState, useEffect, useRef } from "react";
-import { Upload, X, FileText, Image as ImageIcon, CheckCircle } from "lucide-react";
+import { Upload, X, FileText, Image as ImageIcon, CheckCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGlobalUpload } from "./GlobalUploadContext";
 import { detectFileType } from "@/lib/fileDetection";
+import FilePreviewList from "./FilePreviewList";
 
 interface FileUploadProps {
   accept?: string;
@@ -189,9 +190,13 @@ const FileUpload = ({
         <p className="font-display text-2xl font-bold text-foreground mb-2">
           {dragging ? "Release to upload" : "Upload your Files"}
         </p>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-sm text-muted-foreground mb-4">
           <span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.
         </p>
+        <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-[11px] font-bold text-primary border border-primary/20 mb-8">
+          <ShieldCheck className="h-4 w-4" />
+          <span>Your files are private and automatically deleted after processing.</span>
+        </div>
 
         {/* Formats Display exactly like Landing Page */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
@@ -207,31 +212,14 @@ const FileUpload = ({
       </div>
 
       {/* File list */}
-      {files.length > 0 && (
-        <div className="space-y-2">
-          {files.map((file, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                {isImage(file)
-                  ? <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  : <FileText className="h-5 w-5 text-primary" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => removeFile(i)} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive">
-                <X className="h-4 w-4" />
-              </Button>
-            </motion.div>
-          ))}
-        </div>
-      )}
+      <div className="mt-6 w-full max-w-2xl mx-auto">
+        <FilePreviewList
+          files={files}
+          onFilesChange={onFilesChange}
+          onRemove={removeFile}
+          reorderable={multiple}
+        />
+      </div>
     </div>
   );
 };

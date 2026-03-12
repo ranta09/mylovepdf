@@ -11,6 +11,7 @@ interface ProcessingViewProps {
     buttonText: string;
     processingText: string;
     estimateText?: string;
+    disabled?: boolean;
 }
 
 const ProcessingView = ({
@@ -21,6 +22,7 @@ const ProcessingView = ({
     buttonText,
     processingText,
     estimateText = "Estimated time: ~5-15 seconds",
+    disabled = false
 }: ProcessingViewProps) => {
     if (files.length === 0) return null;
 
@@ -35,6 +37,7 @@ const ProcessingView = ({
                 <Button
                     size="lg"
                     onClick={onProcess}
+                    disabled={disabled}
                     className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8 h-12 text-base shadow-lg shadow-primary/20"
                 >
                     {buttonText}

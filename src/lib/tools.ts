@@ -17,6 +17,7 @@ export interface PdfTool {
   path: string;
   category: ToolCategory;
   available: boolean;
+  bgClass?: string;
 }
 
 export const tools: PdfTool[] = [
@@ -60,7 +61,7 @@ export const aiTools: PdfTool[] = [
   },
   {
     id: "ai-quiz", name: "Quiz Generator", description: "Generate multiple-choice or short-answer quizzes from any PDF.",
-    icon: LayoutGrid, // Updated icon since Quiz isn't exported, use LayoutGrid as a placeholder
+    icon: LayoutGrid,
     path: "/quiz-generator", category: "ai", available: true
   },
   {

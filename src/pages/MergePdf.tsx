@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Merge, Loader2, Info } from "lucide-react";
+import { Merge, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import ProcessingView from "@/components/ProcessingView";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 
 const MergePdf = () => {
@@ -12,29 +13,40 @@ const MergePdf = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const [results, setResults] = useState<ProcessingResult[]>([]);
+
   const merge = async () => {
-    if (files.length < 2) { toast.error("Please add at least 2 PDF files"); return; }
+    if (files.length < 2) {
+      toast.error("Please add at least 2 PDF files");
+      return;
+    }
     setProcessing(true);
     setProgress(10);
     try {
-      const merged = await PDFDocument.create();
+      const mergedPdf = await PDFDocument.create();
+
       for (let i = 0; i < files.length; i++) {
         const bytes = await files[i].arrayBuffer();
         const doc = await PDFDocument.load(bytes);
-        const pages = await merged.copyPages(doc, doc.getPageIndices());
-        pages.forEach(p => merged.addPage(p));
+        const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+
         setProgress(10 + ((i + 1) / files.length) * 80);
       }
-      const pdfBytes = await merged.save();
+
+      const pdfBytes = await mergedPdf.save();
       setProgress(100);
+
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "merged.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("PDF merged successfully!");
+
+      setResults([{
+        file: blob,
+        url,
+        filename: "merged_document.pdf"
+      }]);
+
+      toast.success("PDFs merged successfully!");
     } catch {
       toast.error("Failed to merge PDFs");
     } finally {
@@ -46,30 +58,43 @@ const MergePdf = () => {
   return (
     <ToolLayout title="Merge PDF" description="Combine multiple PDF files into a single document" category="merge" icon={<Merge className="h-7 w-7" />}
       metaTitle="Merge PDF — Combine PDF Files Online Free" metaDescription="Merge multiple PDF files into one document. Free, fast and secure online PDF merger." toolId="merge" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <Merge className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Merge PDF</h1>
-            <p className="text-sm text-muted-foreground">Combine multiple PDF files into a single document</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with contracts, reports, invoices, and any PDF files. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="Merge PDF"
+        description="Combine multiple PDF files into a single document"
+        icon={<Merge className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
-        <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
+        {results.length === 0 ? (
+          <>
+            <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
+
+            {files.length > 0 && files.length < 2 && (
+              <div className="mt-4 text-center p-4 bg-orange-500/10 text-orange-600 rounded-xl border border-orange-500/20 text-sm font-medium">
+                Please add at least one more PDF file to merge.
+              </div>
+            )}
+
+            <ProcessingView
+              files={files}
+              processing={processing}
+              progress={progress}
+              onProcess={merge}
+              buttonText={`Merge ${files.length} files`}
+              processingText="Merging..."
+              estimateText="Estimated time: ~3-10 seconds depending on size"
+              disabled={files.length < 2}
+            />
+          </>
+        ) : (
+          <ResultView
+            results={results}
+            onReset={() => {
+              setFiles([]);
+              setResults([]);
+            }}
+          />
+        )}
       </div>
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length >= 2 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={merge} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Merging…</> : `Merge ${files.length} files`}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-10 seconds</p>}
-        </div>
-      )}
     </ToolLayout>
   );
 };

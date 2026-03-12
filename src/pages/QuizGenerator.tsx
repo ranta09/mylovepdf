@@ -4,7 +4,8 @@ import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { BrainCircuit, Download, Eye, EyeOff, CheckCircle2, XCircle, Info, RotateCcw, Loader2 } from "lucide-react";
+import { BrainCircuit, Download, Eye, EyeOff, CheckCircle2, XCircle, Info, RotateCcw, Loader2, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import { extractTextFromPdf } from "@/lib/pdfTextExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -175,18 +176,11 @@ const QuizGenerator = () => {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-              <BrainCircuit className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">AI Quiz Generator</h1>
-              <p className="text-sm text-muted-foreground">Create practice tests from any document</p>
-              <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Upload multiple files at once. Supports PDF, TXT, DOC, CSV, HTML, and more. Great for exam prep, revision, and self-testing. Your files are private and deleted after processing.</span></div>
-            </div>
-          </div>
-        </div>
+        <ToolHeader
+          title="AI Quiz Generator"
+          description="Create practice tests from any document"
+          icon={<BrainCircuit className="h-5 w-5 text-primary-foreground" />}
+        />
 
         {/* Upload */}
         <FileUpload
@@ -197,19 +191,6 @@ const QuizGenerator = () => {
           label="Upload study material (PDF, TXT, DOC, and more)"
         />
 
-        {/* Steps below upload */}
-        <div className="grid gap-2 sm:grid-cols-3">
-          {[
-            { step: "1", text: "Upload your study material" },
-            { step: "2", text: "Pick quiz type & number of questions" },
-            { step: "3", text: "Take the quiz or download it" },
-          ].map((s) => (
-            <div key={s.step} className="flex items-center gap-2 rounded-xl bg-card border border-border p-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{s.step}</span>
-              <span className="text-sm text-foreground">{s.text}</span>
-            </div>
-          ))}
-        </div>
 
         {files.length > 0 && questions.length === 0 && (
           <div className="space-y-4">
@@ -277,12 +258,11 @@ const QuizGenerator = () => {
                         <button
                           key={oi}
                           onClick={() => selectAnswer(i, opt)}
-                          className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left text-sm transition-all ${
-                            revealed && isCorrect ? "border-green-500 bg-green-50 text-green-800"
+                          className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left text-sm transition-all ${revealed && isCorrect ? "border-green-500 bg-green-50 text-green-800"
                             : revealed && isSelected && !isCorrect ? "border-red-400 bg-red-50 text-red-700"
-                            : isSelected ? "border-primary bg-primary/5 text-foreground"
-                            : "border-border hover:border-primary/40"
-                          }`}
+                              : isSelected ? "border-primary bg-primary/5 text-foreground"
+                                : "border-border hover:border-primary/40"
+                            }`}
                         >
                           {revealed && isCorrect && <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />}
                           {revealed && isSelected && !isCorrect && <XCircle className="h-4 w-4 shrink-0 text-red-500" />}

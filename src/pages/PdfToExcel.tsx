@@ -1,6 +1,7 @@
 import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { FileSpreadsheet, Loader2, Info } from "lucide-react";
+import { FileSpreadsheet, Loader2, Info, ShieldCheck } from "lucide-react";
+import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -22,11 +23,11 @@ const PdfToExcel = () => {
       const bytes = await files[0].arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
       let csvContent = "";
-      
+
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        
+
         // Group text items by Y position to form rows
         const rows: Map<number, { x: number; text: string }[]> = new Map();
         content.items.forEach((item: any) => {
@@ -34,7 +35,7 @@ const PdfToExcel = () => {
           if (!rows.has(y)) rows.set(y, []);
           rows.get(y)!.push({ x: item.transform[4], text: item.str });
         });
-        
+
         // Sort rows by Y (descending) and items by X
         const sortedRows = [...rows.entries()].sort((a, b) => b[0] - a[0]);
         for (const [, items] of sortedRows) {
@@ -44,7 +45,7 @@ const PdfToExcel = () => {
             csvContent += row + "\n";
           }
         }
-        
+
         if (i < pdf.numPages) csvContent += "\n";
         setProgress(10 + Math.round((i / pdf.numPages) * 80));
       }
@@ -70,18 +71,11 @@ const PdfToExcel = () => {
   return (
     <ToolLayout title="PDF to Excel" description="Extract text and table data from PDF as CSV" category="convert" icon={<FileSpreadsheet className="h-7 w-7" />}
       metaTitle="PDF to Excel — Extract PDF Tables Free" metaDescription="Extract tables and data from PDF files to CSV/Excel format. Free online tool." toolId="pdf-to-excel" hideHeader>
-      <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-            <FileSpreadsheet className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-foreground">PDF to Excel</h1>
-            <p className="text-sm text-muted-foreground">Extract text and table data from PDF as CSV</p>
-            <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Works great with invoices, financial reports, data tables, and spreadsheets. Max file size: 100MB. Your files are private and automatically deleted after processing.</span></div>
-          </div>
-        </div>
-      </div>
+      <ToolHeader
+        title="PDF to Excel"
+        description="Extract tables and data from PDF to XLSX"
+        icon={<FileSpreadsheet className="h-5 w-5 text-primary-foreground" />}
+      />
       <div className="mt-5">
         <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to extract data from" />
       </div>

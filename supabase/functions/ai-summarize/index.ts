@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -14,9 +14,26 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompts: Record<string, string> = {
-      short: "You are a document summarizer. Provide a concise summary of the given text in 3-5 sentences. Be clear and capture the main points.",
-      bullets: "You are a document summarizer. Provide a bullet-point summary of the given text. Use clear, concise bullet points (10-20 points) that capture all key information. Format each point with a bullet marker (•).",
-      highlights: "You are a document summarizer. Extract the key highlights and important takeaways from the given text. Present them as numbered key highlights with brief explanations. Focus on the most critical information.",
+      short: `You are an expert document analyst. Provide a professional, high-quality, and structured summary of the document.
+      
+      Your response MUST use the following format:
+      ### Overview
+      [A 2-3 sentence overview of the document's main topic and purpose]
+      
+      ### Key Insights
+      [Bullet points of the 3-7 most important takeaways and findings]
+      
+      ### Detailed Explanation
+      [A thorough breakdown of the document's content, organized into logical sections]
+      
+      ### Conclusion
+      [The final conclusion or overall significance]`,
+
+      bullets: `You are an expert document analyst. Provide an incredibly detailed bullet-point summary.
+      Break the summary into logical categories. Format each category with a heading and use concise but information-dense bullet points (•).`,
+
+      highlights: `You are an expert document analyst. Extract the absolute most critical highlights and executive takeaways.
+      Focus on data points, key decisions, and major findings. Use numbered sections with bold titles.`
     };
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -29,8 +46,9 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompts[mode] || systemPrompts.short },
-          { role: "user", content: `Please summarize the following document:\n\n${text.slice(0, 30000)}` },
+          { role: "user", content: `Please summarize the following document professionally and accurately:\n\n${text.slice(0, 50000)}` },
         ],
+        temperature: 0.2,
       }),
     });
 
