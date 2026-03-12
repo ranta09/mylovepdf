@@ -113,6 +113,12 @@ const EditPdf = () => {
       setFuture([]);
       setActivePage(0);
       toast.success(`Loaded PDF (${imgs.length} page${imgs.length !== 1 ? "s" : ""})`);
+      // Auto-maximize the editor
+      setTimeout(() => {
+        if (editorRef.current && !document.fullscreenElement) {
+          editorRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => { });
+        }
+      }, 300);
     } catch {
       toast.error("Failed to load PDF");
     } finally {
@@ -620,8 +626,8 @@ const EditPdf = () => {
                           src={previews[srcIdx]}
                           alt={`Page ${visIdx + 1}`}
                           className={`w-full block select-none ${activeTab === "text" ? "cursor-crosshair" :
-                              activeTab === "image" ? "cursor-cell" :
-                                activeTab === "annotate" ? "cursor-crosshair" : "cursor-default"
+                            activeTab === "image" ? "cursor-cell" :
+                              activeTab === "annotate" ? "cursor-crosshair" : "cursor-default"
                             }`}
                           style={{ transform: `rotate(${pageState?.rotation ?? 0}deg)`, transition: "transform 0.3s" }}
                           draggable={false}
