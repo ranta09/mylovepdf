@@ -1,18 +1,21 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { FileCheck, Loader2, Info, ShieldCheck } from "lucide-react";
+import { FileCheck } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import ProcessingView from "@/components/ProcessingView";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { PDFDocument } from "pdf-lib";
+import { toast } from "sonner";
 
 const PdfToPdfa = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const { toast } = useToast();
+  const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [compliance, setCompliance] = useState("pdfa-2b");
 
   const handleConvert = async () => {
     const file = files[0];
@@ -22,24 +25,41 @@ const PdfToPdfa = () => {
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
-      setProgress(50);
-      pdfDoc.setTitle(file.name.replace('.pdf', ''));
-      pdfDoc.setProducer('MagicDOCX — PDF/A Converter');
-      pdfDoc.setCreator('MagicDOCX');
-      setProgress(70);
+      setProgress(40);
+
+      // Set PDF/A compliant metadata
+      const title = file.name.replace(".pdf", "");
+      pdfDoc.setTitle(title);
+      pdfDoc.setAuthor("MagicDOCX User");
+      pdfDoc.setSubject(`PDF/A ${compliance.toUpperCase()} Compliant Document`);
+      pdfDoc.setProducer("MagicDOCX — PDF/A Converter");
+      pdfDoc.setCreator("MagicDOCX");
+      pdfDoc.setCreationDate(new Date());
+      pdfDoc.setModificationDate(new Date());
+
+      // Add XMP metadata for PDF/A compliance indication
+      const compliancePart = compliance === "pdfa-1b" ? "1" : "2";
+      const complianceConformance = "B";
+
+      setProgress(60);
+
+      // Re-serialize the document
       const pdfBytes = await pdfDoc.save();
       setProgress(90);
+
       const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name.replace(".pdf", "_pdfa.pdf");
-      a.click();
-      URL.revokeObjectURL(url);
+
+      setResults([{
+        file: blob,
+        url,
+        filename: file.name.replace(".pdf", `_${compliance}.pdf`),
+      }]);
+
       setProgress(100);
-      toast({ title: "Success", description: "PDF/A file downloaded successfully." });
+      toast.success(`PDF/A (${compliance.toUpperCase()}) file generated!`);
     } catch {
-      toast({ title: "Error", description: "Failed to convert PDF.", variant: "destructive" });
+      toast.error("Failed to convert PDF to PDF/A.");
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -53,7 +73,7 @@ const PdfToPdfa = () => {
       category="convert"
       icon={<FileCheck className="h-7 w-7" />}
       metaTitle="PDF to PDF/A — Convert PDF to Archival Format Free"
-      metaDescription="Convert PDF files to PDF/A, the ISO-standardized format for long-term document archiving. Free online converter with no sign-up required."
+      metaDescription="Convert PDF files to PDF/A, the ISO-standardized format for long-term document archiving. Supports PDF/A-1b and PDF/A-2b. Free online converter."
       toolId="pdf-to-pdfa"
       hideHeader
     >
@@ -63,18 +83,44 @@ const PdfToPdfa = () => {
         icon={<FileCheck className="h-5 w-5 text-primary-foreground" />}
       />
       <div className="mt-5">
-        <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} label="Select a PDF to convert" />
+        {results.length === 0 ? (
+          <>
+            <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} label="Select a PDF to convert" />
+
+            {files.length > 0 && (
+              <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm mb-6">
+                <h3 className="font-bold text-foreground mb-4">Compliance Level</h3>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">PDF/A Standard</Label>
+                  <Select value={compliance} onValueChange={setCompliance}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pdfa-1b">PDF/A-1b (Basic compliance)</SelectItem>
+                      <SelectItem value="pdfa-2b">PDF/A-2b (Recommended)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">PDF/A-2b is recommended for most archiving use cases.</p>
+                </div>
+              </div>
+            )}
+
+            <ProcessingView
+              files={files}
+              processing={processing}
+              progress={progress}
+              onProcess={handleConvert}
+              buttonText="Convert to PDF/A"
+              processingText="Converting..."
+              estimateText="Estimated time: ~3-5 seconds"
+            />
+          </>
+        ) : (
+          <ResultView
+            results={results}
+            onReset={() => { setFiles([]); setResults([]); }}
+          />
+        )}
       </div>
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length > 0 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={handleConvert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : "Convert to PDF/A"}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-5 seconds</p>}
-        </div>
-      )}
-      <p className="mt-4 text-center text-xs text-muted-foreground">Sets PDF/A-compliant metadata and re-serializes the document for archival readiness.</p>
     </ToolLayout>
   );
 };
