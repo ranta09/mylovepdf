@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Presentation, Loader2, Info, ShieldCheck } from "lucide-react";
+import { Presentation } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import ProcessingView from "@/components/ProcessingView";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 
 const PptToPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ProcessingResult[]>([]);
 
   const convert = async () => {
     if (files.length === 0) return;
     setProcessing(true);
     setProgress(10);
     try {
-      // Convert images to PDF (user exports slides as images first)
       const doc = await PDFDocument.create();
       for (let i = 0; i < files.length; i++) {
         const bytes = await files[i].arrayBuffer();
@@ -31,7 +31,6 @@ const PptToPdf = () => {
           toast.error(`Could not process ${files[i].name}`);
           continue;
         }
-        // Landscape slide dimensions
         const slideWidth = 960;
         const slideHeight = 720;
         const page = doc.addPage([slideWidth, slideHeight]);
@@ -50,11 +49,8 @@ const PptToPdf = () => {
       const pdfBytes = await doc.save();
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "presentation.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
+
+      setResults([{ file: blob, url, filename: "presentation.pdf" }]);
       setProgress(100);
       toast.success("Slides converted to PDF!");
     } catch {
@@ -66,25 +62,41 @@ const PptToPdf = () => {
   };
 
   return (
-    <ToolLayout title="PowerPoint to PDF" description="Convert presentation slide images into a PDF document" category="convert" icon={<Presentation className="h-7 w-7" />}
-      metaTitle="PowerPoint to PDF — Convert Slides to PDF Free" metaDescription="Convert presentation slides to PDF. Free online converter." toolId="ppt-to-pdf" hideHeader>
+    <ToolLayout
+      title="PowerPoint to PDF"
+      description="Convert presentation slide images into a PDF document"
+      category="convert"
+      icon={<Presentation className="h-7 w-7" />}
+      metaTitle="PPT to PDF — Convert PowerPoint to PDF Free"
+      metaDescription="Convert PowerPoint presentation slides to PDF. Free online converter."
+      toolId="ppt-to-pdf"
+      hideHeader
+    >
       <ToolHeader
         title="PPT to PDF"
         description="Convert PowerPoint presentations to PDF"
         icon={<Presentation className="h-5 w-5 text-primary-foreground" />}
       />
       <div className="mt-5">
-        <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select slide images (JPG/PNG)" />
+        {results.length === 0 ? (
+          <>
+            <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select slide images (JPG/PNG) — export from PowerPoint first" />
+            <ProcessingView
+              files={files}
+              processing={processing}
+              progress={progress}
+              onProcess={convert}
+              buttonText={`Convert ${files.length} slide${files.length > 1 ? "s" : ""} to PDF`}
+              processingText="Converting..."
+            />
+          </>
+        ) : (
+          <ResultView
+            results={results}
+            onReset={() => { setFiles([]); setResults([]); }}
+          />
+        )}
       </div>
-      {processing && <Progress value={progress} className="mt-4" />}
-      {files.length > 0 && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={convert} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Converting…</> : `Convert ${files.length} slide${files.length > 1 ? "s" : ""}`}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~3-10 seconds</p>}
-        </div>
-      )}
       <p className="mt-4 text-center text-xs text-muted-foreground">Export your PowerPoint slides as images first, then upload them here.</p>
     </ToolLayout>
   );
