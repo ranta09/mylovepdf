@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -78,24 +78,7 @@ const Chatbot = () => {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const isHome = location.pathname === "/";
-
-  // Scroll detection for dynamic coloring
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 60);
-    };
-    if (isHome) {
-      window.addEventListener("scroll", handleScroll, { passive: true });
-      handleScroll();
-    } else {
-      setIsScrolled(false);
-    }
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHome]);
 
   // Auto-dismiss help text after 5 seconds
   useEffect(() => {
@@ -160,8 +143,6 @@ const Chatbot = () => {
     }
   };
 
-  const isLightMode = isHome && !isScrolled;
-
   return (
     <>
       {/* Floating button */}
@@ -189,10 +170,7 @@ const Chatbot = () => {
             <Button
               onClick={() => setOpen(true)}
               size="lg"
-              className={`h-14 w-14 rounded-full shadow-elevated p-0 transition-all duration-300 ${isLightMode
-                ? "bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30"
-                : "bg-primary text-primary-foreground hover:shadow-primary/20"
-                }`}
+              className="h-14 w-14 rounded-full shadow-elevated p-0"
             >
               <MessageCircle className="h-6 w-6" />
             </Button>
@@ -262,8 +240,8 @@ const Chatbot = () => {
                     }
                   </div>
                   <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.role === "user"
-                    ? "rounded-tr-sm bg-primary text-primary-foreground"
-                    : "rounded-tl-sm bg-muted text-foreground"
+                      ? "rounded-tr-sm bg-primary text-primary-foreground"
+                      : "rounded-tl-sm bg-muted text-foreground"
                     }`}>
                     {m.role === "assistant" ? (
                       <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">

@@ -57,35 +57,16 @@ const megaColumns: MenuColumn[] = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
   const megaRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const isHome = location.pathname === "/";
-
   useEffect(() => {
     setMegaOpen(false);
     setMobileOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 60);
-    };
-
-    if (isHome) {
-      window.addEventListener("scroll", handleScroll, { passive: true });
-      // Initial check
-      handleScroll();
-    } else {
-      setIsScrolled(false);
-    }
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHome]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -102,35 +83,25 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, [megaOpen]);
 
-  // Handle color transitions
-  const isLogoLight = isHome && !isScrolled;
-  const navbarClasses = `sticky top-0 z-50 border-b transition-all duration-300 ${isLogoLight
-    ? "bg-transparent border-transparent"
-    : "bg-card/90 backdrop-blur-xl border-border navbar-scrolled"
-    }`;
-
-  const logoColorClass = isLogoLight ? "text-white" : "text-foreground";
-  const docxColorClass = isLogoLight ? "text-primary-foreground/90" : "text-primary";
-
   return (
-    <nav className={navbarClasses}>
+    <nav className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center group">
           <span
-            className="relative z-10 flex items-baseline gap-0 transition-colors duration-300"
+            className="relative z-10 flex items-baseline gap-0"
             style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
           >
-            <span className={`text-2xl font-bold tracking-tight ${logoColorClass}`}>Mag</span>
-            <span className={`relative text-2xl font-bold tracking-tight ${logoColorClass}`}>
+            <span className="text-2xl font-bold tracking-tight text-foreground">Mag</span>
+            <span className="relative text-2xl font-bold tracking-tight text-foreground">
               <span className="invisible">i</span>
               <span className="absolute inset-0 flex flex-col items-center">
-                <span className={`animate-bounce text-[10px] leading-none transition-colors duration-300 ${isLogoLight ? "text-white/80" : "text-primary"}`} style={{ marginTop: "-2px" }}>✦</span>
-                <span className={`text-2xl font-bold leading-none transition-colors duration-300 ${logoColorClass}`} style={{ marginTop: "-4px" }}>ı</span>
+                <span className="text-primary animate-bounce text-[10px] leading-none" style={{ marginTop: "-2px" }}>✦</span>
+                <span className="text-foreground text-2xl font-bold leading-none" style={{ marginTop: "-4px" }}>ı</span>
               </span>
             </span>
-            <span className={`text-2xl font-bold tracking-tight ${logoColorClass}`}>c</span>
-            <span className={`text-2xl font-black tracking-tight transition-colors duration-300 ${docxColorClass}`}>DOCX</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground">c</span>
+            <span className="text-2xl font-black tracking-tight text-primary">DOCX</span>
           </span>
         </Link>
 
@@ -141,9 +112,7 @@ const Navbar = () => {
             onClick={() => setMegaOpen(prev => !prev)}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${megaOpen
               ? "text-primary bg-primary/10"
-              : isLogoLight
-                ? "text-white/80 hover:text-white hover:bg-white/10"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -152,31 +121,20 @@ const Navbar = () => {
           </button>
           <Link
             to="/blog"
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${isLogoLight
-              ? "text-white/80 hover:text-white hover:bg-white/10"
-              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
           >
             Blog
           </Link>
           <Link
             to="/contact"
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${isLogoLight
-              ? "text-white/80 hover:text-white hover:bg-white/10"
-              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
           >
             Contact Us
           </Link>
         </div>
 
         {/* Mobile toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`md:hidden ${isLogoLight ? "text-white hover:bg-white/10" : ""}`}
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
