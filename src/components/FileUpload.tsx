@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGlobalUpload } from "./GlobalUploadContext";
 import { detectFileType } from "@/lib/fileDetection";
 import FilePreviewList from "./FilePreviewList";
+import FileFormatsDisplay from "./FileFormatsDisplay";
 
 interface FileUploadProps {
   accept?: string;
@@ -194,15 +195,8 @@ const FileUpload = ({
           <span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.
         </p>
 
-        {/* Formats Display exactly like Landing Page */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
-          {acceptedExtensions.map(ext => (
-            <span key={ext} className="inline-flex items-center gap-1 rounded-full bg-background/60 px-3 py-1 text-[11px] font-bold tracking-wider text-muted-foreground shadow-sm">
-              <FileText className="h-3 w-3" />
-              {ext.replace(".", "").toUpperCase()}
-            </span>
-          ))}
-        </div>
+        {/* Formats Display categorized and collapsible */}
+        <FileFormatsDisplay acceptedExtensions={acceptedExtensions} />
 
         <input ref={inputRef} type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
       </div>

@@ -97,6 +97,9 @@ const GlobalDropOverlay = () => {
 
     // -- Double Click Handler --
     const handleDoubleClick = useCallback((e: MouseEvent) => {
+        // Only trigger on the homepage
+        if (location.pathname !== "/") return;
+
         // Don't trigger if clicking on interactive elements
         const target = e.target as HTMLElement;
         const isInteractive = target.closest('button, a, input, [role="button"]');
@@ -104,7 +107,7 @@ const GlobalDropOverlay = () => {
         if (!isInteractive && inputRef.current) {
             inputRef.current.click();
         }
-    }, []);
+    }, [location.pathname]);
 
     // -- File Input Handler (for double-click) --
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {

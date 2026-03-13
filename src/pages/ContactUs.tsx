@@ -5,18 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContactUs = () => {
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const data = {
+            fullName: formData.get("fullName") as string,
+            email: formData.get("email") as string,
+            subject: formData.get("subject") as string,
+            message: formData.get("message") as string,
+        };
+
         setLoading(true);
-        setTimeout(() => {
+        try {
+            const { error } = await supabase.functions.invoke("send-contact", {
+                body: data,
+            });
+
+            if (error) {
+                console.error("Supabase Function Error:", error);
+                throw error;
+            }
+
             toast.success("Message sent! We'll get back to you soon.");
+            e.currentTarget.reset();
+        } catch (err) {
+            console.error("Submission Failure Detail:", err);
+            toast.error("Failed to send message. Please try again later.");
+        } finally {
             setLoading(false);
-            (e.target as HTMLFormElement).reset();
-        }, 1000);
+        }
     };
 
     return (
@@ -65,7 +87,7 @@ const ContactUs = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-foreground">Location</p>
-                                <p className="text-sm text-muted-foreground">Remote-first team, based in India</p>
+                                <p className="text-sm text-muted-foreground font-medium">Delhi, India</p>
                             </div>
                         </div>
                     </div>
@@ -75,19 +97,20 @@ const ContactUs = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-foreground">Full Name</label>
-                            <Input placeholder="John Doe" required className="rounded-xl" />
+                            <Input name="fullName" placeholder="John Doe" required className="rounded-xl" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-foreground">Email Address</label>
-                            <Input type="email" placeholder="john@example.com" required className="rounded-xl" />
+                            <Input name="email" type="email" placeholder="john@example.com" required className="rounded-xl" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-foreground">Subject</label>
-                            <Input placeholder="How can we help?" required className="rounded-xl" />
+                            <Input name="subject" placeholder="How can we help?" required className="rounded-xl" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-foreground">Message</label>
                             <Textarea
+                                name="message"
                                 placeholder="Tell us more about your inquiry..."
                                 required
                                 className="rounded-xl min-h-[120px] resize-none"

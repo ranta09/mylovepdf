@@ -52,6 +52,23 @@ import GlobalDropOverlay from "./components/GlobalDropOverlay";
 import GlobalUploadHint from "./components/GlobalUploadHint";
 import { GlobalUploadProvider } from "./components/GlobalUploadContext";
 
+
+// ── SEO Landing Pages ──────────────────────────────────────────────────────────
+import SummarizePdf from "./pages/seo/SummarizePdf";
+import SummarizePdfForStudents from "./pages/seo/SummarizePdfForStudents";
+import SummarizeResearchPaper from "./pages/seo/SummarizeResearchPaper";
+import SummarizeBookPdf from "./pages/seo/SummarizeBookPdf";
+import SummarizeLegalDocument from "./pages/seo/SummarizeLegalDocument";
+import SummarizeBusinessReport from "./pages/seo/SummarizeBusinessReport";
+import AskQuestionsPdf from "./pages/seo/AskQuestionsPdf";
+
+// ── Blog ───────────────────────────────────────────────────────────────────────
+import Blog from "./pages/Blog";
+import BestAiToolsForStudents from "./pages/blog/BestAiToolsForStudents";
+import HowToSummarizeLongPdfs from "./pages/blog/HowToSummarizeLongPdfs";
+import AiStudyToolsForCollege from "./pages/blog/AiStudyToolsForCollege";
+import BestPdfToolsOnline from "./pages/blog/BestPdfToolsOnline";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -66,6 +83,7 @@ const App = () => (
               <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Index />} />
+                {/* Existing PDF tools */}
                 <Route path="/merge-pdf" element={<MergePdf />} />
                 <Route path="/split-pdf" element={<SplitPdf />} />
                 <Route path="/compress-pdf" element={<CompressPdf />} />
@@ -105,6 +123,20 @@ const App = () => (
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/contact" element={<ContactUs />} />
+                {/* SEO Landing Pages */}
+                <Route path="/summarize-pdf" element={<SummarizePdf />} />
+                <Route path="/summarize-pdf-for-students" element={<SummarizePdfForStudents />} />
+                <Route path="/summarize-research-paper" element={<SummarizeResearchPaper />} />
+                <Route path="/summarize-book-pdf" element={<SummarizeBookPdf />} />
+                <Route path="/summarize-legal-document" element={<SummarizeLegalDocument />} />
+                <Route path="/summarize-business-report" element={<SummarizeBusinessReport />} />
+                <Route path="/ask-questions-from-pdf" element={<AskQuestionsPdf />} />
+                {/* Blog */}
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/best-ai-tools-for-students" element={<BestAiToolsForStudents />} />
+                <Route path="/blog/how-to-summarize-long-pdfs" element={<HowToSummarizeLongPdfs />} />
+                <Route path="/blog/ai-study-tools-for-college-students" element={<AiStudyToolsForCollege />} />
+                <Route path="/blog/best-pdf-tools-online" element={<BestPdfToolsOnline />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Chatbot />

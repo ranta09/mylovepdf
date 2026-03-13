@@ -47,7 +47,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "MagicDOCX <onboarding@resend.dev>",
-        to: ["rishu.ranta09@gmail.com"],
+        to: ["support@magicdocx.com"],
         subject: `🐛 Issue Report from ${email}`,
         html: htmlBody,
         reply_to: email,

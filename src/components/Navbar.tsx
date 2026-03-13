@@ -119,6 +119,18 @@ const Navbar = () => {
             All Tools
             <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${megaOpen ? "rotate-180" : ""}`} />
           </button>
+          <Link
+            to="/blog"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+          >
+            Blog
+          </Link>
+          <Link
+            to="/contact"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+          >
+            Contact Us
+          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -212,6 +224,22 @@ const Navbar = () => {
                   );
                 })
               )}
+              <div className="px-4 pb-6 space-y-2 border-t border-border pt-4">
+                <Link
+                  to="/blog"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Blog
+                </Link>
+                <Link
+                  to="/contact"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Contact Us
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

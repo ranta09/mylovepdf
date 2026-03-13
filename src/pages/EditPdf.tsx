@@ -113,12 +113,6 @@ const EditPdf = () => {
       setFuture([]);
       setActivePage(0);
       toast.success(`Loaded PDF (${imgs.length} page${imgs.length !== 1 ? "s" : ""})`);
-      // Auto-maximize the editor
-      setTimeout(() => {
-        if (editorRef.current && !document.fullscreenElement) {
-          editorRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => { });
-        }
-      }, 300);
     } catch {
       toast.error("Failed to load PDF");
     } finally {
@@ -505,7 +499,7 @@ const EditPdf = () => {
 
         {/* Full editor workspace */}
         {file && previews.length > 0 && (
-          <div ref={editorRef} className="flex flex-col gap-0 rounded-2xl border border-border bg-card shadow-card overflow-hidden" style={{ minHeight: "90vh" }}>
+          <div ref={editorRef} className="flex flex-col gap-0 rounded-2xl border border-border bg-card shadow-card overflow-hidden" style={{ minHeight: "500px", maxHeight: isFullscreen ? "100vh" : "85vh" }}>
 
             {/* ── Top Toolbar ─────────────────────────────────────────────── */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background/95 backdrop-blur px-3 py-2 sticky top-0 z-30">
@@ -564,7 +558,7 @@ const EditPdf = () => {
             {saving && <Progress value={saveProgress} className="h-1 rounded-none" />}
 
             {/* ── Main editor body ────────────────────────────────────────── */}
-            <div className="flex flex-1 overflow-hidden" style={{ height: "calc(90vh - 52px)" }}>
+            <div className="flex flex-1 overflow-hidden">
 
               {/* Page thumbnails sidebar */}
               <div className={`hidden md:flex flex-col gap-2 border-r border-border bg-secondary/30 p-2 overflow-y-auto transition-all duration-300 ${thumbsOpen ? "w-[120px]" : "w-0 p-0 overflow-hidden"}`}>
@@ -605,7 +599,7 @@ const EditPdf = () => {
                         key={`${srcIdx}-${visIdx}`}
                         ref={el => { pageRefs.current[visIdx] = el; }}
                         data-pageindex={visIdx}
-                        className="relative shadow-2xl rounded-sm"
+                        className="relative shadow-lg bg-white rounded-sm mb-4"
                         style={{ width: `${zoom * 100}%`, maxWidth: "100%", transformOrigin: "top center" }}
                         onClick={(e) => handlePageClick(e, srcIdx)}
                         onMouseDown={(e) => {

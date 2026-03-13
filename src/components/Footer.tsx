@@ -12,14 +12,14 @@ const Footer = () => {
     { title: t.catConvert, links: tools.filter(tl => tl.category === "convert").map(tl => ({ label: t[`tool.${tl.id}` as keyof typeof t] || tl.name, path: tl.path })) },
     { title: t.footerEditOrganize, links: tools.filter(tl => tl.category === "edit").map(tl => ({ label: t[`tool.${tl.id}` as keyof typeof t] || tl.name, path: tl.path })) },
     { title: t.footerEssentials, links: tools.filter(tl => ["merge", "split", "compress", "protect"].includes(tl.category)).map(tl => ({ label: t[`tool.${tl.id}` as keyof typeof t] || tl.name, path: tl.path })) },
-    {
-      title: "Company", links: [
-        { label: "About Us", path: "/about" },
-        { label: "Contact Us", path: "/contact" },
-        { label: "Privacy Policy", path: "/privacy" },
-        { label: "Terms of Service", path: "/terms" },
-      ]
-    },
+  ];
+
+  const companyLinks = [
+    { label: "Blog", path: "/blog" },
+    { label: "About Us", path: "/about" },
+    { label: "Contact Us", path: "/contact" },
+    { label: "Privacy Policy", path: "/privacy" },
+    { label: "Terms of Service", path: "/terms" },
   ];
 
   return (
@@ -44,10 +44,24 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-border pt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-xs text-muted-foreground/50 text-center md:text-left">
-            {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
-          </p>
+        <div className="border-t border-border pt-6 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+            <p className="text-xs text-muted-foreground/50 text-center md:text-left">
+              {t.footerRights.replace("{year}", String(new Date().getFullYear()))}
+            </p>
+
+            <nav className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2">
+              {companyLinks.map(link => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
 
           <div className="relative flex justify-center md:justify-end">
             <select
