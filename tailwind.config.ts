@@ -9,7 +9,7 @@ export default {
       center: true,
       padding: "2rem",
       screens: {
-        "2xl": "1400px",
+        "2xl": "1600px",
       },
     },
     extend: {
@@ -62,13 +62,16 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         tool: {
+          pdf: "hsl(var(--tool-pdf))",
+          image: "hsl(var(--tool-image))",
+          ai: "hsl(var(--tool-ai))",
+          convert: "hsl(var(--tool-convert))",
+          edit: "hsl(var(--tool-edit))",
+          // Keep legacy keys for temporary compatibility
           merge: "hsl(var(--tool-merge))",
           split: "hsl(var(--tool-split))",
           compress: "hsl(var(--tool-compress))",
-          convert: "hsl(var(--tool-convert))",
-          edit: "hsl(var(--tool-edit))",
           protect: "hsl(var(--tool-protect))",
-          ai: "hsl(var(--tool-ai))",
         },
       },
       borderRadius: {

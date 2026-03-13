@@ -193,10 +193,6 @@ const FileUpload = ({
         <p className="text-sm text-muted-foreground mb-4">
           <span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.
         </p>
-        <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-[11px] font-bold text-primary border border-primary/20 mb-8">
-          <ShieldCheck className="h-4 w-4" />
-          <span>Your files are private and automatically deleted after processing.</span>
-        </div>
 
         {/* Formats Display exactly like Landing Page */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
@@ -212,7 +208,7 @@ const FileUpload = ({
       </div>
 
       {/* File list */}
-      <div className="mt-6 w-full max-w-2xl mx-auto">
+      <div className="mt-6 w-full max-w-5xl mx-auto">
         <FilePreviewList
           files={files}
           onFilesChange={onFilesChange}

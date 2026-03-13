@@ -22,7 +22,7 @@ const ToolHeader = ({
     return (
         <div className={cn("rounded-2xl border border-border p-6", className || "bg-secondary/30")}>
             <div className="flex items-center gap-3">
-                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconBgClass || "bg-primary")}>
+                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm", iconBgClass)}>
                     {icon}
                 </div>
                 <div className="flex-1">

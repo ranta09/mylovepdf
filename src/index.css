@@ -51,20 +51,29 @@ html {
     --sidebar-border: 215 20% 90%;
     --sidebar-ring: 217 91% 55%;
 
-    /* Tool category colors */
-    --tool-merge: 217 91% 55%;
-    --tool-split: 199 89% 48%;
-    --tool-compress: 142 71% 45%;
-    --tool-convert: 217 91% 55%;
-    --tool-edit: 250 82% 62%;
-    --tool-protect: 328 77% 55%;
-    --tool-ai: 270 70% 60%;
-    /* Elegant Violet/Purple for AI Tools */
+    /* Professional SaaS Tool Palette */
+    --tool-pdf: 0 84% 60%;
+    /* Red #EF4444 */
+    --tool-image: 271 91% 65%;
+    /* Purple #A855F7 */
+    --tool-ai: 239 84% 67%;
+    /* Indigo #6366F1 */
+    --tool-convert: 38 92% 50%;
+    /* Orange #F59E0B */
+    --tool-edit: 161 84% 39%;
+    /* Green #10B981 */
 
-    --gradient-hero: linear-gradient(135deg, hsl(217, 91%, 55%) 0%, hsl(199, 89%, 48%) 60%, hsl(142, 71%, 45%) 100%);
-    --gradient-subtle: linear-gradient(160deg, hsl(217 91% 98%) 0%, hsl(210 20% 98%) 50%, hsl(199 89% 97%) 100%);
-    --shadow-card: 0 1px 3px hsl(220 25% 9% / 0.04), 0 4px 12px hsl(220 25% 9% / 0.05);
-    --shadow-card-hover: 0 8px 20px hsl(217 91% 55% / 0.12), 0 16px 40px hsl(220 25% 9% / 0.08);
+    /* Legacy mappings updated to new palette for compatibility */
+    --tool-merge: var(--tool-pdf);
+    --tool-split: var(--tool-pdf);
+    --tool-compress: var(--tool-pdf);
+    --tool-protect: var(--tool-pdf);
+
+    --gradient-hero: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(271 91% 65%) 100%);
+    --gradient-subtle: linear-gradient(160deg, hsl(var(--primary) / 0.02) 0%, hsl(var(--background)) 100%);
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     --shadow-elevated: 0 12px 40px hsl(220 25% 9% / 0.14);
     --shadow-overlay: 0 0 0 100vmax hsl(220 25% 9% / 0.6);
   }
@@ -87,6 +96,12 @@ html {
   h5,
   h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8;
+    width: 95%;
+    max-width: 1600px;
   }
 }
 

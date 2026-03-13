@@ -24,10 +24,14 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
       {/* Icon */}
       <motion.div
         className={cn(
-          "flex h-14 w-14 items-center justify-center rounded-xl text-primary-foreground transition-transform",
+          "flex h-14 w-14 items-center justify-center rounded-xl transition-all shadow-sm",
           tool.bgClass || categoryColors[tool.category]
         )}
-        whileHover={tool.available ? { scale: 1.12, rotate: [0, -6, 6, -3, 0] } : undefined}
+        whileHover={tool.available ? {
+          scale: 1.15,
+          rotate: [0, -8, 8, -4, 0],
+          boxShadow: `0 0 20px hsl(var(--tool-${tool.category}) / 0.4)`
+        } : undefined}
         transition={{ duration: 0.4 }}
       >
         <Icon className="h-7 w-7" />

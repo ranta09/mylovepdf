@@ -17,6 +17,7 @@ import {
   FileBarChart, Search, Send, ChevronDown
 } from "lucide-react";
 import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
+import FileUpload from "@/components/FileUpload";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -369,49 +370,12 @@ const DocSummarizer = () => {
 
             {!urlMode ? (
               <>
-                {/* Drag & drop zone */}
-                <div
-                  ref={dropRef}
-                  onDragOver={e => { e.preventDefault(); setDragging(true); }}
-                  onDragLeave={() => setDragging(false)}
-                  onDrop={handleFileDrop}
-                  className={`relative rounded-2xl border-2 border-dashed transition-all duration-200 ${dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border bg-secondary/20 hover:border-primary/50 hover:bg-secondary/30"}`}
-                >
-                  <label className="flex flex-col items-center justify-center p-10 cursor-pointer gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                      <Wand2 className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-base font-bold text-foreground">Drag & drop files here</p>
-                      <p className="text-sm text-muted-foreground">or click to browse</p>
-                      <p className="text-xs text-muted-foreground/60">PDF · DOCX · PPTX · XLSX · CSV · TXT · EPUB · JPG · PNG · and more</p>
-                    </div>
-                    <input type="file" multiple accept={SUPPORTED_EXTENSIONS} onChange={handleFileInput} className="hidden" />
-                  </label>
-                </div>
-
-                {/* File list */}
-                {files.length > 0 && (
-                  <div className="space-y-2">
-                    {files.map((f, i) => {
-                      const { icon, color, bg } = getFileIcon(f.name);
-                      return (
-                        <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 shadow-sm">
-                          <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-base ${bg}`}>{icon}</span>
-                          <span className="flex-1 truncate text-sm font-medium text-foreground">{f.name}</span>
-                          <span className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
-                          <button onClick={() => removeFile(i)} className="rounded-full p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                    <button onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
-                      className="flex items-center gap-1.5 text-xs text-primary hover:underline">
-                      <Plus className="h-3.5 w-3.5" /> Add more files
-                    </button>
-                  </div>
-                )}
+                <FileUpload
+                  onFilesChange={setFiles}
+                  files={files}
+                  accept={SUPPORTED_EXTENSIONS}
+                  label="Upload documents"
+                />
               </>
             ) : (
               <div className="space-y-2">

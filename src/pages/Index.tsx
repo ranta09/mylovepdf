@@ -113,7 +113,7 @@ const Index = () => {
             <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full opacity-30 blur-3xl"
               style={{ background: "radial-gradient(ellipse at center, hsl(217 91% 72%) 0%, transparent 70%)" }} />
 
-            <div className="container relative z-10 text-center">
+            <div className="container max-w-[1600px] w-[95%] relative z-10 text-center">
               <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 {/* Headline */}
                 <h2 className="font-display mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-foreground md:text-6xl md:leading-tight mb-4">
@@ -202,7 +202,7 @@ const Index = () => {
           </section>
 
           {/* ─── TOOLS ─── */}
-          <section className="container py-14">
+          <section className="container max-w-[1600px] w-[95%] py-14">
             {search ? (
               filtered.length === 0 ? (
                 <div className="py-16 text-center">

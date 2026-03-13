@@ -16,6 +16,7 @@ import {
   CheckCircle2, XCircle, Download, RotateCcw, ChevronLeft, ChevronRight,
   Timer, Star, Zap, BookOpen, GraduationCap, X, Plus, ChevronDown
 } from "lucide-react";
+import FileUpload from "@/components/FileUpload";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -296,27 +297,12 @@ const QuizGenerator = () => {
             {/* Input content */}
             {inputMode === "file" && (
               <div className="space-y-3">
-                <label className={`flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all hover:border-primary/50 hover:bg-secondary/30 ${files.length ? "border-primary/40 bg-primary/3" : "border-border bg-secondary/20"}`}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                    <BrainCircuit className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold text-foreground">Drop study material here</p>
-                    <p className="text-sm text-muted-foreground">PDF · DOCX · PPTX · XLSX · TXT · CSV · Images</p>
-                  </div>
-                  <input type="file" multiple accept={SUPPORTED_EXTENSIONS} onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])} className="hidden" />
-                </label>
-                {files.length > 0 && (
-                  <div className="space-y-2">
-                    {files.map((f, i) => (
-                      <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5">
-                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="flex-1 truncate text-sm">{f.name}</span>
-                        <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <FileUpload
+                  onFilesChange={setFiles}
+                  files={files}
+                  accept={SUPPORTED_EXTENSIONS}
+                  label="Upload study material"
+                />
               </div>
             )}
 

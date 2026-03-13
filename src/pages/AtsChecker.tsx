@@ -15,6 +15,7 @@ import {
   Sparkles, RotateCcw, Clipboard, ClipboardCheck,
   LinkedinIcon, BriefcaseBusiness, Wand2
 } from "lucide-react";
+import FileUpload from "@/components/FileUpload";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -182,25 +183,13 @@ const AtsChecker = () => {
             </div>
 
             {inputMode === "file" && (
-              <div className="space-y-3">
-                <label className={`flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all hover:border-primary/50 hover:bg-secondary/30 ${files.length ? "border-primary/40" : "border-border bg-secondary/20"}`}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                    <ScanSearch className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold text-foreground">Drop your resume here</p>
-                    <p className="text-sm text-muted-foreground mt-0.5">PDF · DOCX · TXT · RTF · ODT</p>
-                  </div>
-                  <input type="file" accept=".pdf,.docx,.doc,.txt,.rtf,.odt" onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files ?? [])])} className="hidden" />
-                </label>
-                {files.length > 0 && files.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5">
-                    <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="flex-1 truncate text-sm">{f.name}</span>
-                    <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))}><X className="h-4 w-4 text-muted-foreground hover:text-destructive" /></button>
-                  </div>
-                ))}
-              </div>
+              <FileUpload
+                onFilesChange={setFiles}
+                files={files}
+                accept=".pdf,.docx,.doc,.txt,.rtf,.odt"
+                multiple={false}
+                label="Upload resume"
+              />
             )}
 
             {inputMode === "paste" && (

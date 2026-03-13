@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
+import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -267,32 +268,13 @@ const TranslatePdf = () => {
         {results.length === 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
 
-            {/* Drop zone */}
-            <label className={`flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all hover:border-primary/50 hover:bg-secondary/30 ${files.length ? "border-primary/40" : "border-border bg-secondary/20"}`}>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                <Globe className="h-7 w-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-bold text-foreground">Drop documents here</p>
-                <p className="text-sm text-muted-foreground mt-0.5">PDF · DOCX · PPTX · XLSX · TXT · RTF · ODT</p>
-              </div>
-              <input type="file" multiple accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.rtf,.odt"
-                onChange={e => handleFiles(Array.from(e.target.files ?? []))} className="hidden" />
-            </label>
-
-            {/* File list */}
-            {files.length > 0 && (
-              <div className="space-y-2">
-                {files.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5">
-                    <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="flex-1 truncate text-sm">{f.name}</span>
-                    <span className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
-                    <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))}><X className="h-4 w-4 text-muted-foreground hover:text-destructive" /></button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Standard File Upload */}
+            <FileUpload
+              onFilesChange={handleFiles}
+              files={files}
+              accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.rtf,.odt"
+              label="Upload documents"
+            />
 
             {/* Language pickers */}
             {files.length > 0 && (

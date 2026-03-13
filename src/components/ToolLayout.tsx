@@ -60,7 +60,13 @@ const ToolLayout = ({
         <meta name="description" content={metaDescription || description} />
       </Helmet>
 
-      <div className="flex min-h-screen flex-col bg-background">
+      <div
+        className="flex min-h-screen flex-col bg-background"
+        style={{
+          '--primary': `var(--tool-${currentTool?.category || category})`,
+          '--ring': `var(--tool-${currentTool?.category || category})`
+        } as React.CSSProperties}
+      >
         <Navbar />
         <main className="flex-1">
           {/* Tool header */}
@@ -79,12 +85,6 @@ const ToolLayout = ({
                   <div>
                     <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">{title}</h1>
                     <p className="mx-auto mt-2 max-w-lg text-muted-foreground">{description}</p>
-                    <div className="mt-4 flex flex-col items-center gap-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Your files are private and automatically deleted after processing.</span>
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
               </div>
@@ -93,7 +93,7 @@ const ToolLayout = ({
 
 
           {/* Main content */}
-          <section className="container max-w-3xl py-10">
+          <section className="container max-w-[1600px] w-[95%] py-10">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
