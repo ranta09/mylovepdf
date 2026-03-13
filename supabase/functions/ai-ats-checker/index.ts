@@ -1,82 +1,103 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
+const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
   try {
     const { text, jobDescription } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const jobContext = jobDescription
-      ? `\n\nJOB DESCRIPTION FOR COMPARISON:\n${jobDescription.slice(0, 5000)}`
-      : "";
+    const jobCtx = jobDescription ? `\n\nJOB DESCRIPTION:\n${String(jobDescription).slice(0, 6000)}` : "";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const sys = `You are a world-class ATS resume analyst and career coach. Analyze the resume comprehensively and return ONLY valid JSON (no markdown, no fences) matching this exact schema:
+
+{
+  "overallScore": <0-100>,
+  "breakdown": {
+    "atsCompatibility": <0-100>,
+    "keywordMatch": <0-100>,
+    "contentQuality": <0-100>,
+    "formatting": <0-100>,
+    "impactStatements": <0-100>
+  },
+  "sections": {
+    "contact": { "score": <0-100>, "found": ["email","phone",...], "issues": [], "suggestions": [] },
+    "summary": { "score": <0-100>, "issues": [], "suggestions": [], "rewrite": "<improved summary text>" },
+    "experience": { "score": <0-100>, "issues": [], "suggestions": [] },
+    "skills": { "score": <0-100>, "technical": ["skill1",...], "soft": ["skill1",...], "missing": ["skill1",...] },
+    "education": { "score": <0-100>, "issues": [], "suggestions": [] }
+  },
+  "keywords": {
+    "found": ["keyword1",...],
+    "missing": ["keyword1",...],
+    "recommended": [{"keyword":"...","section":"Experience|Skills|Summary"}]
+  },
+  "atsWarnings": ["warning1",...],
+  "bulletRewrites": [
+    {"original": "Responsible for managing...", "improved": "Managed X that achieved Y by Z%"}
+  ],
+  "jobMatch": {
+    "score": <0-100>,
+    "matchedSkills": ["skill1",...],
+    "missingSkills": ["skill1",...],
+    "suggestedRoles": [{"role":"Data Analyst","match":<0-100>,"missingFor":["skill1",...]}]
+  },
+  "linkedInSuggestions": {
+    "headline": "<optimized headline>",
+    "about": "<optimized about section>"
+  },
+  "grammarIssues": ["issue1",...],
+  "lengthAdvice": "<advice on resume length>",
+  "overallSuggestions": ["suggestion1",...]
+}
+
+SCORING RULES:
+- atsCompatibility: Check for tables, columns, headers/footers, images, non-standard fonts, special characters
+- keywordMatch: Based on job description keyword frequency and semantic similarity (if no JD, score general industry keywords)
+- contentQuality: Presence of measurable achievements, strong action verbs, professional language
+- formatting: Clean sections, consistent formatting, ATS-parseable structure
+- impactStatements: Quantified results (numbers, %, $), leadership words, outcome-focused bullets
+
+Provide 3-5 bulletRewrites from the weakest bullets found. Provide 3 suggestedRoles. Return ONLY the JSON.`;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          {
-            role: "system",
-            content: `You are an expert ATS (Applicant Tracking System) resume analyzer. Analyze the resume and return a JSON object with this exact structure:
-
-{
-  "score": <number 0-100>,
-  "sections": {
-    "formatting": { "score": <0-100>, "issues": [<string>], "suggestions": [<string>] },
-    "keywords": { "score": <0-100>, "found": [<string>], "missing": [<string>], "suggestions": [<string>] },
-    "experience": { "score": <0-100>, "issues": [<string>], "suggestions": [<string>] },
-    "skills": { "score": <0-100>, "found": [<string>], "missing": [<string>], "suggestions": [<string>] },
-    "education": { "score": <0-100>, "issues": [<string>], "suggestions": [<string>] }
-  },
-  "overallSuggestions": [<string>]
-}
-
-Return ONLY the JSON object, no markdown, no code blocks.`,
-          },
-          { role: "user", content: `Analyze this resume:\n\n${text.slice(0, 20000)}${jobContext}` },
+          { role: "system", content: sys },
+          { role: "user", content: `Analyze this resume:${jobCtx}\n\nRESUME:\n${String(text).slice(0, 30000)}` },
         ],
+        temperature: 0.15,
       }),
     });
 
-    if (!response.ok) {
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: `AI error: ${response.status}` }), {
-        status: response.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!res.ok) {
+      const t = await res.text();
+      return new Response(JSON.stringify({ error: `AI error: ${res.status}: ${t}` }), { status: res.status, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
-    const data = await response.json();
-    let content = data.choices?.[0]?.message?.content || "{}";
-    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const d = await res.json();
+    let raw = d.choices?.[0]?.message?.content ?? "{}";
+    raw = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
-    let analysis;
+    let analysis: any;
     try {
-      analysis = JSON.parse(content);
+      analysis = JSON.parse(raw);
     } catch {
-      analysis = { score: 0, sections: {}, overallSuggestions: ["Failed to parse analysis. Please try again."] };
+      const m = raw.match(/\{[\s\S]*\}/);
+      try { analysis = m ? JSON.parse(m[0]) : {}; } catch { analysis = {}; }
     }
 
-    return new Response(JSON.stringify({ analysis }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ analysis }), { headers: { ...cors, "Content-Type": "application/json" } });
   } catch (e) {
-    console.error("ats error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
   }
 });
