@@ -316,6 +316,62 @@ const Index = () => {
           )}
 
         </main>
+
+        {/* ─── SEO CONTENT SECTION ─── */}
+        <section className="container py-20 border-t border-border">
+          <div className="max-w-4xl mx-auto prose prose-sm md:prose-base dark:prose-invert space-y-12">
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl font-display font-bold text-foreground m-0">Global PDF Excellence for Everyone</h2>
+              <p className="text-lg text-muted-foreground">MagicDOCX is more than just a PDF editor. It's a complete ecosystem designed to make document management accessible, secure, and intelligent.</p>
+            </div>
+
+            <div className="grid gap-12 md:grid-cols-2">
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-foreground">Secure & Private by Design</h3>
+                <p>
+                  Most online PDF tools upload your sensitive documents to their servers. We do things differently.
+                  MagicDOCX utilizes <strong>browser-based processing</strong> (WebAssembly and Javascript) to
+                  manipulate your files directly on your device. This means your private data stays private.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-foreground">Powered by Advanced AI</h3>
+                <p>
+                  We are bridging the gap between traditional PDF utilities and future-proof AI. Our platform
+                  includes tools to <strong>summarize lengthy PDFs</strong>, generate quizzes for students,
+                  translate documents into 65+ languages, and even chat with your documents using natural language.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-secondary/20 rounded-3xl p-8 md:p-12 space-y-6">
+              <h3 className="text-2xl font-bold text-foreground text-center">Free Tools, Professional Quality</h3>
+              <p className="text-center text-muted-foreground">
+                We believe that powerful productivity shouldn't come with a subscription price tag. MagicDOCX
+                offers 35+ professional tools — from merging and splitting to OCR and electronic signatures —
+                completely free of charge. No watermarks, no sign-ups, and no hidden limits.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                {["Merge", "Convert", "OCR", "Sign", "Protect", "Compress", "Translate", "Summarize"].map(tool => (
+                  <div key={tool} className="flex items-center gap-2 justify-center py-2 px-4 rounded-xl bg-background border border-border text-xs font-bold">
+                    <CheckCircle className="h-3 w-3 text-primary" /> {tool}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="text-2xl font-bold text-foreground">Why Browser-Based Tools Matter?</h3>
+              <p>
+                When you use MagicDOCX, you are using the latest in web technology. Traditional server-side
+                converters add latency, pose security risks, and often have strict file size limits. By
+                leveraging the power of your modern browser, we provide <strong>instant results</strong>
+                without the wait. Your computer does the work, and your data stays in your hands.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <Footer />
       </div>
     </>

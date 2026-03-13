@@ -43,6 +43,10 @@ import HtmlToPdf from "./pages/HtmlToPdf";
 import OcrPdf from "./pages/OcrPdf";
 import PdfToPdfa from "./pages/PdfToPdfa";
 import ComparePdf from "./pages/ComparePdf";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
 import Chatbot from "./components/Chatbot";
 import GlobalDropOverlay from "./components/GlobalDropOverlay";
 import GlobalUploadHint from "./components/GlobalUploadHint";
@@ -97,6 +101,10 @@ const App = () => (
                 <Route path="/ocr-pdf" element={<OcrPdf />} />
                 <Route path="/pdf-to-pdfa" element={<PdfToPdfa />} />
                 <Route path="/compare-pdf" element={<ComparePdf />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Chatbot />

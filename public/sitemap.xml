@@ -35,4 +35,8 @@
   <url><loc>https://mylovepdf.lovable.app/chat-with-pdf</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://mylovepdf.lovable.app/ats-checker</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://mylovepdf.lovable.app/translate-pdf</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mylovepdf.lovable.app/privacy</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://mylovepdf.lovable.app/terms</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://mylovepdf.lovable.app/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://mylovepdf.lovable.app/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
 </urlset>

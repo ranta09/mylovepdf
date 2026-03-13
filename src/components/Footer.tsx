@@ -12,6 +12,14 @@ const Footer = () => {
     { title: t.catConvert, links: tools.filter(tl => tl.category === "convert").map(tl => ({ label: t[`tool.${tl.id}` as keyof typeof t] || tl.name, path: tl.path })) },
     { title: t.footerEditOrganize, links: tools.filter(tl => tl.category === "edit").map(tl => ({ label: t[`tool.${tl.id}` as keyof typeof t] || tl.name, path: tl.path })) },
     { title: t.footerEssentials, links: tools.filter(tl => ["merge", "split", "compress", "protect"].includes(tl.category)).map(tl => ({ label: t[`tool.${tl.id}` as keyof typeof t] || tl.name, path: tl.path })) },
+    {
+      title: "Company", links: [
+        { label: "About Us", path: "/about" },
+        { label: "Contact Us", path: "/contact" },
+        { label: "Privacy Policy", path: "/privacy" },
+        { label: "Terms of Service", path: "/terms" },
+      ]
+    },
   ];
 
   return (
