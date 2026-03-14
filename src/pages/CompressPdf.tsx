@@ -168,55 +168,71 @@ const CompressPdf = () => {
   const totalOriginalSize = files.reduce((acc, f) => acc + f.size, 0);
   const estimatedSize = totalOriginalSize * (1 - reductionPercentage / 100);
 
-  // --- ADVANCED COMPRESSION HELPERS ---
-  const processImage = async (imageBytes: Uint8Array, mimeType: string, targetDpi: number, quality: number): Promise<Uint8Array> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const blob = new Blob([imageBytes.buffer as ArrayBuffer], { type: mimeType });
-      const url = URL.createObjectURL(blob);
+  // --- REAL COMPRESSION: render pages as JPEG images at target DPI/quality, rebuild PDF ---
 
-      img.onload = () => {
-        URL.revokeObjectURL(url);
+  const compressSinglePdf = async (
+    file: File,
+    dpi: number,
+    quality: number,
+    onProgress: (p: number) => void
+  ): Promise<{ blob: Blob; originalSize: number; compressedSize: number }> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const numPages = pdfDoc.numPages;
+    const outDoc = await PDFDocument.create();
 
-        // Simple heuristic: 72 points per inch. 
-        // We scale pixels so they align roughly with target DPI relative to a standard A4/Letter width.
-        const maxDimension = Math.round((targetDpi / 72) * 600);
+    // Scale factor: 72 DPI is the PDF standard, so scale = targetDpi / 72
+    const scale = dpi / 72;
 
-        let width = img.width;
-        let height = img.height;
+    for (let i = 1; i <= numPages; i++) {
+      onProgress(Math.round((i / numPages) * 90));
 
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
+      const page = await pdfDoc.getPage(i);
+      const viewport = page.getViewport({ scale });
 
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(imageBytes);
-          return;
-        }
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d")!;
+      await page.render({ canvasContext: ctx, viewport }).promise;
 
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((resultBlob) => {
-          if (resultBlob) {
-            resultBlob.arrayBuffer().then(buffer => resolve(new Uint8Array(buffer)));
-          } else {
-            resolve(imageBytes);
-          }
-        }, "image/jpeg", quality);
-      };
+      // Convert canvas to JPEG blob at target quality
+      const jpegBlob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob(
+          (blob) => resolve(blob!),
+          "image/jpeg",
+          quality
+        );
+      });
 
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(imageBytes);
-      };
+      const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
+      const jpegImage = await outDoc.embedJpg(jpegBytes);
 
-      img.src = url;
-    });
+      // Get original page dimensions (in PDF points at 72 DPI)
+      const origViewport = page.getViewport({ scale: 1 });
+      const pdfPage = outDoc.addPage([origViewport.width, origViewport.height]);
+      pdfPage.drawImage(jpegImage, {
+        x: 0,
+        y: 0,
+        width: origViewport.width,
+        height: origViewport.height,
+      });
+    }
+
+    // Strip metadata
+    outDoc.setTitle("");
+    outDoc.setAuthor("");
+    outDoc.setSubject("");
+    outDoc.setKeywords([]);
+    outDoc.setProducer("MagicDOCX");
+    outDoc.setCreator("MagicDOCX");
+
+    onProgress(95);
+
+    const compressedBytes = await outDoc.save({ useObjectStreams: true });
+    const blob = new Blob([compressedBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+
+    return { blob, originalSize: file.size, compressedSize: blob.size };
   };
 
   const startCompression = async () => {
@@ -227,23 +243,21 @@ const CompressPdf = () => {
     setResults([]);
     const newResults: ProcessedFile[] = [];
 
-    // Mode-specific targets as requested
     const targets = {
       recommended: { dpi: 150, quality: 0.75 },
       high: { dpi: 96, quality: 0.60 },
       low: { dpi: 200, quality: 0.85 },
-      custom: { dpi: 120, quality: 0.70 }
+      custom: { dpi: 120, quality: 0.70 },
     };
 
-    let config = targets[mode === 'custom' ? 'custom' : mode];
+    let config = targets[mode === "custom" ? "custom" : mode];
 
-    // Heuristic adjustment for custom target size
-    if (mode === 'custom' && customTargetKB) {
+    if (mode === "custom" && customTargetKB) {
       const targetSize = parseFloat(customTargetKB) * 1024;
       const totalSize = files.reduce((acc, f) => acc + f.size, 0);
       const ratio = targetSize / totalSize;
-
-      if (ratio < 0.25) config = { dpi: 72, quality: 0.50 };
+      if (ratio < 0.1) config = { dpi: 72, quality: 0.40 };
+      else if (ratio < 0.25) config = { dpi: 72, quality: 0.50 };
       else if (ratio < 0.5) config = { dpi: 96, quality: 0.60 };
       else if (ratio < 0.8) config = { dpi: 150, quality: 0.75 };
       else config = { dpi: 200, quality: 0.85 };
@@ -252,93 +266,32 @@ const CompressPdf = () => {
     for (let i = 0; i < files.length; i++) {
       setCurrentFileIndex(i);
       const file = files[i];
+
       try {
-        setProgress(Math.round(((i) / files.length) * 100) + 2);
+        const result = await compressSinglePdf(
+          file,
+          config.dpi,
+          config.quality,
+          (p) => setProgress(Math.round(((i + p / 100) / files.length) * 100))
+        );
 
-        // 1. Load original document
-        const bytes = await file.arrayBuffer();
-        const srcDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-        const outDoc = await PDFDocument.create();
-
-        // 2. Real Image Optimization (Step 2: Optimize images)
-        // We traverse low-level objects to find and recompress images
-        const context = srcDoc.context;
-        const indirectObjects = context.enumerateIndirectObjects();
-
-        for (let j = 0; j < indirectObjects.length; j++) {
-          const [ref] = indirectObjects[j];
-          const lookedUp = context.lookup(ref);
-
-          if (lookedUp && (lookedUp as any).dict) {
-            const dict = (lookedUp as any).dict;
-            const subtype = dict.get(context.obj('Subtype'));
-            if (subtype && subtype.toString() === '/Image') {
-              const contents = (lookedUp as any).contents;
-              if (contents && contents.length > 5000) {
-                try {
-                  const optimized = await processImage(contents, 'image/jpeg', config.dpi, config.quality);
-                  (lookedUp as any).contents = optimized;
-                } catch (e) {
-                  console.warn("Failed to optimize image in PDF", e);
-                }
-              }
-            }
-          }
-          if (j % 20 === 0) setProgress(Math.min(95, Math.round(((i + (j / indirectObjects.length)) / files.length) * 100)));
-        }
-
-        // 3. Create fresh document for structural cleanup (Purges unnecessary data)
-        // (Already created earlier for context)
-
-        // 4. Copy pages and apply rotation
-        const pageIndices = srcDoc.getPageIndices();
-        const copiedPages = await outDoc.copyPages(srcDoc, pageIndices);
-
-        const fileRotation = fileDataList[i]?.rotation || 0;
-        copiedPages.forEach((page) => {
-          if (fileRotation !== 0) {
-            const currentRotation = page.getRotation().angle;
-            page.setRotation(degrees((currentRotation + fileRotation) % 360));
-          }
-          outDoc.addPage(page);
-        });
-
-        // 5. Strip metadata (Step 3: Remove unnecessary data)
-        outDoc.setTitle('');
-        outDoc.setAuthor('');
-        outDoc.setSubject('');
-        outDoc.setKeywords([]);
-        outDoc.setProducer('MagicDOCX Compressor');
-        outDoc.setCreator('MagicDOCX');
-
-        setProgress(Math.round(((i + 0.9) / files.length) * 100));
-
-        // 6. Save with maximum structural optimization and Flate compression
-        const compressedBytes = await outDoc.save({
-          useObjectStreams: true,
-          addDefaultPage: false,
-        });
-
-        const finalBlob = new Blob([compressedBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-        const finalSize = finalBlob.size;
-        const url = URL.createObjectURL(finalBlob);
+        const url = URL.createObjectURL(result.blob);
 
         newResults.push({
           originalFile: file,
-          compressedBlob: finalBlob,
+          compressedBlob: result.blob,
           compressedUrl: url,
-          originalSize: file.size,
-          compressedSize: finalSize
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
         });
 
-        // 7. AUTO-DOWNLOAD
-        const a = document.createElement('a');
+        // Auto-download
+        const a = document.createElement("a");
         a.href = url;
         a.download = file.name.replace(/\.pdf$/i, "_compressed.pdf");
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
       } catch (err) {
         console.error("Compression failed for", file.name, err);
         toast.error(`Failed to compress ${file.name}`);
@@ -348,7 +301,7 @@ const CompressPdf = () => {
     setProgress(100);
     setResults(newResults);
     setProcessing(false);
-    toast.success("Compression complete!");
+    if (newResults.length > 0) toast.success("Compression complete!");
   };
 
   return (
