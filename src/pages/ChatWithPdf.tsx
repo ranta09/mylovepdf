@@ -16,6 +16,8 @@ import {
   RotateCcw, FileQuestion, ChevronDown, CheckCircle2
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Layout } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -293,16 +295,9 @@ const ChatWithPdf = () => {
       metaTitle="Chat With PDF – Ask Questions About Documents | MagicDocx"
       metaDescription="Chat with PDFs and documents using AI. Upload files, ask questions, generate summaries, and extract insights instantly with MagicDocx."
       toolId="ai-chat"
-      hideHeader
+      hideHeader={!!documentText || extracting}
     >
       <div className="space-y-8">
-        <ToolHeader
-          title="Chat With PDF"
-          description="Ask questions about any document using AI"
-          icon={<MessageSquare className="h-5 w-5 text-primary-foreground" />}
-          className="bg-tool-ai/5 border-tool-ai/20"
-          iconBgClass="bg-tool-ai"
-        />
 
         {/* ── UPLOAD PHASE ──────────────────────────────────────────────── */}
         {!documentText && (
@@ -369,128 +364,233 @@ const ChatWithPdf = () => {
           </motion.div>
         )}
 
-        {/* ── CHAT PHASE ─────────────────────────────────────────────────── */}
+        {/* ── IMMERSIVE CHAT WORKSPACE ───────────────────────────────────────── */}
         {documentText && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-row overflow-hidden relative">
 
-            {/* Doc info bar */}
-            <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 shadow-sm">
-              <div className="flex items-center gap-2 min-w-0">
-                <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm font-medium truncate">{docNames.join(", ")}</span>
-                <span className="text-xs text-muted-foreground flex-shrink-0">{docNames.length > 1 ? `(${docNames.length} docs)` : ""}</span>
-              </div>
-              <div className="flex gap-2 flex-shrink-0 ml-3">
-                <Button variant="ghost" size="sm" onClick={exportPDF} className="rounded-lg h-7 px-2 text-xs gap-1"><Download className="h-3 w-3" />PDF</Button>
-                <Button variant="ghost" size="sm" onClick={exportMD} className="rounded-lg h-7 px-2 text-xs gap-1"><Download className="h-3 w-3" />MD</Button>
-                <Button variant="ghost" size="sm" onClick={exportTXT} className="rounded-lg h-7 px-2 text-xs gap-1"><Download className="h-3 w-3" />TXT</Button>
-                <Button variant="outline" size="sm" onClick={resetChat} className="rounded-lg h-7 px-2 text-xs gap-1"><RotateCcw className="h-3 w-3" />New</Button>
-              </div>
-            </div>
-
-            {/* Quick actions */}
-            <div className="flex flex-wrap gap-2">
-              {QUICK_ACTIONS.map(a => (
-                <button key={a.mode} onClick={() => runQuickAction(a.mode)}
-                  disabled={!!quickLoading || isStreaming}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all disabled:opacity-50 ${a.color}`}>
-                  {quickLoading === a.mode ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : a.icon}
-                  {a.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 min-h-[420px] max-h-[56vh] overflow-y-auto rounded-2xl border border-border bg-secondary/10 p-4 space-y-4 scroll-smooth">
-
-              {/* Suggested prompts (shown before first user message) */}
-              {messages.length <= 1 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Suggested Questions</p>
-                  <div className="flex flex-wrap gap-2">
-                    {SUGGESTED_PROMPTS.map(p => (
-                      <button key={p} onClick={() => sendMessage(p)}
-                        className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-secondary/50 transition-all text-left">
-                        {p}
-                      </button>
-                    ))}
-                  </div>
+              {/* LEFT SIDE: Document Intelligence */}
+              <div className="w-80 border-r border-border bg-secondary/5 flex flex-col shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-black uppercase tracking-widest">Document Intelligence</span>
                 </div>
-              )}
 
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex gap-3 group ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {msg.role === "assistant" && (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-0.5">
-                      <Bot className="h-4 w-4 text-primary" />
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                    {/* Active Documents */}
+                    <div className="space-y-3">
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Active Documents</h3>
+                      <div className="space-y-2">
+                        {docNames.map((name, i) => (
+                          <div key={i} className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-center gap-3">
+                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-[10px] font-bold text-foreground uppercase truncate tracking-tight">{name}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex flex-col gap-1 max-w-[84%]">
-                    {msg.mode && msg.mode !== "chat" && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{MODE_LABELS[msg.mode as QuickMode]}</span>
-                    )}
-                    <div className={`rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-card border border-border shadow-sm rounded-bl-sm"}`}>
-                      {msg.role === "assistant" ? (
-                        <div className="prose prose-sm max-w-none dark:prose-invert text-foreground">
-                          <ReactMarkdown>{msg.content || "…"}</ReactMarkdown>
+
+                    {/* Quick Intelligence */}
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Quick Vectors
+                      </h3>
+                      <div className="space-y-2">
+                        {QUICK_ACTIONS.map(a => (
+                          <button key={a.mode} onClick={() => runQuickAction(a.mode)}
+                            disabled={!!quickLoading || isStreaming}
+                            className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all group ${a.color}`}>
+                            {quickLoading === a.mode ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : a.icon}
+                            <span className="text-[10px] font-black uppercase tracking-wider">{a.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Security Protocol */}
+                    <div className="pt-6 border-t border-border">
+                      <div className="p-4 bg-secondary/20 rounded-2xl border border-border space-y-3">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          Data Integrity
+                        </p>
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
+                          Your files are encrypted during processing and automatically purged from our neural buffers after session termination.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </div>
+
+              {/* CENTER: Chat Stream */}
+              <div className="flex-1 bg-secondary/10 flex flex-col items-center p-8 overflow-hidden relative">
+                <div className="w-full max-w-4xl h-full flex flex-col bg-background shadow-2xl rounded-2xl border border-border overflow-hidden relative">
+
+                  {/* Messages Area */}
+                  <ScrollArea className="flex-1">
+                    <div className="p-8 space-y-8 min-h-full flex flex-col">
+
+                      {/* Initial State / Suggestions */}
+                      {messages.length <= 1 && (
+                        <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-500 py-12">
+                          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20">
+                            <Bot className="h-10 w-10 text-primary" />
+                          </div>
+                          <div className="text-center space-y-2">
+                            <h2 className="text-xl font-black uppercase tracking-tighter">I've parsed your documents</h2>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Select a starter prompt or ask anything</p>
+                          </div>
+                          <div className="flex flex-wrap justify-center gap-2 max-w-xl">
+                            {SUGGESTED_PROMPTS.map(p => (
+                              <button key={p} onClick={() => sendMessage(p)}
+                                className="rounded-full border border-border bg-background px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:border-primary/40 hover:text-primary transition-all shadow-sm">
+                                {p}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      ) : msg.content}
-                    </div>
-                    {msg.role === "assistant" && msg.content && (
-                      <button onClick={() => copyMessage(i, msg.content)}
-                        className="self-start flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all px-1">
-                        {copied === i ? <><CheckCircle2 className="h-3 w-3 text-green-500" />Copied</> : <><Clipboard className="h-3 w-3" />Copy</>}
-                      </button>
-                    )}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary mt-0.5">
-                      <User className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-              ))}
+                      )}
 
-              {/* Streaming cursor */}
-              {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10"><Bot className="h-4 w-4 text-primary" /></div>
-                  <div className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /><span className="text-xs text-muted-foreground">Thinking…</span>
+                      {/* Message list */}
+                      <div className="space-y-8">
+                        {messages.map((msg, i) => (
+                          <div key={i} className={`flex gap-4 group ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                            {msg.role === "assistant" && (
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mt-1">
+                                <Bot className="h-5 w-5 text-primary" />
+                              </div>
+                            )}
+                            <div className={`flex flex-col gap-2 max-w-[85%]`}>
+                              {msg.mode && msg.mode !== "chat" && (
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary mb-1">{MODE_LABELS[msg.mode as QuickMode]}</span>
+                              )}
+                              <div className={`rounded-2xl px-6 py-4 text-[13px] leading-relaxed relative ${msg.role === "user" ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20" : "bg-secondary/50 border border-border text-foreground"}`}>
+                                {msg.role === "assistant" ? (
+                                  <div className="prose prose-sm max-w-none dark:prose-invert text-foreground font-medium">
+                                    <ReactMarkdown>{msg.content || "Thinking..."}</ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <p className="uppercase tracking-tight">{msg.content}</p>
+                                )}
+
+                                {msg.role === "assistant" && msg.content && (
+                                  <button onClick={() => copyMessage(i, msg.content)}
+                                    className="absolute -right-10 top-2 p-2 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
+                                    {copied === i ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            {msg.role === "user" && (
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-foreground text-background mt-1">
+                                <User className="h-5 w-5" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
+                          <div className="flex gap-4 animate-pulse">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mt-1">
+                              <Bot className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="bg-secondary/50 border border-border rounded-2xl px-6 py-4 flex items-center gap-3">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Neural Buffer Overflow...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div ref={chatEndRef} />
+                    </div>
+                  </ScrollArea>
+
+                  {/* Input Area */}
+                  <div className="p-6 border-t border-border bg-background/50 backdrop-blur-md">
+                    <div className="flex gap-3 items-end max-w-3xl mx-auto w-full">
+                      <div className="relative flex-1 group">
+                        <textarea
+                          ref={inputRef}
+                          value={input}
+                          rows={1}
+                          onChange={e => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
+                          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                          placeholder="Interrogate your document stream..."
+                          disabled={isStreaming}
+                          className="w-full rounded-2xl border-2 border-border bg-secondary/20 px-6 py-4 pr-14 text-xs font-bold uppercase tracking-tight resize-none focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 disabled:opacity-60 max-h-[120px] transition-all placeholder:text-muted-foreground/50"
+                        />
+                        <button onClick={toggleVoice}
+                          className={`absolute right-4 bottom-4 p-2 rounded-xl transition-all ${listening ? "bg-red-500 text-white animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10"}`}>
+                          {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <Button onClick={() => sendMessage()} disabled={isStreaming || !input.trim()} size="icon"
+                        className="h-14 w-14 rounded-2xl shrink-0 shadow-lg shadow-primary/20 bg-primary hover:shadow-primary/40 transition-all">
+                        {isStreaming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Input bar */}
-            <div className="flex gap-2 items-end">
-              <div className="relative flex-1">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  rows={1}
-                  onChange={e => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  placeholder="Ask a question about your document…"
-                  disabled={isStreaming}
-                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 pr-12 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60 max-h-[120px]"
-                />
-                <button onClick={toggleVoice}
-                  className={`absolute right-3 bottom-3 p-1.5 rounded-full transition-all ${listening ? "bg-red-500 text-white animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-secondary"}`}>
-                  {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </button>
               </div>
-              <Button onClick={() => sendMessage()} disabled={isStreaming || !input.trim()} size="icon"
-                className="h-11 w-11 rounded-2xl shrink-0 shadow-sm">
-                {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </div>
 
-            <p className="text-center text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
-              <ShieldCheck className="h-3 w-3" />Files encrypted and automatically deleted after 1 hour. · {messages.length - 1} messages
-            </p>
-          </motion.div>
+              {/* RIGHT SIDE: Global Actions */}
+              <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
+                <div className="p-4 border-b border-border bg-secondary/5 flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Strategic Hub</span>
+                  <Button variant="ghost" size="sm" onClick={resetChat} className="h-8 text-[10px] font-black uppercase tracking-widest hover:bg-destructive/5 hover:text-destructive px-3 gap-2">
+                    <RotateCcw className="h-3.5 w-3.5" /> Reset
+                  </Button>
+                </div>
+
+                <ScrollArea className="flex-1 p-6">
+                  <div className="space-y-8">
+                    {/* Suggestion Prompts */}
+                    {messages.length > 2 && (
+                      <div className="space-y-4">
+                        <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 border-b border-border pb-2">
+                          <Lightbulb className="h-3.5 w-3.5 text-yellow-500" /> Follow-ups
+                        </h3>
+                        <div className="flex flex-col gap-2">
+                          {SUGGESTED_PROMPTS.slice(0, 3).map(p => (
+                            <button key={p} onClick={() => sendMessage(p)} className="text-left p-3 rounded-xl border border-border bg-secondary/20 text-[10px] font-bold uppercase tracking-tight text-muted-foreground hover:border-primary/30 hover:text-primary transition-all">
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Export Profiles */}
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 border-b border-border pb-2">
+                        <Download className="h-3.5 w-3.5" /> Intelligence Export
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          { label: "Neural PDF Report", icon: <Download className="h-4 w-4" />, action: exportPDF },
+                          { label: "Clean Markdown", icon: <FileText className="h-4 w-4" />, action: exportMD },
+                          { label: "Plain Text Stream", icon: <Clipboard className="h-4 w-4" />, action: exportTXT },
+                        ].map((exp, i) => (
+                          <Button key={i} variant="outline" onClick={exp.action} className="justify-start h-12 rounded-xl text-[10px] font-black uppercase tracking-widest gap-4 border-border hover:bg-secondary/50">
+                            {exp.icon} {exp.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t border-border bg-secondary/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest uppercase">Neural Link Established</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── SEO Content ──────────────────────────────────────────────────── */}

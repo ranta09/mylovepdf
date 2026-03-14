@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
 import FileUpload from "@/components/FileUpload";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -343,16 +344,9 @@ const DocSummarizer = () => {
       metaTitle="AI Document Summarizer – Summarize PDFs, Word, PPT & More | MagicDocx"
       metaDescription="Summarize documents instantly using AI. Upload PDF, Word, PPT, Excel or images and get quick summaries, key insights and study notes online for free."
       toolId="ai-summarizer"
-      hideHeader
+      hideHeader={status !== "idle"}
     >
       <div className="space-y-8">
-        <ToolHeader
-          title="AI Document Summarizer"
-          description="Instantly summarize any document, file, or web page with AI"
-          icon={<Wand2 className="h-5 w-5 text-primary-foreground" />}
-          className="bg-tool-ai/5 border-tool-ai/20"
-          iconBgClass="bg-tool-ai"
-        />
 
         {/* ── Upload / Input area ─────────────────────────────────────── */}
         {status === "idle" && (
@@ -454,130 +448,174 @@ const DocSummarizer = () => {
 
         {/* ── Results ─────────────────────────────────────────────────── */}
         {status === "completed" && (
-          <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden relative">
 
-            {/* File info bar */}
-            <div className="flex flex-wrap items-center gap-2">
-              {extractedFiles.map((f, i) => {
-                const { icon, bg } = getFileIcon(f.name);
-                return (
-                  <div key={i} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${bg}`}>
-                    <span>{icon}</span>
-                    <span className="max-w-[120px] truncate">{f.name.split("/").pop()}</span>
-                    {f.pageCount && <span className="text-muted-foreground">· {f.pageCount}p</span>}
+              {/* Toolbar / File info bar */}
+              <div className="bg-background/80 backdrop-blur border-b border-border px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-3">
+                  <Wand2 className="h-4 w-4 text-primary" />
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-black uppercase tracking-tight text-foreground">AI Intelligence Report</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {extractedFiles.map((f, i) => {
+                        const { icon } = getFileIcon(f.name);
+                        return (
+                          <div key={i} className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                            <span>{icon}</span>
+                            <span className="max-w-[100px] truncate">{f.name.split("/").pop()}</span>
+                            {i < extractedFiles.length - 1 && <span>•</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                );
-              })}
-              <div className="ml-auto flex gap-2">
-                <Button variant="ghost" size="sm" onClick={copyContent} className="h-7 rounded-lg text-xs gap-1">
-                  <Copy className="h-3.5 w-3.5" /> Copy
-                </Button>
-                <Button variant="ghost" size="sm" onClick={downloadMarkdown} className="h-7 rounded-lg text-xs gap-1">
-                  <Download className="h-3.5 w-3.5" /> MD
-                </Button>
-                <Button variant="ghost" size="sm" onClick={downloadTxt} className="h-7 rounded-lg text-xs gap-1">
-                  <Download className="h-3.5 w-3.5" /> TXT
-                </Button>
-                <Button variant="ghost" size="sm" onClick={downloadPdf} className="h-7 rounded-lg text-xs gap-1">
-                  <FileText className="h-3.5 w-3.5" /> PDF
-                </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={copyContent} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                    <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy
+                  </Button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Button variant="ghost" size="sm" onClick={downloadMarkdown} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> MD
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={downloadTxt} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> TXT
+                  </Button>
+                  <Button variant="default" size="sm" onClick={downloadPdf} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                    <FileText className="h-3.5 w-3.5 mr-1.5" /> Download PDF
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setStatus("idle"); setFiles([]); setUrlInput(""); setResults(EMPTY_RESULTS); setExtractedFiles([]); setChatHistory([]); }}
+                    className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                    <Plus className="h-3.5 w-3.5 mr-1.5" /> New
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Tabs */}
-            <div className="flex flex-wrap gap-1 rounded-2xl bg-secondary p-1.5">
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${activeTab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}>
-                  {t.icon}
-                  <span className="hidden sm:inline">{t.label}</span>
-                  {loadingTabs.has(t.id) && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
-                  {!loadingTabs.has(t.id) && results[t.id as keyof SummaryResults] && <CheckCircle2 className="h-3 w-3 text-green-500" />}
-                </button>
-              ))}
-            </div>
+              {/* Tabs navigation */}
+              <div className="bg-secondary/5 border-b border-border px-6 py-2 flex gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
+                {TABS.map(t => (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)}
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-black uppercase whitespace-nowrap transition-all border ${activeTab === t.id ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border text-muted-foreground hover:text-foreground bg-background"}`}>
+                    {t.icon}
+                    <span>{t.label}</span>
+                    {loadingTabs.has(t.id) && <Loader2 className="h-3 w-3 animate-spin text-primary ml-1" />}
+                    {!loadingTabs.has(t.id) && results[t.id as keyof SummaryResults] && activeTab !== t.id && <CheckCircle2 className="h-3 w-3 text-green-500 ml-1" />}
+                  </button>
+                ))}
+              </div>
 
-            {/* Tab content */}
-            <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-              {activeTab === "chat" ? (
-                <div className="flex flex-col h-[480px]">
-                  <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {chatHistory.length === 0 && (
-                      <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                        <MessageSquare className="h-10 w-10 opacity-30" />
-                        <p className="text-sm font-medium">Ask anything about your document</p>
-                        <div className="flex flex-wrap justify-center gap-2 mt-2">
-                          {["Summarize in 5 words", "What are the main themes?", "List all action items", "Explain like I'm 10"].map(q => (
-                            <button key={q} onClick={() => { setChatInput(q); }}
-                              className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium hover:bg-secondary/60 transition-colors">{q}</button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {chatHistory.map((m, i) => (
-                      <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                        {m.role === "ai" && (
-                          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Wand2 className="h-4 w-4 text-primary" />
+              {/* Main Workspace Area */}
+              <div className="flex-1 overflow-hidden relative bg-secondary/5">
+                {activeTab === "chat" ? (
+                  <div className="h-full flex flex-col max-w-5xl mx-auto border-x border-border bg-background">
+                    <ScrollArea ref={chatRef} className="flex-1 p-8">
+                      <div className="space-y-6">
+                        {chatHistory.length === 0 && (
+                          <div className="flex flex-col items-center justify-center h-64 gap-4 text-muted-foreground">
+                            <div className="p-4 rounded-full bg-primary/5">
+                              <MessageSquare className="h-10 w-10 text-primary/30" />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm font-black uppercase tracking-widest text-foreground">Interactive Knowledge Base</p>
+                              <p className="text-xs">Ask specific questions about the processed documents</p>
+                            </div>
+                            <div className="flex flex-wrap justify-center gap-2 mt-2">
+                              {["Summarize key findings", "What are the main risks?", "List requirements", "Explain the technical details"].map(q => (
+                                <button key={q} onClick={() => { setChatInput(q); }}
+                                  className="rounded-xl border border-border bg-background px-4 py-2 text-[10px] font-bold uppercase hover:border-primary/50 transition-all">{q}</button>
+                              ))}
+                            </div>
                           </div>
                         )}
-                        <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"}`}>
-                          {m.role === "ai"
-                            ? <div className="prose prose-sm max-w-none text-foreground"><ReactMarkdown>{m.text}</ReactMarkdown></div>
-                            : m.text}
-                        </div>
-                      </div>
-                    ))}
-                    {chatLoading && (
-                      <div className="flex gap-3">
-                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Wand2 className="h-4 w-4 text-primary animate-pulse" />
-                        </div>
-                        <div className="rounded-2xl rounded-bl-sm bg-secondary px-4 py-3">
-                          <div className="flex gap-1 items-center h-5">
-                            <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
-                            <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
-                            <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        {chatHistory.map((m, i) => (
+                          <div key={i} className={`flex gap-4 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                            {m.role === "ai" && (
+                              <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm shadow-primary/20">
+                                <Wand2 className="h-4 w-4 text-primary-foreground" />
+                              </div>
+                            )}
+                            <div className={`max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-sm ${m.role === "user" ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-card border border-border text-foreground rounded-tl-none"}`}>
+                              {m.role === "ai"
+                                ? <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed text-foreground"><ReactMarkdown>{m.text}</ReactMarkdown></div>
+                                : m.text}
+                            </div>
                           </div>
-                        </div>
+                        ))}
+                        {chatLoading && (
+                          <div className="flex gap-4">
+                            <div className="h-8 w-8 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                              <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                            </div>
+                            <div className="rounded-2xl rounded-tl-none bg-card border border-border px-5 py-4 shadow-sm">
+                              <div className="flex gap-1.5 items-center h-5">
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="border-t border-border p-3 flex gap-2">
-                    <Input
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      placeholder="Ask a question about your document…"
-                      onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleChat()}
-                      className="flex-1 rounded-xl"
-                    />
-                    <Button onClick={handleChat} disabled={chatLoading || !chatInput.trim()} size="sm" className="h-10 w-10 p-0 rounded-xl">
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6 md:p-8 prose prose-sm max-w-none text-foreground prose-headings:font-display prose-headings:font-bold prose-p:leading-relaxed prose-li:leading-relaxed min-h-[300px]">
-                  {loadingTabs.has(activeTab) ? (
-                    <div className="flex items-center gap-3 text-muted-foreground py-10 justify-center">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      <span className="text-sm">Generating {TABS.find(t => t.id === activeTab)?.label}…</span>
+                    </ScrollArea>
+                    <div className="p-6 bg-background border-t border-border shrink-0">
+                      <div className="flex gap-3 max-w-4xl mx-auto relative">
+                        <Input
+                          value={chatInput}
+                          onChange={e => setChatInput(e.target.value)}
+                          placeholder="Query Document Intelligence..."
+                          onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleChat()}
+                          className="flex-1 h-12 rounded-xl bg-secondary/20 border-border focus:ring-primary/20 pr-12 text-sm font-medium"
+                        />
+                        <Button onClick={handleChat} disabled={chatLoading || !chatInput.trim()} className="absolute right-1 top-1 h-10 w-10 p-0 rounded-lg">
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-center mt-3 text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Powered by Advanced Document Neural Analysis</p>
                     </div>
-                  ) : results[activeTab as keyof SummaryResults] ? (
-                    <ReactMarkdown>{results[activeTab as keyof SummaryResults]}</ReactMarkdown>
-                  ) : (
-                    <p className="text-muted-foreground italic text-center py-10">No content generated for this tab.</p>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-full bg-background">
+                    <div className="max-w-4xl mx-auto p-12 lg:p-16">
+                      <div className="prose prose-sm md:prose-base max-w-none text-foreground prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-p:leading-relaxed prose-li:leading-relaxed dark:prose-invert">
+                        {loadingTabs.has(activeTab) ? (
+                          <div className="flex flex-col items-center gap-4 text-muted-foreground py-24">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Synthesizing {TABS.find(t => t.id === activeTab)?.label}...</span>
+                          </div>
+                        ) : results[activeTab as keyof SummaryResults] ? (
+                          <ReactMarkdown>{results[activeTab as keyof SummaryResults]}</ReactMarkdown>
+                        ) : (
+                          <div className="flex flex-col items-center gap-4 text-muted-foreground py-24 opacity-50 italic">
+                            <span className="text-sm">No structured data found for this analysis vector.</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
 
-            {/* Reset */}
-            <Button variant="outline" onClick={() => { setStatus("idle"); setFiles([]); setUrlInput(""); setResults(EMPTY_RESULTS); setExtractedFiles([]); setChatHistory([]); }}
-              className="w-full rounded-2xl py-5">
-              Summarize Another Document
-            </Button>
-          </motion.div>
+              {/* Status Bar */}
+              <div className="bg-background border-t border-border px-6 py-3 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Encrypted Document Processing Active</span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 border-l border-border pl-6">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Analysis Vectors: </span>
+                    <span className="text-[10px] font-black text-primary uppercase">7 Intelligent Modes</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase">{extractedFiles.length} Source{extractedFiles.length > 1 ? 's' : ''} Synthesized</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
         )}
 
         {/* ── SEO Content ──────────────────────────────────────────────── */}

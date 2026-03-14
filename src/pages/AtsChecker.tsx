@@ -13,9 +13,13 @@ import {
   ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle,
   Loader2, ShieldCheck, FileText, Type, X, ChevronDown,
   Sparkles, RotateCcw, Clipboard, ClipboardCheck,
-  LinkedinIcon, BriefcaseBusiness, Wand2
+  LinkedinIcon, BriefcaseBusiness, Wand2, Layout, Info
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -157,16 +161,9 @@ const AtsChecker = () => {
       metaTitle="ATS Resume Checker – Scan Your Resume for ATS Compatibility | MagicDocx"
       metaDescription="Check if your resume passes Applicant Tracking Systems (ATS). Upload your resume to get an ATS score, keyword analysis, and expert resume improvement suggestions."
       toolId="ai-ats"
-      hideHeader
+      hideHeader={!!result}
     >
       <div className="space-y-8">
-        <ToolHeader
-          title="ATS Resume Checker"
-          description="AI-powered resume analysis — score, optimize, and land more interviews"
-          icon={<ScanSearch className="h-5 w-5 text-primary-foreground" />}
-          className="bg-tool-ai/5 border-tool-ai/20"
-          iconBgClass="bg-tool-ai"
-        />
 
         {/* ── UPLOAD PHASE ─────────────────────────────────────────────── */}
         {!result && (
@@ -227,279 +224,366 @@ const AtsChecker = () => {
           </motion.div>
         )}
 
-        {/* ── RESULTS DASHBOARD ───────────────────────────────────────── */}
+        {/* ── IMMERSIVE WORKSPACE ───────────────────────────────────────── */}
         {result && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-row overflow-hidden relative">
 
-            {/* Score Hero */}
-            <div className={`rounded-2xl border p-7 text-center space-y-4 ${scoreBg(result.overallScore)}`}>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">ATS Compatibility Score</p>
-              <p className={`text-8xl font-black leading-none ${scoreColor(result.overallScore)}`}>{result.overallScore}</p>
-              <p className={`text-xl font-bold ${scoreColor(result.overallScore)}`}>{scoreLabel(result.overallScore)}</p>
-              {result.lengthAdvice && <p className="text-xs text-muted-foreground">{result.lengthAdvice}</p>}
-            </div>
-
-            {/* Score breakdown bars */}
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-sm">
-              <h3 className="text-sm font-bold text-foreground">Score Breakdown</h3>
-              {Object.entries(result.breakdown ?? {}).map(([k, v]) => (
-                <div key={k} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{BREAKDOWN_LABELS[k] ?? k}</span>
-                    <span className={`font-bold ${scoreColor(v)}`}>{v}/100</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                    <div className={`h-2 rounded-full transition-all duration-700 ${barColor(v)}`} style={{ width: `${v}%` }} />
-                  </div>
+              {/* LEFT SIDE: Score Profile & Breakdown */}
+              <div className="w-80 border-r border-border bg-secondary/5 flex flex-col shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-black uppercase tracking-widest">Analysis Profile</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Toolbar */}
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={downloadReport} className="rounded-xl gap-1.5 text-xs flex-1"><Download className="h-3.5 w-3.5" />PDF Report</Button>
-              <Button variant="outline" onClick={reset} className="rounded-xl gap-1.5 text-xs flex-1"><RotateCcw className="h-3.5 w-3.5" />New Analysis</Button>
-            </div>
-
-            {/* Tab bar */}
-            <div className="flex gap-1 rounded-2xl bg-secondary p-1.5 overflow-x-auto">
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all flex-1 justify-center ${activeTab === t.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t.icon} {t.label}
-                </button>
-              ))}
-            </div>
-
-            {/* ── Overview Tab ─────────────────────────────────────────── */}
-            {activeTab === "overview" && (
-              <div className="space-y-4">
-
-                {/* ATS Warnings */}
-                {(result.atsWarnings ?? []).length > 0 && (
-                  <div className="rounded-2xl border border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800 p-4 space-y-2">
-                    <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-300 flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" />ATS Warnings</h3>
-                    {result.atsWarnings.map((w, i) => <p key={i} className="text-xs text-yellow-700 dark:text-yellow-400">⚠ {w}</p>)}
-                  </div>
-                )}
-
-                {/* Sections */}
-                {Object.entries(result.sections ?? {}).map(([key, sec]) => {
-                  if (!sec) return null;
-                  return (
-                    <div key={key} className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-foreground">{SECTION_LABELS[key] ?? key}</h3>
-                        <div className="flex items-center gap-2">{scoreIcon(sec.score)}<span className={`font-bold text-sm ${scoreColor(sec.score)}`}>{sec.score}/100</span></div>
-                      </div>
-                      {sec.found && sec.found.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {sec.found.map((f, i) => <span key={i} className="rounded-full bg-green-100 dark:bg-green-950/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">{f}</span>)}
-                        </div>
-                      )}
-                      {(sec.technical || sec.soft) && (
-                        <div className="space-y-1.5">
-                          {sec.technical && sec.technical.length > 0 && <div className="flex flex-wrap gap-1.5">{sec.technical.map((s, i) => <span key={i} className="rounded-full bg-blue-100 dark:bg-blue-950/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">{s}</span>)}</div>}
-                          {sec.soft && sec.soft.length > 0 && <div className="flex flex-wrap gap-1.5">{sec.soft.map((s, i) => <span key={i} className="rounded-full bg-purple-100 dark:bg-purple-950/30 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:text-purple-400">{s}</span>)}</div>}
-                          {sec.missing && sec.missing.length > 0 && <div className="flex flex-wrap gap-1.5">{sec.missing.map((s, i) => <span key={i} className="rounded-full bg-red-100 dark:bg-red-950/30 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-400">+{s}</span>)}</div>}
-                        </div>
-                      )}
-                      {sec.issues && sec.issues.length > 0 && (
-                        <ul className="space-y-1">
-                          {sec.issues.map((issue, i) => <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground"><AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 flex-shrink-0" />{issue}</li>)}
-                        </ul>
-                      )}
-                      {sec.suggestions && sec.suggestions.length > 0 && (
-                        <ul className="space-y-1">
-                          {sec.suggestions.map((s, i) => <li key={i} className="flex items-start gap-1.5 text-xs text-foreground"><CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />{s}</li>)}
-                        </ul>
-                      )}
-                      {sec.rewrite && (
-                        <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 space-y-2">
-                          <p className="text-[10px] font-bold uppercase text-primary">AI-Improved Summary</p>
-                          <p className="text-xs text-foreground leading-relaxed">{sec.rewrite}</p>
-                          <button onClick={() => copyText("summary", sec.rewrite!)} className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-primary">
-                            {copied === "summary" ? <><ClipboardCheck className="h-3 w-3 text-green-500" />Copied</> : <><Clipboard className="h-3 w-3" />Copy</>}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Overall suggestions */}
-                {(result.overallSuggestions ?? []).length > 0 && (
-                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-2">
-                    <h3 className="text-sm font-bold text-foreground">🎯 Top Improvement Tips</h3>
-                    {result.overallSuggestions.map((s, i) => (
-                      <p key={i} className="text-xs text-foreground flex items-start gap-1.5"><span className="text-primary font-bold mt-0.5">{i + 1}.</span>{s}</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Keywords Tab ─────────────────────────────────────────── */}
-            {activeTab === "keywords" && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-card p-5 space-y-3">
-                    <h3 className="text-sm font-bold text-green-700 dark:text-green-400">✓ Keywords Found ({(result.keywords?.found ?? []).length})</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(result.keywords?.found ?? []).map((k, i) => <span key={i} className="rounded-full bg-green-100 dark:bg-green-950/30 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">{k}</span>)}
-                      {!(result.keywords?.found ?? []).length && <p className="text-xs text-muted-foreground">No keywords detected.</p>}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-red-200 dark:border-red-900 bg-card p-5 space-y-3">
-                    <h3 className="text-sm font-bold text-red-600 dark:text-red-400">✗ Missing Keywords ({(result.keywords?.missing ?? []).length})</h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(result.keywords?.missing ?? []).map((k, i) => <span key={i} className="rounded-full bg-red-100 dark:bg-red-950/30 px-3 py-1 text-xs font-medium text-red-700 dark:text-red-400">{k}</span>)}
-                      {!(result.keywords?.missing ?? []).length && <p className="text-xs text-muted-foreground">No missing keywords — great!</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {(result.keywords?.recommended ?? []).length > 0 && (
-                  <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-sm">
-                    <h3 className="text-sm font-bold text-foreground">📍 Where to Add Missing Keywords</h3>
-                    <div className="space-y-2">
-                      {result.keywords.recommended.map((r, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-2.5">
-                          <span className="text-sm font-medium text-foreground">{r.keyword}</span>
-                          <span className="text-xs rounded-full bg-primary/10 px-2.5 py-0.5 text-primary font-medium">Add to {r.section}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {(result.grammarIssues ?? []).length > 0 && (
-                  <div className="rounded-2xl border border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800 p-5 space-y-2">
-                    <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-300">✏️ Grammar & Clarity Issues</h3>
-                    {result.grammarIssues.map((g, i) => <p key={i} className="text-xs text-yellow-700 dark:text-yellow-400">• {g}</p>)}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Bullet Rewrites Tab ──────────────────────────────────── */}
-            {activeTab === "bullets" && (
-              <div className="space-y-4">
-                {(result.bulletRewrites ?? []).length === 0 && (
-                  <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground text-sm">No bullet rewrites available. Your bullets look strong!</div>
-                )}
-                {(result.bulletRewrites ?? []).map((b, i) => (
-                  <div key={i} className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm">
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-500">Before</p>
-                      <p className="text-sm text-muted-foreground italic">"{b.original}"</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-green-600">After (AI-Improved)</p>
-                      <p className="text-sm font-medium text-foreground">"{b.improved}"</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => copyText(`bullet-${i}`, b.improved)}
-                        className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${appliedBullets.has(i) ? "border-green-300 bg-green-50 text-green-700" : "border-border hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-foreground"}`}>
-                        {copied === `bullet-${i}` ? <><ClipboardCheck className="h-3.5 w-3.5 text-green-500" />Copied!</> : <><Clipboard className="h-3.5 w-3.5" />Copy Improved</>}
-                      </button>
-                      <button onClick={() => setAppliedBullets(prev => { const s = new Set(prev); s.add(i); return s; })}
-                        className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${appliedBullets.has(i) ? "border-green-300 bg-green-50 text-green-700" : "border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground"}`}>
-                        <CheckCircle2 className="h-3.5 w-3.5" />{appliedBullets.has(i) ? "Applied ✓" : "Mark Applied"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* ── Job Match Tab ─────────────────────────────────────────── */}
-            {activeTab === "jobmatch" && (
-              <div className="space-y-5">
-                {result.jobMatch && (
-                  <>
-                    <div className={`rounded-2xl border p-6 text-center ${scoreBg(result.jobMatch.score)}`}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Job Description Match</p>
-                      <p className={`text-5xl font-black ${scoreColor(result.jobMatch.score)}`}>{result.jobMatch.score}%</p>
-                      <p className={`text-sm font-bold mt-1 ${scoreColor(result.jobMatch.score)}`}>{scoreLabel(result.jobMatch.score)}</p>
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                    {/* Hero Score */}
+                    <div className={`rounded-3xl border p-6 text-center shadow-sm ${scoreBg(result.overallScore)}`}>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">ATS Grade</p>
+                      <p className={`text-6xl font-black leading-none ${scoreColor(result.overallScore)}`}>{result.overallScore}</p>
+                      <p className={`text-xs font-bold mt-2 uppercase ${scoreColor(result.overallScore)}`}>{scoreLabel(result.overallScore)}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {result.jobMatch.matchedSkills?.length > 0 && (
-                        <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-card p-5 space-y-3">
-                          <h3 className="text-sm font-bold text-green-700 dark:text-green-400">✓ Matched Skills</h3>
-                          <div className="flex flex-wrap gap-1.5">
-                            {result.jobMatch.matchedSkills.map((s, i) => <span key={i} className="rounded-full bg-green-100 dark:bg-green-950/30 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">{s}</span>)}
-                          </div>
-                        </div>
-                      )}
-                      {result.jobMatch.missingSkills?.length > 0 && (
-                        <div className="rounded-2xl border border-red-200 dark:border-red-900 bg-card p-5 space-y-3">
-                          <h3 className="text-sm font-bold text-red-600 dark:text-red-400">✗ Skills to Add</h3>
-                          <div className="flex flex-wrap gap-1.5">
-                            {result.jobMatch.missingSkills.map((s, i) => <span key={i} className="rounded-full bg-red-100 dark:bg-red-950/30 px-3 py-1 text-xs font-medium text-red-700 dark:text-red-400">{s}</span>)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {result.jobMatch.suggestedRoles?.length > 0 && (
-                      <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-sm">
-                        <h3 className="text-sm font-bold text-foreground">🎯 Suggested Job Roles for You</h3>
-                        {result.jobMatch.suggestedRoles.map((r, i) => (
-                          <div key={i} className="rounded-xl border border-border p-4 space-y-2">
+                    {/* Breakdown */}
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Layout className="h-3.5 w-3.5" />
+                        Score Vectors
+                      </h3>
+                      <div className="space-y-4">
+                        {Object.entries(result.breakdown ?? {}).map(([k, v]) => (
+                          <div key={k} className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-semibold text-foreground">{r.role}</p>
-                              <span className={`text-sm font-bold ${scoreColor(r.match)}`}>{r.match}% match</span>
+                              <span className="text-[10px] font-black text-muted-foreground uppercase">{BREAKDOWN_LABELS[k] ?? k}</span>
+                              <span className={`text-[10px] font-black ${scoreColor(v)}`}>{v}/100</span>
                             </div>
-                            {r.missingFor?.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {r.missingFor.map((s, j) => <span key={j} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-muted-foreground">Need: {s}</span>)}
-                              </div>
-                            )}
+                            <Progress value={v} className={`h-1 rounded-full ${barColor(v)}/20 [&>div]:${barColor(v)}`} />
                           </div>
                         ))}
                       </div>
-                    )}
-                  </>
-                )}
-                {!result.jobMatch && (
-                  <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-                    Paste a job description when analyzing to get job match insights.
-                  </div>
-                )}
-              </div>
-            )}
+                    </div>
 
-            {/* ── LinkedIn Tab ─────────────────────────────────────────── */}
-            {activeTab === "linkedin" && (
-              <div className="space-y-4">
-                {result.linkedInSuggestions?.headline && (
-                  <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-sm">
-                    <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5"><LinkedinIcon className="h-4 w-4 text-blue-600" />Optimized LinkedIn Headline</h3>
-                    <p className="text-sm font-medium text-foreground bg-secondary/50 rounded-xl px-4 py-3">{result.linkedInSuggestions.headline}</p>
-                    <button onClick={() => copyText("headline", result.linkedInSuggestions.headline)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-                      {copied === "headline" ? <><ClipboardCheck className="h-3 w-3 text-green-500" />Copied</> : <><Clipboard className="h-3 w-3" />Copy headline</>}
-                    </button>
+                    {/* Quick Stats */}
+                    {result.lengthAdvice && (
+                      <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 mb-1">
+                          <Info className="h-3.5 w-3.5" />
+                          Format Tip
+                        </p>
+                        <p className="text-[9px] text-muted-foreground font-bold leading-relaxed uppercase">{result.lengthAdvice}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-                {result.linkedInSuggestions?.about && (
-                  <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-sm">
-                    <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5"><LinkedinIcon className="h-4 w-4 text-blue-600" />Optimized About Section</h3>
-                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap bg-secondary/50 rounded-xl px-4 py-3">{result.linkedInSuggestions.about}</p>
-                    <button onClick={() => copyText("about", result.linkedInSuggestions.about)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-                      {copied === "about" ? <><ClipboardCheck className="h-3 w-3 text-green-500" />Copied</> : <><Clipboard className="h-3 w-3" />Copy about section</>}
-                    </button>
-                  </div>
-                )}
-                {!result.linkedInSuggestions?.headline && !result.linkedInSuggestions?.about && (
-                  <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">LinkedIn optimization suggestions will appear here after analysis.</div>
-                )}
+                </ScrollArea>
               </div>
-            )}
-          </motion.div>
+
+              {/* CENTER AREA: Analysis Deep Dive */}
+              <div className="flex-1 bg-secondary/10 flex flex-col items-center p-8 overflow-hidden relative">
+                <div className="w-full max-w-4xl h-full flex flex-col bg-background shadow-2xl rounded-2xl border border-border overflow-hidden">
+
+                  {/* Internal Navbar / Tabs */}
+                  <div className="flex items-center justify-between p-2 border-b border-border bg-secondary/5">
+                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)} className="w-full">
+                      <TabsList className="bg-transparent h-10 gap-1">
+                        {TABS.map(t => (
+                          <TabsTrigger key={t.id} value={t.id} className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+                            {t.label}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  </div>
+
+                  <ScrollArea className="flex-1">
+                    <div className="p-8">
+                      <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+
+                        {/* ── Overview Tab ── */}
+                        {activeTab === "overview" && (
+                          <div className="space-y-6">
+                            {(result.atsWarnings ?? []).length > 0 && (
+                              <div className="rounded-2xl border border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800 p-5 space-y-3">
+                                <h3 className="text-xs font-black text-yellow-800 dark:text-yellow-300 flex items-center gap-2 uppercase tracking-widest">
+                                  <AlertTriangle className="h-4 w-4" /> Hard Failures
+                                </h3>
+                                {result.atsWarnings.map((w, i) => <p key={i} className="text-[11px] font-bold text-yellow-700 dark:text-yellow-400 uppercase tracking-tight leading-tight flex items-start gap-2"><span>⚠</span> {w}</p>)}
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {Object.entries(result.sections ?? {}).map(([key, sec]) => {
+                                if (!sec) return null;
+                                return (
+                                  <div key={key} className="rounded-2xl border border-border bg-background p-5 shadow-sm space-y-4 hover:shadow-md transition-all group">
+                                    <div className="flex items-center justify-between border-b border-border pb-3">
+                                      <h3 className="text-[11px] font-black text-foreground uppercase tracking-widest">{SECTION_LABELS[key] ?? key}</h3>
+                                      <Badge variant="outline" className={`h-5 text-[10px] font-black uppercase border-none ${scoreColor(sec.score)} ${scoreBg(sec.score)}`}>{sec.score}/100</Badge>
+                                    </div>
+
+                                    {sec.rewrite ? (
+                                      <div className="space-y-2">
+                                        <p className="text-[9px] font-black uppercase text-primary">Neural Improvement</p>
+                                        <div className="p-3 bg-primary/5 rounded-xl text-xs leading-relaxed font-medium italic relative group/copy">
+                                          "{sec.rewrite}"
+                                          <Button variant="ghost" size="icon" onClick={() => copyText(key, sec.rewrite!)} className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover/copy:opacity-100 transition-opacity">
+                                            {copied === key ? <ClipboardCheck className="h-3 w-3 text-green-500" /> : <Clipboard className="h-3 w-3" />}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-2">
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {(sec.found ?? []).map((f, i) => <Badge key={i} className="bg-green-500/10 text-green-600 text-[10px] border-none font-bold uppercase">{f}</Badge>)}
+                                          {(sec.missing ?? []).map((m, i) => <Badge key={i} className="bg-red-500/10 text-red-600 text-[10px] border-none font-bold uppercase">+{m}</Badge>)}
+                                        </div>
+                                        <ul className="space-y-1.5">
+                                          {(sec.suggestions ?? []).map((s, i) => (
+                                            <li key={i} className="flex gap-2 text-[10px] font-bold text-muted-foreground uppercase leading-tight italic">
+                                              <span className="text-primary">•</span> {s}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Keywords Tab ── */}
+                        {activeTab === "keywords" && (
+                          <div className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-4">
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4" /> Detected ({(result.keywords?.found ?? []).length})
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                  {(result.keywords?.found ?? []).map((k, i) => (
+                                    <Badge key={i} className="px-3 py-1 bg-green-500/5 text-green-600 border border-green-500/20 text-[10px] font-black uppercase tracking-wider">{k}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="space-y-4">
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
+                                  <XCircle className="h-4 w-4" /> Missing ({(result.keywords?.missing ?? []).length})
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                  {(result.keywords?.missing ?? []).map((k, i) => (
+                                    <Badge key={i} className="px-3 py-1 bg-red-500/5 text-red-600 border border-red-500/20 text-[10px] font-black uppercase tracking-wider">{k}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {(result.keywords?.recommended ?? []).length > 0 && (
+                              <div className="space-y-4 pt-6 border-t border-border">
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground">Strategic Distribution</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                  {result.keywords.recommended.map((r, i) => (
+                                    <div key={i} className="p-4 bg-secondary/30 rounded-2xl border border-border flex flex-col gap-1">
+                                      <span className="text-xs font-black text-foreground uppercase tracking-tight">{r.keyword}</span>
+                                      <span className="text-[9px] font-black text-primary uppercase">Target: {r.section}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── Bullets Tab ── */}
+                        {activeTab === "bullets" && (
+                          <div className="space-y-4 max-w-3xl mx-auto">
+                            {(result.bulletRewrites ?? []).map((b, i) => (
+                              <div key={i} className="rounded-2xl border border-border bg-background p-6 space-y-6 hover:border-primary/50 transition-colors shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -z-0" />
+                                <div className="relative z-10 space-y-4">
+                                  <div className="space-y-1.5">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-red-500 italic block">Original Statement</span>
+                                    <p className="text-xs text-muted-foreground line-through decoration-red-500/30">"{b.original}"</p>
+                                  </div>
+                                  <div className="h-px bg-border/50" />
+                                  <div className="space-y-2">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                                      <Sparkles className="h-3 w-3" /> Enhanced Impact Statement
+                                    </span>
+                                    <p className="text-sm font-bold text-foreground">"{b.improved}"</p>
+                                  </div>
+                                  <div className="flex gap-3 pt-2">
+                                    <Button variant="outline" size="sm" onClick={() => copyText(`bullet-${i}`, b.improved)} className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest gap-2 bg-background border-border">
+                                      {copied === `bullet-${i}` ? <><ClipboardCheck className="h-3.5 w-3.5 text-green-500" /> Copied</> : <><Clipboard className="h-3.5 w-3.5" /> Copy Improved</>}
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => setAppliedBullets(prev => { const s = new Set(prev); s.add(i); return s; })} className={`h-8 rounded-lg text-[10px] font-black uppercase tracking-widest gap-2 ${appliedBullets.has(i) ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-background border-border"}`}>
+                                      <CheckCircle2 className="h-3.5 w-3.5" /> {appliedBullets.has(i) ? "Applied" : "Mark Applied"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* ── Job Match Tab ── */}
+                        {activeTab === "jobmatch" && (
+                          <div className="space-y-8">
+                            {result.jobMatch && (
+                              <div className="space-y-8">
+                                <div className={`rounded-3xl border p-8 flex flex-col items-center justify-center text-center ${scoreBg(result.jobMatch.score)}`}>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Tailoring Match Depth</p>
+                                  <p className={`text-7xl font-black ${scoreColor(result.jobMatch.score)}`}>{result.jobMatch.score}%</p>
+                                  <p className={`text-xs font-black uppercase mt-2 ${scoreColor(result.jobMatch.score)}`}>{scoreLabel(result.jobMatch.score)} Alignment</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                                  <div className="space-y-4">
+                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-green-600">Matched Intelligence</h3>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {result.jobMatch.matchedSkills.map((s, i) => <Badge key={i} className="rounded-lg bg-green-500/10 text-green-600 border-none font-bold text-xs">{s}</Badge>)}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-4">
+                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-red-600">Gap Analysis</h3>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {result.jobMatch.missingSkills.map((s, i) => <Badge key={i} className="rounded-lg bg-red-500/10 text-red-600 border-none font-bold text-xs">{s}</Badge>)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {result.jobMatch.suggestedRoles && (
+                                  <div className="space-y-4 pt-8 border-t border-border">
+                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-foreground">Suggested Career Vectors</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {result.jobMatch.suggestedRoles.map((r, i) => (
+                                        <div key={i} className="p-5 border border-border rounded-2xl bg-secondary/10 flex flex-col gap-3">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-black uppercase text-foreground">{r.role}</span>
+                                            <span className={`text-xs font-black ${scoreColor(r.match)}`}>{r.match}%</span>
+                                          </div>
+                                          <Progress value={r.match} className="h-1" />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── LinkedIn Tab ── */}
+                        {activeTab === "linkedin" && (
+                          <div className="space-y-8 max-w-3xl mx-auto">
+                            <div className="rounded-3xl border border-blue-500/20 bg-blue-500/5 p-8 space-y-6 relative overflow-hidden group">
+                              <div className="absolute top-0 right-0 p-4">
+                                <LinkedinIcon className="h-10 w-10 text-blue-600/20" />
+                              </div>
+                              <div className="space-y-4 relative z-10">
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-blue-600">Optimized Narrative</h3>
+                                <div className="space-y-6">
+                                  <div className="space-y-2">
+                                    <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Profile Headline</p>
+                                    <p className="text-sm font-bold text-foreground leading-relaxed">"{result.linkedInSuggestions.headline}"</p>
+                                    <Button variant="ghost" size="sm" onClick={() => copyText("headline", result.linkedInSuggestions.headline)} className="h-7 text-[10px] font-black uppercase px-0 hover:bg-transparent text-blue-600">
+                                      {copied === "headline" ? "Copied" : "Copy Headline"}
+                                    </Button>
+                                  </div>
+                                  <Separator className="bg-blue-500/10" />
+                                  <div className="space-y-2">
+                                    <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">About Section</p>
+                                    <p className="text-xs text-foreground leading-relaxed font-medium whitespace-pre-wrap italic">
+                                      {result.linkedInSuggestions.about}
+                                    </p>
+                                    <Button variant="ghost" size="sm" onClick={() => copyText("about", result.linkedInSuggestions.about)} className="h-7 text-[10px] font-black uppercase px-0 hover:bg-transparent text-blue-600">
+                                      {copied === "about" ? "Copied" : "Copy Professional About"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+
+              {/* RIGHT SIDE: Strategic Recommendations */}
+              <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
+                <div className="p-4 border-b border-border bg-secondary/5 flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Strategic Hub</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="icon" onClick={downloadReport} className="h-8 w-8 rounded-lg">
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={reset} className="h-8 text-[10px] font-black uppercase tracking-widest hover:bg-destructive/5 hover:text-destructive px-3">
+                      Discard
+                    </Button>
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                    {/* Top Tips */}
+                    <div className="space-y-4">
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        Actionable Intel
+                      </h3>
+                      <div className="space-y-3">
+                        {(result.overallSuggestions ?? []).map((s, i) => (
+                          <div key={i} className="p-4 bg-secondary/30 rounded-2xl border border-border group hover:border-primary/30 transition-all">
+                            <div className="flex gap-3">
+                              <span className="text-[10px] font-black text-primary/40 leading-none pt-0.5">{(i + 1).toString().padStart(2, '0')}</span>
+                              <p className="text-[10px] font-bold text-foreground uppercase tracking-tight leading-tight">{s}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Grammar Issues */}
+                    {(result.grammarIssues ?? []).length > 0 && (
+                      <div className="space-y-4 pt-6 border-t border-border">
+                        <h3 className="text-[11px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+                          <Type className="h-3.5 w-3.5" />
+                          Refinement List
+                        </h3>
+                        <div className="space-y-2">
+                          {result.grammarIssues.map((g, i) => (
+                            <p key={i} className="text-[10px] font-bold text-muted-foreground uppercase leading-tight flex items-start gap-2">
+                              <span className="text-amber-500">•</span> {g}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                      <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 mb-2">
+                        <Download className="h-3.5 w-3.5" />
+                        Final Output
+                      </p>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase leading-relaxed mb-4">Export the comprehensive intelligence report as a secure PDF document.</p>
+                      <Button onClick={downloadReport} className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">
+                        Secure PDF Export
+                      </Button>
+                    </div>
+                  </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t border-border bg-secondary/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Protocol Version: 5.2.0</span>
+                    <span className="text-[9px] font-black text-primary uppercase">Neural Verified</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── SEO Content ─────────────────────────────────────────────────── */}

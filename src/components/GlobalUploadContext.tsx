@@ -14,6 +14,10 @@ interface GlobalUploadContextType {
     // What files the current tool accepts
     acceptedTypes: string[];
     setAcceptedTypes: (types: string[]) => void;
+
+    // Flag to disable global drop/paste/double-click (e.g. after a file is uploaded)
+    disableGlobalFeatures: boolean;
+    setDisableGlobalFeatures: (disabled: boolean) => void;
 }
 
 const GlobalUploadContext = createContext<GlobalUploadContextType | undefined>(undefined);
@@ -21,7 +25,8 @@ const GlobalUploadContext = createContext<GlobalUploadContextType | undefined>(u
 export const GlobalUploadProvider = ({ children }: { children: ReactNode }) => {
     const [activeTool, setActiveTool] = useState<PdfTool | null>(null);
     const [globalFiles, setGlobalFiles] = useState<File[]>([]);
-    const [acceptedTypes, setAcceptedTypes] = useState<string[]>([".pdf"]);
+    const [acceptedTypes, setAcceptedTypes] = useState<string[]>([]);
+    const [disableGlobalFeatures, setDisableGlobalFeatures] = useState<boolean>(false);
 
     const clearGlobalFiles = () => setGlobalFiles([]);
 
@@ -35,6 +40,8 @@ export const GlobalUploadProvider = ({ children }: { children: ReactNode }) => {
                 clearGlobalFiles,
                 acceptedTypes,
                 setAcceptedTypes,
+                disableGlobalFeatures,
+                setDisableGlobalFeatures,
             }}
         >
             {children}

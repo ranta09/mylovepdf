@@ -5,6 +5,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { createWorker } from "tesseract.js";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -94,47 +95,156 @@ const OcrPdf = () => {
       metaTitle="OCR PDF — Make Scanned PDFs Searchable Online Free"
       metaDescription="Convert scanned PDF documents into searchable, selectable text using OCR technology. Free online OCR for PDF files with no sign-up required."
       toolId="ocr-pdf"
-      hideHeader
+      hideHeader={files.length > 0 || !!extractedText || processing}
     >
-      <ToolHeader
-        title="OCR PDF"
-        description="Extract text from scanned PDFs using text recognition"
-        icon={<ScanLine className="h-5 w-5 text-primary-foreground" />}
-      />
-      <div className="mt-5">
-        <FileUpload accept=".pdf" files={files} onFilesChange={(f) => { setFiles(f); setExtractedText(""); }} label="Select a scanned PDF" />
-      </div>
+      {(files.length > 0 || extractedText) && !processing && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-row overflow-hidden relative">
 
-      {processing && <Progress value={progress} className="mt-4" />}
+            {/* LEFT SIDE: OCR Settings / Stats */}
+            <div className="w-80 border-r border-border bg-secondary/5 flex flex-col shrink-0">
+              <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2">
+                <ScanLine className="h-4 w-4 text-primary" />
+                <span className="text-xs font-black uppercase tracking-widest">Analysis Engine</span>
+              </div>
+              <ScrollArea className="flex-1 p-6">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <h3 className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Recognition Protocol</h3>
+                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl space-y-1">
+                      <p className="text-[10px] font-black text-primary uppercase">Tesseract OCR v5</p>
+                      <p className="text-[9px] text-muted-foreground uppercase leading-tight font-bold tracking-tight">Neural network based text extraction with multi-channel support.</p>
+                    </div>
+                  </div>
 
-      {files.length > 0 && !extractedText && (
-        <div className="mt-6 flex flex-col items-center gap-2">
-          <Button size="lg" onClick={handleProcess} disabled={processing} className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-            {processing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Running OCR…</> : "Apply OCR"}
-          </Button>
-          {processing && <p className="text-xs text-muted-foreground">Estimated time: ~10-30 seconds per page</p>}
-        </div>
-      )}
+                  <div className="space-y-3">
+                    <h3 className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Detection Status</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Language</span>
+                        <span className="text-[10px] font-black text-foreground uppercase">English (Standard)</span>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-border pt-2">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Resolution</span>
+                        <span className="text-[10px] font-black text-foreground uppercase">288 DPI (Upscaled)</span>
+                      </div>
+                    </div>
+                  </div>
 
-      {extractedText && (
-        <div className="mt-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-display text-base font-semibold text-foreground">Extracted Text</h3>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={copyToClipboard} className="rounded-xl gap-1">
-                <Copy className="h-3.5 w-3.5" /> Copy
-              </Button>
-              <Button variant="outline" size="sm" onClick={downloadAsTxt} className="rounded-xl gap-1">
-                <Download className="h-3.5 w-3.5" /> Download TXT
-              </Button>
+                  <div className="pt-6 border-t border-border">
+                    <div className="p-4 bg-secondary/20 rounded-2xl border border-border space-y-3">
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Info className="h-3.5 w-3.5" />
+                        Accuracy Tip
+                      </p>
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
+                        High-contrast documents provide the best results. Complex layouts may requires manual correction.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* CENTER: Main Preview / Results */}
+            <div className="flex-1 bg-secondary/10 flex flex-col items-center justify-center p-8 overflow-y-auto">
+              {extractedText ? (
+                <div className="w-full h-full max-w-4xl bg-background shadow-2xl rounded-2xl border border-border flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
+                  <div className="p-4 border-b border-border bg-secondary/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Copy className="h-4 w-4 text-primary" />
+                      </div>
+                      <h2 className="text-xs font-black uppercase tracking-widest">Extracted Metadata</h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={copyToClipboard} className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest gap-2">
+                        <Copy className="h-3.5 w-3.5" /> Copy
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={downloadAsTxt} className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest gap-2">
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </Button>
+                    </div>
+                  </div>
+                  <ScrollArea className="flex-1 p-8 bg-secondary/5">
+                    <div className="max-w-3xl mx-auto prose prose-sm prose-slate">
+                      <pre className="text-xs font-mono text-foreground leading-relaxed whitespace-pre-wrap bg-transparent border-none p-0">
+                        {extractedText}
+                      </pre>
+                    </div>
+                  </ScrollArea>
+                </div>
+              ) : (
+                <div className="w-full max-w-xl bg-background shadow-2xl rounded-2xl border border-border p-12 text-center relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-0" />
+                  <div className="relative z-10 space-y-6">
+                    <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20">
+                      <ScanLine className="h-10 w-10 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-black uppercase tracking-tighter">{files[0]?.name || "Document Stream"}</h2>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic tracking-wider">Awaiting OCR Sequence</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT SIDE: Action Center */}
+            <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
+              <div className="p-4 border-b border-border bg-secondary/5 flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Execution Hub</span>
+                <Button variant="ghost" size="sm" onClick={() => { setFiles([]); setExtractedText(""); }} className="h-7 text-[10px] font-black uppercase tracking-widest hover:bg-destructive/5 hover:text-destructive">
+                  Reset
+                </Button>
+              </div>
+
+              <ScrollArea className="flex-1 p-6">
+                <div className="space-y-8">
+                  <div className="space-y-3">
+                    <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-2">Analysis Vector</h3>
+                    <div className="p-4 bg-secondary/30 rounded-2xl border border-border space-y-2">
+                      <p className="text-[10px] font-black text-foreground uppercase">Precision Scan</p>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase">Optimal for scanned PDFs with high-quality imagery.</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Privacy Protocol
+                    </p>
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
+                      OCR is processed entirely within your secure local environment. No document data is transmitted to external servers.
+                    </p>
+                  </div>
+                </div>
+              </ScrollArea>
+
+              <div className="p-6 border-t border-border bg-background">
+                {extractedText ? (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => { setFiles([]); setExtractedText(""); }}
+                    className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-[0.2em] border-primary/30 text-primary hover:bg-primary/5 transition-all"
+                  >
+                    Process Another PDF
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={handleProcess}
+                    disabled={processing}
+                    className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-3"
+                  >
+                    {processing ? <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing...</> : <>Run Neural OCR <ScanLine className="h-4 w-4" /></>}
+                  </Button>
+                )}
+                {processing && <Progress value={progress} className="mt-4 h-1 rounded-full" />}
+              </div>
             </div>
           </div>
-          <div className="max-h-96 overflow-y-auto rounded-xl border border-border bg-secondary/30 p-4 text-sm text-foreground whitespace-pre-wrap">
-            {extractedText}
-          </div>
-          <Button variant="ghost" onClick={() => { setFiles([]); setExtractedText(""); }} className="rounded-xl">
-            Process Another PDF
-          </Button>
         </div>
       )}
     </ToolLayout>

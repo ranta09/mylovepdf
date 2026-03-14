@@ -16,7 +16,6 @@ interface FileUploadProps {
   onFilesChange: (files: File[]) => void;
   files: File[];
   label?: string;
-  collapsible?: boolean;
 }
 
 const FileUpload = ({
@@ -26,12 +25,11 @@ const FileUpload = ({
   onFilesChange,
   files,
   label = "Select files",
-  collapsible = true,
 }: FileUploadProps) => {
   const [dragging, setDragging] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const globalUploadContext = useGlobalUpload();
+  const { globalFiles, clearGlobalFiles, setAcceptedTypes, disableGlobalFeatures } = useGlobalUpload();
 
   const acceptedExtensions = accept.split(",").map(s => s.trim().toLowerCase());
 
@@ -69,12 +67,12 @@ const FileUpload = ({
   // This will pick up any drops or pastes captured by GlobalDropOverlay
   useEffect(() => {
     try {
-      if (globalUploadContext?.globalFiles && globalUploadContext.globalFiles.length > 0) {
+      if (globalFiles && globalFiles.length > 0) {
         console.log("=== TOOL HYDRATION ===");
-        console.log("Global files found:", globalUploadContext.globalFiles.length);
+        console.log("Global files found:", globalFiles.length);
 
-        const validGlobalFiles = globalUploadContext.globalFiles.filter(isAcceptedFile);
-        console.log(`Accepted ${validGlobalFiles.length} / ${globalUploadContext.globalFiles.length} files for this tool`);
+        const validGlobalFiles = globalFiles.filter(isAcceptedFile);
+        console.log(`Accepted ${validGlobalFiles.length} / ${globalFiles.length} files for this tool`);
 
         if (validGlobalFiles.length > 0) {
           addFiles(validGlobalFiles);
@@ -84,23 +82,23 @@ const FileUpload = ({
         }
 
         // CRITICAL: Clear immediately to prevent cross-contamination or suggestions showing
-        globalUploadContext.clearGlobalFiles();
+        clearGlobalFiles();
       }
     } catch (e) {
       // Ignore context errors
     }
-  }, [globalUploadContext?.globalFiles, addFiles]); // React to any new global files
+  }, [globalFiles, addFiles]); // React to any new global files
 
   // Sync accepted types with global context so the DropOverlay knows what to accept
   useEffect(() => {
     try {
-      if (globalUploadContext?.setAcceptedTypes) {
-        globalUploadContext.setAcceptedTypes(acceptedExtensions);
+      if (setAcceptedTypes) {
+        setAcceptedTypes(acceptedExtensions);
       }
     } catch (e) {
       // Ignore if context is unavailable
     }
-  }, [accept, globalUploadContext?.setAcceptedTypes]);
+  }, [accept, setAcceptedTypes]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -123,6 +121,8 @@ const FileUpload = ({
   // Paste handler
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
+      if (disableGlobalFeatures) return;
+
       const items = e.clipboardData?.items;
       if (!items) return;
       const pastedFiles: File[] = [];
@@ -143,7 +143,7 @@ const FileUpload = ({
     };
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
-  }, [addFiles, acceptedExtensions]);
+  }, [addFiles, acceptedExtensions, disableGlobalFeatures]);
 
   const removeFile = (index: number) => onFilesChange(files.filter((_, i) => i !== index));
 
@@ -194,11 +194,15 @@ const FileUpload = ({
           {dragging ? "Release to upload" : "Upload your Files"}
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          <span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.
+          {files.length > 0 ? (
+            <>Click this tile to <span className="font-semibold text-primary">browse for more files</span>.</>
+          ) : (
+            <><span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.</>
+          )}
         </p>
 
         {/* Formats Display categorized and collapsible */}
-        <FileFormatsDisplay acceptedExtensions={acceptedExtensions} collapsible={collapsible} />
+        <FileFormatsDisplay acceptedExtensions={acceptedExtensions} />
 
         <input ref={inputRef} type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
       </div>

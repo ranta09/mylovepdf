@@ -17,7 +17,7 @@ const GlobalDropOverlay = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
     const location = useLocation();
-    const { activeTool, acceptedTypes, globalFiles, setGlobalFiles } = useGlobalUpload();
+    const { activeTool, acceptedTypes, globalFiles, setGlobalFiles, disableGlobalFeatures } = useGlobalUpload();
 
     // -- File Processing --
     // Helper to centralize file processing from drag, paste, and double-click
@@ -36,15 +36,17 @@ const GlobalDropOverlay = () => {
 
     // -- Drag & Drop Handlers --
     const handleDragEnter = useCallback((e: DragEvent) => {
+        if (disableGlobalFeatures) return;
         e.preventDefault();
         e.stopPropagation();
         dragCounter.current++;
         if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
             setDragActive(true);
         }
-    }, []);
+    }, [disableGlobalFeatures]);
 
     const handleDragLeave = useCallback((e: DragEvent) => {
+        if (disableGlobalFeatures) return;
         e.preventDefault();
         e.stopPropagation();
         dragCounter.current--;
@@ -52,14 +54,16 @@ const GlobalDropOverlay = () => {
             dragCounter.current = 0;
             setDragActive(false);
         }
-    }, []);
+    }, [disableGlobalFeatures]);
 
     const handleDragOver = useCallback((e: DragEvent) => {
+        if (disableGlobalFeatures) return;
         e.preventDefault();
         e.stopPropagation();
-    }, []);
+    }, [disableGlobalFeatures]);
 
     const handleDrop = useCallback((e: DragEvent) => {
+        if (disableGlobalFeatures) return;
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
@@ -68,10 +72,11 @@ const GlobalDropOverlay = () => {
         if (files && files.length > 0) {
             processFiles(Array.from(files));
         }
-    }, [setDragActive, setGlobalFiles]);
+    }, [setDragActive, setGlobalFiles, disableGlobalFeatures]);
 
     // -- Paste Handler --
     const handlePaste = useCallback((e: ClipboardEvent) => {
+        if (disableGlobalFeatures) return;
         // Don't intercept paste if user is typing in an input or textarea
         if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
             return;
@@ -93,10 +98,11 @@ const GlobalDropOverlay = () => {
         if (filesFromPaste.length > 0) {
             processFiles(filesFromPaste);
         }
-    }, [setGlobalFiles]);
+    }, [setGlobalFiles, disableGlobalFeatures]);
 
     // -- Double Click Handler --
     const handleDoubleClick = useCallback((e: MouseEvent) => {
+        if (disableGlobalFeatures) return;
         // Only trigger on the homepage
         if (location.pathname !== "/") return;
 
@@ -107,7 +113,7 @@ const GlobalDropOverlay = () => {
         if (!isInteractive && inputRef.current) {
             inputRef.current.click();
         }
-    }, [location.pathname]);
+    }, [location.pathname, disableGlobalFeatures]);
 
     // -- File Input Handler (for double-click) --
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {

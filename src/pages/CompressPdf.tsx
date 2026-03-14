@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Minimize2, Settings, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, AlertCircle, Loader2, Layout, Zap, X, RotateCw } from "lucide-react";
+import { Minimize2, Settings, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, AlertCircle, Loader2, Layout, Zap, X, RotateCw, RefreshCw, Plus, ShieldCheck } from "lucide-react";
+import JSZip from "jszip";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -10,7 +11,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 // Set worker path for pdfjs
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -49,6 +53,8 @@ const CompressPdf = () => {
   const [progress, setProgress] = useState(0);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [results, setResults] = useState<ProcessedFile[]>([]);
+  const [zipUrl, setZipUrl] = useState<string | null>(null);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
 
   // Cleanup object URLs
   useEffect(() => {
@@ -95,6 +101,10 @@ const CompressPdf = () => {
       setFileDataList([]);
     }
   };
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+  }, [files, setDisableGlobalFeatures]);
 
   const handleAddFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || []);
@@ -151,8 +161,6 @@ const CompressPdf = () => {
   };
 
   // Estimate compressed size based on page count and DPI/quality settings
-  // Each page rendered as JPEG: approximate bytes = width_px * height_px * bytesPerPixelAfterJPEG
-  // For A4 at given DPI: ~8.27 x 11.69 inches
   const estimateCompressedSize = (): number => {
     const totalPages = fileDataList.reduce((acc, fd) => acc + fd.pageCount, 0);
     if (totalPages === 0) return 0;
@@ -171,14 +179,10 @@ const CompressPdf = () => {
       if (targetBytes > 0) return targetBytes;
     }
 
-    // Approximate JPEG bytes per page: pixels * compression factor
-    // Average A4 page: 8.27 x 11.69 inches
     const widthPx = 8.27 * config.dpi;
     const heightPx = 11.69 * config.dpi;
     const totalPixels = widthPx * heightPx;
-    // JPEG bytes ≈ pixels * quality * ~0.15 (empirical factor for typical PDF content)
     const bytesPerPage = totalPixels * config.quality * 0.15;
-    // Add ~5KB per page for PDF structure overhead
     const pdfOverhead = totalPages * 5000 + 2000;
 
     return Math.round(bytesPerPage * totalPages + pdfOverhead);
@@ -190,8 +194,6 @@ const CompressPdf = () => {
     ? Math.round(((totalOriginalSize - estimatedSize) / totalOriginalSize) * 100)
     : 0;
 
-  // --- REAL COMPRESSION: render pages as JPEG images at target DPI/quality, rebuild PDF ---
-
   const compressSinglePdf = async (
     file: File,
     dpi: number,
@@ -202,8 +204,6 @@ const CompressPdf = () => {
     const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const numPages = pdfDoc.numPages;
     const outDoc = await PDFDocument.create();
-
-    // Scale factor: 72 DPI is the PDF standard, so scale = targetDpi / 72
     const scale = dpi / 72;
 
     for (let i = 1; i <= numPages; i++) {
@@ -218,7 +218,6 @@ const CompressPdf = () => {
       const ctx = canvas.getContext("2d")!;
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      // Convert canvas to JPEG blob at target quality
       const jpegBlob = await new Promise<Blob>((resolve) => {
         canvas.toBlob(
           (blob) => resolve(blob!),
@@ -229,8 +228,6 @@ const CompressPdf = () => {
 
       const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
       const jpegImage = await outDoc.embedJpg(jpegBytes);
-
-      // Get original page dimensions (in PDF points at 72 DPI)
       const origViewport = page.getViewport({ scale: 1 });
       const pdfPage = outDoc.addPage([origViewport.width, origViewport.height]);
       pdfPage.drawImage(jpegImage, {
@@ -241,14 +238,8 @@ const CompressPdf = () => {
       });
     }
 
-    // Strip metadata
-    outDoc.setTitle("");
-    outDoc.setAuthor("");
-    outDoc.setSubject("");
-    outDoc.setKeywords([]);
     outDoc.setProducer("MagicDOCX");
     outDoc.setCreator("MagicDOCX");
-
     onProgress(95);
 
     const compressedBytes = await outDoc.save({ useObjectStreams: true });
@@ -263,7 +254,9 @@ const CompressPdf = () => {
     setProcessing(true);
     setProgress(0);
     setResults([]);
+    setZipUrl(null);
     const newResults: ProcessedFile[] = [];
+    const zip = files.length > 1 ? new JSZip() : null;
 
     const targets = {
       recommended: { dpi: 150, quality: 0.75 },
@@ -307,17 +300,32 @@ const CompressPdf = () => {
           compressedSize: result.compressedSize,
         });
 
-        // Auto-download
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name.replace(/\.pdf$/i, "_compressed.pdf");
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        if (zip) {
+          zip.file(file.name.replace(/\.pdf$/i, "_compressed.pdf"), result.blob);
+        } else {
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.name.replace(/\.pdf$/i, "_compressed.pdf");
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
       } catch (err) {
         console.error("Compression failed for", file.name, err);
         toast.error(`Failed to compress ${file.name}`);
       }
+    }
+
+    if (zip && newResults.length > 0) {
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      setZipUrl(url);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "MagicDOCX_Compressed_PDFs.zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     setProgress(100);
@@ -327,322 +335,259 @@ const CompressPdf = () => {
   };
 
   return (
-    <ToolLayout title="Compress PDF" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />} metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress" hideHeader>
-      <div className="mt-2">
-        {files.length === 0 ? (
-          <div className="mt-5">
-            <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} multiple label="Select PDFs to compress" collapsible={false} />
+    <ToolLayout title="Compress PDF Online" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />} metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress" hideHeader={files.length > 0}>
+      <div className="mt-2 text-left">
+        {files.length === 0 && !processing && results.length === 0 && (
+          <div className="mt-10 text-center">
+            <FileUpload
+              accept=".pdf"
+              files={files}
+              onFilesChange={handleFilesChange}
+              label="Select PDF files to compress"
+            />
           </div>
-        ) : processing ? (
-          <div className="mt-4 mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 shadow-elevated text-center">
-            <div className="mb-6 relative flex justify-center items-center h-24">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full border-4 border-primary/20"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full border-4 border-primary border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }}></div>
-              </div>
-              <Settings className="h-7 w-7 text-primary absolute animate-pulse" />
-            </div>
+        )}
 
-            <h3 className="text-xl font-bold mb-1">Compressing your PDF...</h3>
-
-            {files.length > 1 && (
-              <p className="text-muted-foreground mb-4 font-medium text-xs bg-secondary inline-block px-2 py-0.5 rounded-full">
-                File {currentFileIndex + 1} of {files.length}
-              </p>
-            )}
-
-            <div className="w-full bg-secondary rounded-full h-2 mb-3 overflow-hidden">
-              <div
-                className="bg-primary h-full transition-all duration-300 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-
-            <div className="text-left space-y-2 mt-4 bg-background rounded-xl p-3 border border-border max-h-[250px] overflow-y-auto custom-scrollbar">
-              {files.map((f, i) => (
-                <div key={i} className="flex justify-between items-center text-xs">
-                  <span className="flex items-center gap-2 truncate max-w-[70%]">
-                    {i < currentFileIndex ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" /> :
-                      i === currentFileIndex ? <Loader2 className="h-3.5 w-3.5 text-primary animate-spin shrink-0" /> :
-                        <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground shrink-0" />}
-                    <span className={cn("truncate", i > currentFileIndex ? "text-muted-foreground" : "text-foreground font-medium")}>{f.name}</span>
-                  </span>
-                  <span className="text-[10px] text-muted-foreground shrink-0">{formatSize(f.size)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : results.length > 0 ? (
-          <div className="mt-4 mx-auto max-w-xl rounded-2xl border border-green-500/20 bg-card p-8 shadow-elevated text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-
-            <div className="mx-auto w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
-            </div>
-
-            <h2 className="text-xl font-bold text-foreground mb-1">PDF Compressed Successfully</h2>
-
-            {results.length === 1 ? (
-              <p className="text-sm text-muted-foreground mb-6">Your document is now optimized and ready to download.</p>
-            ) : (
-              <p className="text-sm text-muted-foreground mb-6">All {results.length} documents have been successfully optimized.</p>
-            )}
-
-            <div className="bg-secondary/50 rounded-xl p-5 mb-6">
-              <div className="grid grid-cols-3 gap-4 divide-x divide-border">
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-0.5">Original</p>
-                  <p className="text-sm font-bold text-foreground line-through opacity-70">
-                    {formatSize(results.reduce((acc, r) => acc + r.originalSize, 0))}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-0.5">Compressed</p>
-                  <p className="text-lg font-black text-green-600 dark:text-green-400">
-                    {formatSize(results.reduce((acc, r) => acc + r.compressedSize, 0))}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-0.5">Saved</p>
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-bold text-foreground">
-                      {formatSize(results.reduce((acc, r) => acc + (r.originalSize - r.compressedSize), 0))}
-                    </span>
-                    <span className="text-[10px] font-bold text-white bg-green-500 px-1 py-0.5 rounded-sm mt-0.5">
-                      {Math.round((1 - (results.reduce((acc, r) => acc + r.compressedSize, 0) / results.reduce((acc, r) => acc + r.originalSize, 0))) * 100)}%
-                    </span>
+        {files.length > 0 && !processing && results.length === 0 && (
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden">
+            {/* LEFT SIDE: Thumbnails Grid (Small Window Preview) */}
+            <div className="w-full lg:w-[60%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+              <div className="p-4 border-b border-border bg-background/50 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setFiles([]); setFileDataList([]); }}
+                    className="h-8 w-8 p-0 rounded-full hover:bg-secondary/20"
+                  >
+                    <ArrowRight className="h-4 w-4 rotate-180" />
+                  </Button>
+                  <div className="h-4 w-[1px] bg-border mx-1" />
+                  <div className="flex items-center gap-2 text-left">
+                    <FileBox className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{files.length} Files</span>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <Button
-                size="lg"
-                className="w-full text-md h-12"
-                onClick={() => {
-                  results.forEach(r => {
-                    const a = document.createElement('a');
-                    a.href = r.compressedUrl;
-                    a.download = r.originalFile.name.replace(/\.pdf$/i, "_compressed.pdf");
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  });
-                }}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download {results.length > 1 ? `Files (${files.length})` : 'File'}
-              </Button>
-
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <Button variant="outline" className="h-10 text-xs" onClick={() => { setResults([]); setFiles([]); }}>
-                  <Upload className="mr-2 h-3.5 w-3.5" /> Compress New
-                </Button>
-                <Button variant="outline" className="h-10 text-xs" onClick={() => toast("Link copied to clipboard!")}>
-                  <Share2 className="mr-2 h-3.5 w-3.5" /> Share
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-            {/* LEFT PANEL: SMART PREVIEW */}
-            <div className="flex-1 space-y-4 lg:max-w-[calc(100%-424px)]">
-              <div className="bg-card border border-border shadow-elevated rounded-2xl p-5 h-[500px] flex flex-col relative overflow-hidden group/sidebar">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full pointer-events-none -z-0 transition-transform group-hover/sidebar:scale-110 duration-700"></div>
-
-                <div className="flex items-center justify-between mb-4 relative z-10 shrink-0">
-                  <h2 className="text-lg font-bold flex items-center gap-2">
-                    <div className="p-1.5 bg-primary/10 rounded-lg">
-                      <FileBox className="h-4 w-4 text-primary" />
-                    </div>
-                    Files to Compress
-                  </h2>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-secondary rounded-full text-muted-foreground uppercase tracking-tight">
-                    {files.length} {files.length === 1 ? 'file' : 'files'}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setFiles([]); setFileDataList([]); }}
+                    className="h-8 text-[10px] font-black uppercase tracking-widest text-destructive hover:bg-destructive/5 px-3"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> Reset
+                  </Button>
+                  <input type="file" ref={fileInputRef} onChange={handleAddFiles} accept=".pdf" multiple className="hidden" />
                 </div>
+              </div>
 
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-10 space-y-2 mb-3">
-                  <AnimatePresence mode="popLayout">
+              <ScrollArea className="flex-1">
+                <div className="p-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {fileDataList.map((fd, idx) => (
-                      <motion.div
-                        key={`${fd.file.name}-${idx}`}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95, x: -20 }}
-                        className="flex gap-3 items-center bg-background/60 backdrop-blur-sm p-2 rounded-xl border border-border shadow-sm group hover:border-primary/40 hover:shadow-md transition-all duration-300 relative overflow-hidden shrink-0"
-                      >
-                        <div className="w-12 h-16 bg-secondary/30 rounded-lg border border-border/50 overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner group-hover:scale-105 transition-transform duration-300">
+                      <div key={idx} className="group flex flex-col gap-2 p-2 bg-background border border-border hover:border-primary/50 rounded-xl transition-all duration-200 text-left relative">
+                        <div className="aspect-[3/4] w-full bg-secondary/30 rounded-lg overflow-hidden flex items-center justify-center relative shadow-sm border border-border/10">
                           {fd.previewUrl ? (
-                            <img
-                              src={fd.previewUrl}
-                              alt="Preview"
-                              className="w-full h-full object-contain transition-transform duration-300"
-                              style={{ transform: `rotate(${fd.rotation}deg)` }}
-                            />
+                            <img src={fd.previewUrl} alt="Preview" className="w-full h-full object-contain" style={{ transform: `rotate(${fd.rotation}deg)` }} />
                           ) : (
-                            <FileBox className="h-5 w-5 text-muted-foreground/30" />
+                            <FileBox className="h-8 w-8 text-muted-foreground/30" />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                          <div className="absolute top-1 left-1 bg-primary px-1 py-0.5 rounded text-[7px] font-black text-white shadow-sm">
+                          <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <button onClick={() => rotateFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-primary transition-colors shadow-sm border border-border/50"><RotateCw className="h-3 w-3" /></button>
+                            <button onClick={() => removeFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-destructive transition-colors shadow-sm border border-border/50"><X className="h-3 w-3" /></button>
+                          </div>
+                          <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
                             {idx + 1}
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0 pr-10">
-                          <p className="font-bold text-xs truncate text-foreground group-hover:text-primary transition-colors">{fd.file.name}</p>
-                          <div className="flex items-center gap-2 mt-1 text-[9px] text-muted-foreground font-semibold">
-                            <span className="bg-secondary/50 px-1.5 py-0.5 rounded border border-border/30">{formatSize(fd.file.size)}</span>
-                            {fd.pageCount > 0 && <span className="flex items-center gap-1"><Layout className="h-2.5 w-2.5" /> {fd.pageCount} Pages</span>}
-                          </div>
+                        <div className="px-1 min-w-0">
+                          <p className="text-[9px] font-black text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
+                          <p className="text-[8px] font-black text-primary uppercase">{formatSize(fd.file.size)}</p>
                         </div>
-
-                        {/* Action Buttons */}
-                        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); rotateFile(idx); }}
-                            className="p-1 bg-background border border-border rounded-md hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground shadow-sm"
-                            title="Rotate 90°"
-                          >
-                            <RotateCw className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                            className="p-1 bg-background border border-border rounded-md hover:bg-red-50 hover:text-red-500 transition-colors text-muted-foreground shadow-sm"
-                            title="Remove file"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </motion.div>
+                      </div>
                     ))}
-                  </AnimatePresence>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="aspect-[3/4] border-2 border-dashed border-border hover:border-primary/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+                    >
+                      <Plus className="h-5 w-5" />
+                      Add More
+                    </button>
+                  </div>
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* RIGHT SIDE: Workbench Settings */}
+            <div className="flex-1 bg-secondary/10 flex flex-col p-6 lg:pt-8 lg:pb-12 lg:px-12 overflow-y-auto">
+              <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-background border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -z-0" />
+                    <div className="relative z-10 space-y-1">
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Weight</p>
+                      <p className="text-3xl font-black text-foreground tracking-tighter">{formatSize(totalOriginalSize)}</p>
+                    </div>
+                  </div>
+                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-0" />
+                    <div className="relative z-10 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">Post Estimation</p>
+                        <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-glow">-{reductionPercentage}%</span>
+                      </div>
+                      <p className="text-3xl font-black text-primary tracking-tighter">{formatSize(estimatedSize)}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="relative z-10 pt-3 border-t border-border mt-auto shrink-0">
-                  <div className="flex gap-2">
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.1 }}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 h-10 border-2 border-dashed border-primary/30 rounded-xl flex items-center justify-center text-[10px] font-bold text-primary hover:bg-primary/5 hover:border-primary/50 transition-all group/add"
-                    >
-                      <Upload className="h-3.5 w-3.5 mr-1.5 group-hover/add:-translate-y-0.5 transition-transform" />
-                      Add More Files
-                    </motion.button>
-
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.15 }}
-                      onClick={() => setFiles([])}
-                      className="px-3 h-10 border-2 border-dashed border-border rounded-xl flex items-center justify-center text-[10px] font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
-                    >
-                      Reset
-                    </motion.button>
+                <div className="bg-background border border-border rounded-3xl p-8 space-y-8 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl">
+                      <Zap className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="text-base font-black uppercase tracking-tighter">Compression Engine</h3>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider italic">Advanced neural optimization active</p>
+                    </div>
                   </div>
 
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleAddFiles}
-                    accept=".pdf"
-                    multiple
-                    className="hidden"
-                  />
+                  <div className="flex flex-col gap-3">
+                    {[
+                      { id: 'high', label: 'Strong Compression', desc: 'Smaller files and lower quality', icon: Minimize2, color: 'text-primary' },
+                      { id: 'recommended', label: 'Recommended', desc: 'Balanced size and quality', icon: CheckCircle2, color: 'text-green-500' },
+                      { id: 'low', label: 'Professional', desc: 'Best quality and minimal compression', icon: FileBox, color: 'text-blue-500' }
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => setMode(m.id as CompressMode)}
+                        className={cn(
+                          "flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all duration-300 group relative overflow-hidden",
+                          mode === m.id ? "border-primary bg-primary/5 shadow-inner" : "border-border bg-background hover:border-primary/20"
+                        )}
+                      >
+                        <m.icon className={cn("h-6 w-6 shrink-0", mode === m.id ? m.color : "text-muted-foreground/40")} />
+                        <div className="flex flex-col">
+                          <p className={cn("text-[11px] font-black uppercase tracking-widest", mode === m.id ? "text-foreground" : "text-muted-foreground")}>{m.label}</p>
+                          <p className="text-[9px] font-black text-muted-foreground/40 uppercase leading-none tracking-tight">{m.desc}</p>
+                        </div>
+                        {mode === m.id && <div className="ml-auto"><CheckCircle2 className="h-4 w-4 text-primary" /></div>}
+                      </button>
+                    ))}
+                  </div>
+
+                  <Button
+                    onClick={startCompression}
+                    size="lg"
+                    className="w-full h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
+                  >
+                    Start Neural Compression
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* RIGHT PANEL: COMPRESSION CONTROLS */}
-            <div className="w-full lg:w-[400px] shrink-0 space-y-4 h-[500px] flex flex-col">
-              <div className="bg-card border border-border shadow-elevated rounded-2xl p-4 flex flex-col relative overflow-hidden flex-1 min-h-0">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full pointer-events-none -z-0"></div>
+        {/* ── Processing View ─────────────────────────────────────────────── */}
+        {processing && (
+          <div className="fixed top-16 inset-x-0 bottom-0 z-50 bg-background/95 backdrop-blur-md flex items-center justify-center p-6">
+            <div className="w-full max-w-xl space-y-8 text-center bg-card border border-border p-12 rounded-3xl shadow-2xl">
+              <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                <Settings className="h-10 w-10 text-primary animate-pulse" />
+              </div>
 
-                <div className="mb-3 relative z-10 shrink-0">
-                  <h2 className="text-md font-black text-foreground tracking-tight flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-                    Compression Level
-                  </h2>
-                  <p className="text-[10px] text-muted-foreground font-medium mt-0.5 ml-3.5 uppercase tracking-widest">Balance savings & quality</p>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black uppercase tracking-tighter">Compressing Document Architecture</h3>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{files.length > 1 ? `Optimizing File ${currentFileIndex + 1} of ${files.length}` : "Generating Neural Preview..."}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Progress value={progress} className="h-2 rounded-full" />
+                <p className="text-[11px] font-black text-primary uppercase tracking-widest">{progress}% Complete</p>
+              </div>
+
+              <div className="pt-4 border-t border-border mt-8 space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
+                {files.map((f, i) => (
+                  <div key={i} className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                    <span className="flex items-center gap-2 max-w-[70%] truncate">
+                      {i < currentFileIndex ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : i === currentFileIndex ? <Loader2 className="h-3 w-3 text-primary animate-spin" /> : <div className="h-3 w-3 rounded-full border border-border" />}
+                      <span className={cn(i === currentFileIndex ? "text-foreground" : "text-muted-foreground")}>{f.name}</span>
+                    </span>
+                    <span className="text-muted-foreground">{formatSize(f.size)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── RESULTS PHASE ─────────────────────────────────────────────── */}
+        {results.length > 0 && !processing && (
+          <div className="fixed top-16 inset-x-0 bottom-0 z-50 bg-background flex items-center justify-center p-6">
+            <div className="w-full max-w-2xl bg-card border border-primary/20 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="bg-primary/5 border-b border-primary/10 p-12 text-center space-y-6">
+                <div className="mx-auto w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center border-4 border-green-500/30">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Architectural Optimization Complete</h2>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Documents have been successfully compressed</p>
                 </div>
 
-                <div className="space-y-1.5 relative z-10 overflow-y-auto pr-1 flex-1 custom-scrollbar">
-                  {[
-                    { id: 'recommended', label: 'Recommended', desc: 'Optimal balance', percent: 40, icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-500/10' },
-                    { id: 'high', label: 'High Compression', desc: 'Maximum savings', percent: 95, icon: Minimize2, color: 'text-primary', bg: 'bg-primary/10' },
-                    { id: 'low', label: 'Low Compression', desc: 'Crisp quality', percent: 15, icon: FileBox, color: 'text-blue-500', bg: 'bg-blue-500/10' }
-                  ].map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setMode(m.id as CompressMode)}
-                      className={cn(
-                        "w-full flex items-center p-2.5 rounded-xl border-2 transition-all duration-300 text-left group/mode",
-                        mode === m.id
-                          ? "border-primary bg-primary/[0.03] shadow-inner-sm ring-1 ring-primary/20"
-                          : "border-border bg-background hover:border-primary/30 hover:shadow-sm"
-                      )}
-                    >
-                      <div className={cn("p-2 rounded-lg shrink-0 mr-3 transition-colors duration-300 shadow-sm", mode === m.id ? m.bg : "bg-secondary")}>
-                        <m.icon className={cn("h-3.5 w-3.5", mode === m.id ? m.color : "text-muted-foreground")} />
-                      </div>
-                      <div className="flex-1">
-                        <p className={cn("font-extrabold text-xs transition-colors", mode === m.id ? "text-foreground" : "text-muted-foreground group-hover/mode:text-foreground")}>{m.label}</p>
-                        <p className="text-[9px] font-bold text-muted-foreground/60 leading-tight uppercase tracking-widest">{m.desc}</p>
-                      </div>
-                      <div className={cn(
-                        "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ml-1.5 transition-all duration-500",
-                        mode === m.id ? "border-primary scale-110 shadow-glow" : "border-muted-foreground/20 scale-90"
-                      )}>
-                        {mode === m.id && <motion.div layoutId="active-dot" className="w-2 h-2 bg-primary rounded-full shadow-sm"></motion.div>}
-                      </div>
-                    </button>
-                  ))}
+                <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border grid grid-cols-3 gap-6 divide-x divide-border shadow-sm">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Input size</p>
+                    <p className="text-md font-bold text-muted-foreground/60 line-through tracking-tighter">{formatSize(totalOriginalSize)}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-primary uppercase tracking-widest">Optimized Weight</p>
+                    <p className="text-2xl font-black text-primary tracking-tighter">{formatSize(results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-green-500 uppercase tracking-widest">Neutral Savings</p>
+                    <div className="flex flex-col items-center">
+                      <p className="text-md font-bold text-foreground tracking-tighter">{formatSize(totalOriginalSize - results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
+                      <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full mt-1">
+                        {Math.round((1 - (results.reduce((acc, r) => acc + r.compressedSize, 0) / (totalOriginalSize || 1))) * 100)}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* LIVE ESTIMATION PANEL */}
-              <div className="bg-gradient-to-br from-primary/5 to-primary/0 border-2 border-primary/10 shadow-elevated rounded-2xl p-4 relative overflow-hidden group/estimate shrink-0">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-full opacity-20 blur-2xl group-hover/estimate:scale-150 transition-transform duration-700"></div>
-                <div className="absolute top-0 left-0 w-1 h-full bg-primary/40 group-hover/estimate:bg-primary transition-colors"></div>
-
-                <div className="flex justify-between items-center mb-3 relative z-10">
-                  <h3 className="font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
-                    <div className="w-1 h-1 bg-primary rounded-full animate-ping"></div>
-                    Real-time Estimate
-                  </h3>
-                  <div className="bg-primary px-2 py-0.5 rounded-full text-[9px] font-black text-primary-foreground shadow-glow animate-pulse">
-                    -{reductionPercentage}%
-                  </div>
-                </div>
-
-                <div className="space-y-2 relative z-10">
-                  <div className="flex justify-between items-center text-[10px] font-bold">
-                    <div className="flex items-center gap-1.5 text-muted-foreground/60 tracking-tight">
-                      <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
-                      Original Total
-                    </div>
-                    <span className="text-muted-foreground line-through decoration-primary/30">{formatSize(totalOriginalSize)}</span>
-                  </div>
-                  <div className="flex justify-between items-center bg-primary/5 -mx-1 px-3 py-2 rounded-xl border border-primary/10 backdrop-blur-sm group-hover/estimate:bg-primary/10 transition-colors duration-300">
-                    <span className="text-[10px] font-black text-foreground flex items-center gap-2">
-                      <Zap className="h-3 w-3 text-primary fill-primary/20" />
-                      Optimized Size
-                    </span>
-                    <span className="font-black text-md text-primary tracking-tight">{formatSize(estimatedSize)}</span>
-                  </div>
-                </div>
-
+              <div className="p-8 space-y-3">
                 <Button
-                  onClick={startCompression}
                   size="lg"
-                  className="w-full mt-3 h-11 text-[11px] font-black uppercase tracking-widest shadow-elevated hover:shadow-primary/30 transition-all group-hover:bg-primary group-hover:shadow-glow rounded-xl"
+                  className="w-full h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30 transition-all hover:scale-[1.01]"
+                  onClick={() => {
+                    if (zipUrl) {
+                      const a = document.createElement('a');
+                      a.href = zipUrl;
+                      a.download = "MagicDOCX_Compressed_PDFs.zip";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    } else {
+                      results.forEach(r => {
+                        const a = document.createElement('a');
+                        a.href = r.compressedUrl;
+                        a.download = r.originalFile.name.replace(/\.pdf$/i, "_compressed.pdf");
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      });
+                    }
+                  }}
                 >
-                  Compress PDF <ArrowRight className="ml-2 h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  <Download className="h-5 w-5 mr-3" /> Download {results.length > 1 ? 'ZIP Archive' : 'Optimized PDF'}
+                </Button>
+                <Button variant="ghost" className="w-full h-12 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground" onClick={() => { setResults([]); setFiles([]); }}>
+                  <RefreshCw className="h-4 w-4 mr-2" /> Start New Compression
                 </Button>
               </div>
             </div>

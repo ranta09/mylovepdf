@@ -15,6 +15,14 @@ import {
   ZoomIn, ZoomOut, Maximize, Minimize, PanelRight, AlignCenter
 } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import {
   renderPdfPages, buildEditedPdf, makeId,
   type Overlay, type TextOverlay, type ImageOverlay,
   type AnnotationOverlay, type SignatureOverlay,
@@ -72,6 +80,11 @@ const EditPdf = () => {
   const [textColor, setTextColor] = useState("#000000");
   const [textBold, setTextBold] = useState(false);
   const [textItalic, setTextItalic] = useState(false);
+  const [textFont, setTextFont] = useState("helvetica");
+
+  // Dragging overlay state
+  const [draggingOverlay, setDraggingOverlay] = useState<{ pageIdx: number; overlayId: string; startX: number; startY: number; mouseStartX: number; mouseStartY: number } | null>(null);
+  const wasDraggingMove = useRef(false);
 
   // Annotation tool state
   const [annotKind, setAnnotKind] = useState<AnnotationKind>("highlight");
@@ -209,6 +222,47 @@ const EditPdf = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [history, future, state]);
 
+  // ─── Dragging Overlays ─────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!draggingOverlay) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const { pageIdx, startX, startY, mouseStartX, mouseStartY } = draggingOverlay;
+      const pageEl = pageRefs.current[pageIdx];
+      if (!pageEl) return;
+
+      const rect = pageEl.getBoundingClientRect();
+      const deltaX = ((e.clientX - mouseStartX) / rect.width) * 100;
+      const deltaY = ((e.clientY - mouseStartY) / rect.height) * 100;
+
+      wasDraggingMove.current = true;
+
+      const next = cloneState(state);
+      const overlay = next.pages[pageIdx].overlays.find(o => o.id === draggingOverlay.overlayId);
+      if (overlay) {
+        overlay.x = Math.max(0, Math.min(100, startX + deltaX));
+        overlay.y = Math.max(0, Math.min(100, startY + deltaY));
+        setState(next);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setDraggingOverlay(null);
+      // Small timeout to prevent the click event from firing after drop
+      setTimeout(() => { wasDraggingMove.current = false; }, 100);
+      setHistory(h => [...h.slice(-MAX_HISTORY + 1), cloneState(state)]);
+      setFuture([]);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [draggingOverlay, state]);
+
   // ─── Overlays ──────────────────────────────────────────────────────────────
 
   const addOverlay = (pageIdx: number, overlay: Overlay) => {
@@ -236,12 +290,12 @@ const EditPdf = () => {
   // ─── Page interactions ─────────────────────────────────────────────────────
 
   const handlePageClick = (e: React.MouseEvent, srcIdx: number) => {
-    if (activeTab !== "text") return;
+    if (activeTab !== "text" || wasDraggingMove.current) return;
     const { x, y } = getRelativePos(e);
     const overlay: TextOverlay = {
       id: makeId(), type: "text",
       text: textContent, fontSize: textSize[0], color: textColor,
-      bold: textBold, italic: textItalic, x, y
+      bold: textBold, italic: textItalic, fontFamily: textFont, x, y
     };
     addOverlay(srcIdx, overlay);
   };
@@ -389,14 +443,48 @@ const EditPdf = () => {
   const renderOverlay = (ov: Overlay, srcIdx: number) => {
     if (ov.type === "text") {
       const o = ov as TextOverlay;
+      const isDragging = draggingOverlay?.overlayId === o.id;
+
+      const handleMouseDown = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setDraggingOverlay({
+          pageIdx: srcIdx,
+          overlayId: o.id,
+          startX: o.x,
+          startY: o.y,
+          mouseStartX: e.clientX,
+          mouseStartY: e.clientY
+        });
+      };
+
       return (
-        <div key={o.id} className="absolute group flex items-start"
-          style={{ left: `${o.x}%`, top: `${o.y}%`, transform: "translate(-50%, -50%)", userSelect: "none" }}>
-          <span style={{ fontSize: `${Math.max(8, o.fontSize * 0.7)}px`, color: o.color, fontWeight: o.bold ? "bold" : "normal", fontStyle: o.italic ? "italic" : "normal", background: "rgba(255,255,255,0.8)", borderRadius: 3, padding: "1px 4px", border: "1px dashed rgba(0,0,0,0.25)" }}>
+        <div key={o.id} className={cn("absolute group flex items-start cursor-move transition-shadow", isDragging && "shadow-2xl z-50")}
+          style={{
+            left: `${o.x}%`,
+            top: `${o.y}%`,
+            transform: "translate(-50%, -50%)",
+            userSelect: "none",
+            filter: isDragging ? "brightness(1.1)" : "none"
+          }}
+          onMouseDown={handleMouseDown}>
+          <span style={{
+            fontSize: `${Math.max(8, o.fontSize * 0.7)}px`,
+            color: o.color,
+            fontWeight: o.bold ? "bold" : "normal",
+            fontStyle: o.italic ? "italic" : "normal",
+            fontFamily: o.fontFamily === "times" ? "'Times New Roman', serif" : o.fontFamily === "courier" ? "'Courier New', monospace" : "sans-serif",
+            background: "transparent",
+            borderRadius: 4,
+            padding: "2px 6px",
+            border: "1px solid transparent",
+            transition: "all 0.2s"
+          }}
+            className="group-hover:bg-white/10 shadow-none ring-0">
             {o.text}
           </span>
-          <button onClick={() => removeOverlay(srcIdx, o.id)} className="ml-0.5 opacity-0 group-hover:opacity-100 bg-destructive text-white rounded-full h-4 w-4 flex items-center justify-center transition-opacity">
-            <X className="h-2.5 w-2.5" />
+          <button onClick={(e) => { e.stopPropagation(); removeOverlay(srcIdx, o.id); }}
+            className="ml-1 opacity-0 group-hover:opacity-100 bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95">
+            <X className="h-3 w-3" />
           </button>
         </div>
       );
@@ -445,10 +533,35 @@ const EditPdf = () => {
     }
     if (ov.type === "signature") {
       const o = ov as SignatureOverlay;
+      const isDragging = draggingOverlay?.overlayId === o.id;
+
+      const handleMouseDown = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setDraggingOverlay({
+          pageIdx: srcIdx,
+          overlayId: o.id,
+          startX: o.x,
+          startY: o.y,
+          mouseStartX: e.clientX,
+          mouseStartY: e.clientY
+        });
+      };
+
       return (
-        <div key={o.id} className="absolute group" style={{ left: `${o.x}%`, top: `${o.y}%`, width: `${o.width}%`, height: `${o.height}%` }}>
+        <div key={o.id} className={cn("absolute group cursor-move transition-shadow", isDragging && "shadow-2xl z-50 opacity-50")}
+          style={{
+            left: `${o.x}%`,
+            top: `${o.y}%`,
+            width: `${o.width}%`,
+            height: `${o.height}%`,
+            filter: isDragging ? "brightness(1.1)" : "none"
+          }}
+          onMouseDown={handleMouseDown}>
           <img src={o.dataUrl} className="w-full h-full" style={{ mixBlendMode: "multiply" }} alt="signature" />
-          <button onClick={() => removeOverlay(srcIdx, o.id)} className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-destructive text-white rounded-full h-4 w-4 flex items-center justify-center transition-opacity"><X className="h-3 w-3" /></button>
+          <button onClick={(e) => { e.stopPropagation(); removeOverlay(srcIdx, o.id); }}
+            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95">
+            <X className="h-3 w-3" />
+          </button>
         </div>
       );
     }
@@ -466,28 +579,21 @@ const EditPdf = () => {
 
   return (
     <ToolLayout
-      title="Edit PDF"
+      title="Edit PDF Online"
       description="Edit PDF online — add text, replace images, annotate, sign and manage pages."
       category="edit"
       icon={<Edit3 className="h-7 w-7" />}
       metaTitle="Edit PDF Online — Change Text & Images | MagicDocx"
       metaDescription="Edit any PDF online. Add text, replace images, annotate, sign, and manage pages. Free in-browser PDF editor."
       toolId="edit"
-      hideHeader
+      hideHeader={!!file}
     >
       <div className="space-y-4">
-        <ToolHeader
-          title="Edit PDF Online"
-          description="Add text, images, annotations, and signatures"
-          icon={<Edit3 className="h-5 w-5 text-primary-foreground" />}
-          className="bg-tool-edit/5 border-tool-edit/20"
-          iconBgClass="bg-tool-edit"
-        />
 
         {/* Upload state */}
         {!file && !loading && (
           <FileUpload accept=".pdf" multiple={false} files={[]} onFilesChange={handleFiles}
-            label="Drop your PDF here to start editing" collapsible={false} />
+            label="Drop your PDF here to start editing" />
         )}
 
         {loading && (
@@ -499,306 +605,336 @@ const EditPdf = () => {
 
         {/* Full editor workspace */}
         {file && previews.length > 0 && (
-          <div ref={editorRef} className="flex flex-col gap-0 rounded-2xl border border-border bg-card shadow-card overflow-hidden" style={{ minHeight: "500px", maxHeight: isFullscreen ? "100vh" : "85vh" }}>
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+            <div ref={editorRef} className="flex-1 flex flex-col overflow-hidden">
 
-            {/* ── Top Toolbar ─────────────────────────────────────────────── */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background/95 backdrop-blur px-3 py-2 sticky top-0 z-30">
+              {/* ── Top Toolbar ─────────────────────────────────────────────── */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 shrink-0">
 
-              {/* Tool Tabs */}
-              <div className="flex gap-0.5 rounded-xl bg-secondary p-1">
-                {tabs.map(t => (
-                  <button key={t.id} onClick={() => setActiveTab(t.id)}
-                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${activeTab === t.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}>
-                    {t.icon} <span className="hidden sm:inline">{t.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Center: Zoom controls */}
-              <div className="flex items-center gap-1 rounded-xl bg-secondary px-2 py-1">
-                <Button variant="ghost" size="sm" onClick={zoomOut} disabled={zoom <= ZOOM_STEPS[0]} className="h-7 w-7 p-0 rounded-lg" title="Zoom Out">
-                  <ZoomOut className="h-3.5 w-3.5" />
-                </Button>
-                <button onClick={zoomFitWidth} className="text-xs font-bold tabular-nums min-w-[44px] text-center text-foreground hover:text-primary transition-colors" title="Reset to Fit Width">
-                  {Math.round(zoom * 100)}%
-                </button>
-                <Button variant="ghost" size="sm" onClick={zoomIn} disabled={zoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1]} className="h-7 w-7 p-0 rounded-lg" title="Zoom In">
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </Button>
-                <div className="mx-1 h-4 w-px bg-border" />
-                <Button variant="ghost" size="sm" onClick={zoomFitWidth} className="h-7 px-2 text-[10px] rounded-lg gap-1" title="Fit Width">
-                  <AlignCenter className="h-3 w-3" /> Fit
-                </Button>
-              </div>
-
-              {/* Right: History + Actions */}
-              <div className="flex items-center gap-1.5">
-                <Button variant="ghost" size="sm" onClick={undo} disabled={!history.length} title="Undo (Ctrl+Z)" className="h-7 w-7 p-0">
-                  <Undo2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={redo} disabled={!future.length} title="Redo (Ctrl+Y)" className="h-7 w-7 p-0">
-                  <Redo2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={saveVersion} disabled={saving} className="h-7 rounded-lg text-xs gap-1 hidden md:flex">
-                  <Save className="h-3 w-3" /> Save
-                </Button>
-                <Button size="sm" onClick={download} disabled={saving} className="h-7 rounded-lg text-xs gap-1 bg-primary text-primary-foreground">
-                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                  <span className="hidden sm:inline">Download</span>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setRightPanelOpen(r => !r)} className="h-7 w-7 p-0" title="Toggle panel">
-                  <PanelRight className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="h-7 w-7 p-0" title="Fullscreen">
-                  {isFullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
-                </Button>
-              </div>
-            </div>
-
-            {saving && <Progress value={saveProgress} className="h-1 rounded-none" />}
-
-            {/* ── Main editor body ────────────────────────────────────────── */}
-            <div className="flex flex-1 overflow-hidden">
-
-              {/* Page thumbnails sidebar */}
-              <div className={`hidden md:flex flex-col gap-2 border-r border-border bg-secondary/30 p-2 overflow-y-auto transition-all duration-300 ${thumbsOpen ? "w-[120px]" : "w-0 p-0 overflow-hidden"}`}>
-                {state.pageOrder.map((srcIdx, visIdx) => (
-                  <div key={`${srcIdx}-${visIdx}`}
-                    className={`group relative cursor-pointer rounded-xl border-2 overflow-hidden transition-all flex-shrink-0 ${activePage === visIdx ? "border-primary shadow-md" : "border-transparent hover:border-muted-foreground/30"}`}
-                    onClick={() => scrollToPage(visIdx)}>
-                    <img src={previews[srcIdx]} alt={`Page ${visIdx + 1}`} className="w-full"
-                      style={{ transform: `rotate(${state.pages[srcIdx].rotation}deg)`, transition: "transform 0.3s" }} />
-                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 text-center text-[9px] font-bold py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {visIdx + 1}
-                    </div>
-                    {activePage === visIdx && (
-                      <div className="absolute inset-0 border-2 border-primary rounded-xl pointer-events-none" />
-                    )}
-                  </div>
-                ))}
-                <button onClick={() => setThumbsOpen(false)} className="text-[10px] text-muted-foreground hover:text-foreground mt-2 transition-colors">
-                  Hide ←
-                </button>
-              </div>
-
-              {/* Page canvas area — scrollable, large */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/20 px-4 py-6" style={{ scrollBehavior: "smooth" }}>
-                {!thumbsOpen && (
-                  <button onClick={() => setThumbsOpen(true)} className="mb-3 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                    <ChevronRight className="h-3 w-3" /> Show pages
-                  </button>
-                )}
-
-                <div className="flex flex-col items-center gap-8">
-                  {state.pageOrder.map((srcIdx, visIdx) => {
-                    const pageState = state.pages[srcIdx];
-                    const overlays = pageState?.overlays ?? [];
-
-                    return (
-                      <div
-                        key={`${srcIdx}-${visIdx}`}
-                        ref={el => { pageRefs.current[visIdx] = el; }}
-                        data-pageindex={visIdx}
-                        className="relative shadow-lg bg-white rounded-sm mb-4"
-                        style={{ width: `${zoom * 100}%`, maxWidth: "100%", transformOrigin: "top center" }}
-                        onClick={(e) => handlePageClick(e, srcIdx)}
-                        onMouseDown={(e) => {
-                          if (activeTab === "image") handleImgMouseDown(e);
-                          if (activeTab === "annotate") handleAnnotMouseDown(e);
-                        }}
-                        onMouseMove={(e) => {
-                          if (activeTab === "image") handleImgMouseMove(e);
-                          if (activeTab === "annotate") handleAnnotMouseMove(e);
-                        }}
-                        onMouseUp={(e) => {
-                          if (activeTab === "image") handleImgMouseUp(e, srcIdx);
-                          if (activeTab === "annotate") handleAnnotMouseUp(e, srcIdx);
-                        }}
-                      >
-                        {/* Page image */}
-                        <img
-                          src={previews[srcIdx]}
-                          alt={`Page ${visIdx + 1}`}
-                          className={`w-full block select-none ${activeTab === "text" ? "cursor-crosshair" :
-                            activeTab === "image" ? "cursor-cell" :
-                              activeTab === "annotate" ? "cursor-crosshair" : "cursor-default"
-                            }`}
-                          style={{ transform: `rotate(${pageState?.rotation ?? 0}deg)`, transition: "transform 0.3s" }}
-                          draggable={false}
-                        />
-
-                        {/* Overlays */}
-                        {overlays.map(ov => renderOverlay(ov, srcIdx))}
-
-                        {/* Image drag preview */}
-                        {imgDragging && imgRect && activePage === visIdx && (
-                          <div className="absolute border-2 border-green-500 border-dashed bg-green-500/10 pointer-events-none"
-                            style={{ left: `${imgRect.x}%`, top: `${imgRect.y}%`, width: `${imgRect.width}%`, height: `${imgRect.height}%` }} />
-                        )}
-
-                        {/* Annotation drag preview */}
-                        {annotDragging && annotRect && activePage === visIdx && annotKind !== "freehand" && annotKind !== "comment" && (
-                          <div className="absolute border-2 border-dashed pointer-events-none"
-                            style={{ left: `${annotRect.x}%`, top: `${annotRect.y}%`, width: `${annotRect.width}%`, height: `${annotRect.height}%`, borderColor: annotColor, background: annotKind === "highlight" ? "rgba(255,255,0,0.25)" : "transparent", borderRadius: annotKind === "ellipse" ? "50%" : undefined }} />
-                        )}
-
-                        {/* Freehand in progress */}
-                        {annotDragging && annotKind === "freehand" && freehandPoints.length > 1 && activePage === visIdx && (
-                          <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
-                            <polyline points={freehandPoints.map(p => `${p[0]}%,${p[1]}%`).join(" ")} fill="none" stroke={annotColor} strokeWidth="2px" vectorEffect="non-scaling-stroke" />
-                          </svg>
-                        )}
-
-                        {/* Page number badge */}
-                        <div className="absolute bottom-3 right-3 rounded-md bg-black/50 backdrop-blur px-2 py-0.5 text-xs text-white pointer-events-none font-medium">
-                          Page {visIdx + 1} of {state.pageOrder.length}
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Tool Tabs */}
+                <div className="flex gap-0.5 rounded-xl bg-secondary p-1">
+                  {tabs.map(t => (
+                    <button key={t.id} onClick={() => setActiveTab(t.id)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${activeTab === t.id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}>
+                      {t.icon} <span className="hidden sm:inline">{t.label}</span>
+                    </button>
+                  ))}
                 </div>
 
-                {/* Privacy note at the bottom */}
-                <div className="flex items-center justify-center gap-1.5 mt-8 text-xs text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Your file never leaves your device.
+                {/* Center: Zoom controls */}
+                <div className="flex items-center gap-1 rounded-xl bg-secondary px-2 py-1">
+                  <Button variant="ghost" size="sm" onClick={zoomOut} disabled={zoom <= ZOOM_STEPS[0]} className="h-7 w-7 p-0 rounded-lg" title="Zoom Out">
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </Button>
+                  <button onClick={zoomFitWidth} className="text-xs font-bold tabular-nums min-w-[44px] text-center text-foreground hover:text-primary transition-colors" title="Reset to Fit Width">
+                    {Math.round(zoom * 100)}%
+                  </button>
+                  <Button variant="ghost" size="sm" onClick={zoomIn} disabled={zoom >= ZOOM_STEPS[ZOOM_STEPS.length - 1]} className="h-7 w-7 p-0 rounded-lg" title="Zoom In">
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="mx-1 h-4 w-px bg-border" />
+                  <Button variant="ghost" size="sm" onClick={zoomFitWidth} className="h-7 px-2 text-[10px] rounded-lg gap-1" title="Fit Width">
+                    <AlignCenter className="h-3 w-3" /> Fit
+                  </Button>
+                </div>
+
+                {/* Right: History + Actions */}
+                <div className="flex items-center gap-1.5">
+                  <Button variant="ghost" size="sm" onClick={undo} disabled={!history.length} title="Undo (Ctrl+Z)" className="h-7 w-7 p-0">
+                    <Undo2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={redo} disabled={!future.length} title="Redo (Ctrl+Y)" className="h-7 w-7 p-0">
+                    <Redo2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={saveVersion} disabled={saving} className="h-7 rounded-lg text-xs gap-1 hidden md:flex">
+                    <Save className="h-3 w-3" /> Save
+                  </Button>
+                  <Button size="sm" onClick={download} disabled={saving} className="h-7 rounded-lg text-xs gap-1 bg-primary text-primary-foreground">
+                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    <span className="hidden sm:inline">Download</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setRightPanelOpen(r => !r)} className="h-7 w-7 p-0" title="Toggle panel">
+                    <PanelRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="h-7 w-7 p-0" title="Fullscreen">
+                    {isFullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
+                  </Button>
                 </div>
               </div>
 
-              {/* ── Right Tool Panel ───────────────────────────────────────── */}
-              <div className={`border-l border-border bg-card flex flex-col gap-0 overflow-y-auto transition-all duration-300 ${rightPanelOpen ? "w-[280px]" : "w-0 overflow-hidden"}`}>
-                <div className="p-4 space-y-5">
+              {saving && <Progress value={saveProgress} className="h-1 rounded-none" />}
 
-                  {/* Text Tool */}
-                  {activeTab === "text" && (
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-sm flex items-center gap-2 text-foreground"><Type className="h-4 w-4 text-blue-500" /> Text Tool</h3>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Content</label>
-                        <Input value={textContent} onChange={e => setTextContent(e.target.value)} className="text-sm" />
+              {/* ── Main editor body ────────────────────────────────────────── */}
+              <div className="flex flex-1 overflow-hidden">
+
+                {/* Page thumbnails sidebar */}
+                <div className={`hidden md:flex flex-col gap-2 border-r border-border bg-secondary/30 p-2 overflow-y-auto transition-all duration-300 ${thumbsOpen ? "w-[120px]" : "w-0 p-0 overflow-hidden"}`}>
+                  {state.pageOrder.map((srcIdx, visIdx) => (
+                    <div key={`${srcIdx}-${visIdx}`}
+                      className={`group relative cursor-pointer rounded-xl border-2 overflow-hidden transition-all flex-shrink-0 ${activePage === visIdx ? "border-primary shadow-md" : "border-transparent hover:border-muted-foreground/30"}`}
+                      onClick={() => scrollToPage(visIdx)}>
+                      <img src={previews[srcIdx]} alt={`Page ${visIdx + 1}`} className="w-full"
+                        style={{ transform: `rotate(${state.pages[srcIdx].rotation}deg)`, transition: "transform 0.3s" }} />
+                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 text-center text-[9px] font-bold py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {visIdx + 1}
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Size: {textSize[0]}px</label>
-                        <Slider value={textSize} onValueChange={setTextSize} min={8} max={72} step={1} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Color</label>
-                        <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="h-9 w-full rounded-lg border border-border cursor-pointer" />
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => setTextBold(b => !b)} className={`flex-1 rounded-lg border py-1.5 text-sm font-bold transition-all ${textBold ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-secondary"}`}>B</button>
-                        <button onClick={() => setTextItalic(b => !b)} className={`flex-1 rounded-lg border py-1.5 text-sm italic transition-all ${textItalic ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-secondary"}`}>I</button>
-                      </div>
-                      <p className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3 text-xs text-blue-700 dark:text-blue-300">
-                        💡 Click anywhere on the page to place your text.
-                      </p>
+                      {activePage === visIdx && (
+                        <div className="absolute inset-0 border-2 border-primary rounded-xl pointer-events-none" />
+                      )}
                     </div>
+                  ))}
+                  <button onClick={() => setThumbsOpen(false)} className="text-[10px] text-muted-foreground hover:text-foreground mt-2 transition-colors">
+                    Hide ←
+                  </button>
+                </div>
+
+                {/* Page canvas area — scrollable, large */}
+                <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/20 px-4 py-6 custom-scrollbar" style={{ scrollBehavior: "smooth" }}>
+                  {!thumbsOpen && (
+                    <button onClick={() => setThumbsOpen(true)} className="mb-3 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                      <ChevronRight className="h-3 w-3" /> Show pages
+                    </button>
                   )}
 
-                  {/* Image Tool */}
-                  {activeTab === "image" && (
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4 text-green-500" /> Image Replace</h3>
-                      <p className="rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3 text-xs text-green-700 dark:text-green-300">
-                        🖼 Drag a rectangle on the page to define the placement area. A file picker will appear to pick your image.
-                      </p>
-                    </div>
-                  )}
+                  <div className="flex flex-col items-center gap-8">
+                    {state.pageOrder.map((srcIdx, visIdx) => {
+                      const pageState = state.pages[srcIdx];
+                      const overlays = pageState?.overlays ?? [];
 
-                  {/* Pages Tool */}
-                  {activeTab === "pages" && (
-                    <div className="space-y-3">
-                      <h3 className="font-bold text-sm flex items-center gap-2"><FileStack className="h-4 w-4 text-purple-500" /> Page Manager</h3>
-                      {state.pageOrder.map((srcIdx, visIdx) => (
-                        <div key={`${srcIdx}-${visIdx}`}
-                          className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm cursor-pointer transition-all ${activePage === visIdx ? "bg-primary/5 border-primary/30" : "border-border hover:bg-secondary"}`}
-                          onClick={() => scrollToPage(visIdx)}>
-                          <span className="font-medium text-xs">Page {visIdx + 1}</span>
-                          <div className="flex items-center gap-0.5">
-                            <button onClick={e => { e.stopPropagation(); rotatePage(visIdx, -1); }} className="rounded p-1 hover:bg-secondary/80" title="Rotate CCW"><RotateCcw className="h-3 w-3" /></button>
-                            <button onClick={e => { e.stopPropagation(); rotatePage(visIdx, 1); }} className="rounded p-1 hover:bg-secondary/80" title="Rotate CW"><RotateCw className="h-3 w-3" /></button>
-                            <button onClick={e => { e.stopPropagation(); movePage(visIdx, visIdx - 1); }} disabled={visIdx === 0} className="rounded p-1 hover:bg-secondary/80 disabled:opacity-30"><ChevronLeft className="h-3 w-3" /></button>
-                            <button onClick={e => { e.stopPropagation(); movePage(visIdx, visIdx + 1); }} disabled={visIdx === state.pageOrder.length - 1} className="rounded p-1 hover:bg-secondary/80 disabled:opacity-30"><ChevronRight className="h-3 w-3" /></button>
-                            <button onClick={e => { e.stopPropagation(); deletePage(visIdx); }} className="rounded p-1 hover:bg-destructive/10 text-destructive"><Trash2 className="h-3 w-3" /></button>
+                      return (
+                        <div
+                          key={`${srcIdx}-${visIdx}`}
+                          ref={el => { pageRefs.current[visIdx] = el; }}
+                          data-pageindex={visIdx}
+                          className="relative shadow-lg bg-white rounded-sm mb-4"
+                          style={{ width: `${zoom * 100}%`, maxWidth: "100%", transformOrigin: "top center" }}
+                          onClick={(e) => handlePageClick(e, srcIdx)}
+                          onMouseDown={(e) => {
+                            if (activeTab === "image") handleImgMouseDown(e);
+                            if (activeTab === "annotate") handleAnnotMouseDown(e);
+                          }}
+                          onMouseMove={(e) => {
+                            if (activeTab === "image") handleImgMouseMove(e);
+                            if (activeTab === "annotate") handleAnnotMouseMove(e);
+                          }}
+                          onMouseUp={(e) => {
+                            if (activeTab === "image") handleImgMouseUp(e, srcIdx);
+                            if (activeTab === "annotate") handleAnnotMouseUp(e, srcIdx);
+                          }}
+                        >
+                          {/* Page image */}
+                          <img
+                            src={previews[srcIdx]}
+                            alt={`Page ${visIdx + 1}`}
+                            className={`w-full block select-none ${activeTab === "text" ? "cursor-crosshair" :
+                              activeTab === "image" ? "cursor-cell" :
+                                activeTab === "annotate" ? "cursor-crosshair" : "cursor-default"
+                              }`}
+                            style={{ transform: `rotate(${pageState?.rotation ?? 0}deg)`, transition: "transform 0.3s" }}
+                            draggable={false}
+                          />
+
+                          {/* Overlays */}
+                          {overlays.map(ov => renderOverlay(ov, srcIdx))}
+
+                          {/* Image drag preview */}
+                          {imgDragging && imgRect && activePage === visIdx && (
+                            <div className="absolute border-2 border-green-500 border-dashed bg-green-500/10 pointer-events-none"
+                              style={{ left: `${imgRect.x}%`, top: `${imgRect.y}%`, width: `${imgRect.width}%`, height: `${imgRect.height}%` }} />
+                          )}
+
+                          {/* Annotation drag preview */}
+                          {annotDragging && annotRect && activePage === visIdx && annotKind !== "freehand" && annotKind !== "comment" && (
+                            <div className="absolute border-2 border-dashed pointer-events-none"
+                              style={{ left: `${annotRect.x}%`, top: `${annotRect.y}%`, width: `${annotRect.width}%`, height: `${annotRect.height}%`, borderColor: annotColor, background: annotKind === "highlight" ? "rgba(255,255,0,0.25)" : "transparent", borderRadius: annotKind === "ellipse" ? "50%" : undefined }} />
+                          )}
+
+                          {/* Freehand in progress */}
+                          {annotDragging && annotKind === "freehand" && freehandPoints.length > 1 && activePage === visIdx && (
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+                              <polyline points={freehandPoints.map(p => `${p[0]}%,${p[1]}%`).join(" ")} fill="none" stroke={annotColor} strokeWidth="2px" vectorEffect="non-scaling-stroke" />
+                            </svg>
+                          )}
+
+                          {/* Page number badge */}
+                          <div className="absolute bottom-3 right-3 rounded-md bg-black/50 backdrop-blur px-2 py-0.5 text-xs text-white pointer-events-none font-medium">
+                            Page {visIdx + 1} of {state.pageOrder.length}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
 
-                  {/* Annotate Tool */}
-                  {activeTab === "annotate" && (
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-sm flex items-center gap-2"><Highlighter className="h-4 w-4 text-yellow-500" /> Annotation Tool</h3>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {(["highlight", "rectangle", "ellipse", "comment", "freehand"] as AnnotationKind[]).map(k => (
-                          <button key={k} onClick={() => setAnnotKind(k)} className={`rounded-lg border py-1.5 text-xs font-medium capitalize transition-all ${annotKind === k ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-secondary"}`}>{k}</button>
+                  {/* Privacy note at the bottom */}
+                  <div className="flex items-center justify-center gap-1.5 mt-8 text-xs text-muted-foreground">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Your file never leaves your device.
+                  </div>
+                </div>
+
+                {/* ── Right Tool Panel ───────────────────────────────────────── */}
+                <div className={`border-l border-border bg-card flex flex-col gap-0 overflow-y-auto transition-all duration-300 ${rightPanelOpen ? "w-[300px]" : "w-0 overflow-hidden"}`}>
+                  <div className="p-4 space-y-5">
+
+                    {/* Text Tool */}
+                    {activeTab === "text" && (
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-sm flex items-center gap-2 text-foreground"><Type className="h-4 w-4 text-blue-500" /> Text Tool</h3>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Content</label>
+                          <Input value={textContent} onChange={e => setTextContent(e.target.value)} className="text-sm bg-secondary/50 border-none focus-visible:ring-1 focus-visible:ring-primary h-10" placeholder="Type your text..." />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Font Family</label>
+                          <Select value={textFont} onValueChange={setTextFont}>
+                            <SelectTrigger className="w-full bg-secondary/50 border-none h-10 text-sm">
+                              <SelectValue placeholder="Select Font" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="helvetica" className="font-sans">Sans Serif (Helvetica)</SelectItem>
+                              <SelectItem value="times" className="font-serif">Serif (Times Roman)</SelectItem>
+                              <SelectItem value="courier" className="font-mono">Monospace (Courier)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Size</label>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-primary/10 text-primary rounded-md">{textSize[0]}px</span>
+                          </div>
+                          <Slider value={textSize} onValueChange={setTextSize} min={8} max={72} step={1} className="py-2" />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Color & Style</label>
+                          <div className="flex gap-2">
+                            <div className="relative group/color flex-1">
+                              <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="h-10 w-full rounded-lg border-none cursor-pointer p-0 overflow-hidden bg-transparent" />
+                              <div className="absolute inset-0 rounded-lg border border-border pointer-events-none" style={{ backgroundColor: textColor, opacity: 0.1 }} />
+                            </div>
+                            <button onClick={() => setTextBold(b => !b)} className={cn("flex-1 rounded-lg border py-2 text-sm font-bold transition-all", textBold ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border bg-secondary/30 hover:bg-secondary")}>B</button>
+                            <button onClick={() => setTextItalic(b => !b)} className={cn("flex-1 rounded-lg border py-2 text-sm italic transition-all", textItalic ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border bg-secondary/30 hover:bg-secondary")}>I</button>
+                          </div>
+                        </div>
+
+                        <div className="pt-2">
+                          <p className="rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 p-3 text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed italic">
+                            💡 Click anywhere on the page to place text. You can drag existing text to move it.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Image Tool */}
+                    {activeTab === "image" && (
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4 text-green-500" /> Image Replace</h3>
+                        <p className="rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3 text-xs text-green-700 dark:text-green-300">
+                          🖼 Drag a rectangle on the page to define the placement area. A file picker will appear to pick your image.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Pages Tool */}
+                    {activeTab === "pages" && (
+                      <div className="space-y-3">
+                        <h3 className="font-bold text-sm flex items-center gap-2"><FileStack className="h-4 w-4 text-purple-500" /> Page Manager</h3>
+                        <div className="space-y-2">
+                          {state.pageOrder.map((srcIdx, visIdx) => (
+                            <div key={`${srcIdx}-${visIdx}`}
+                              className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm cursor-pointer transition-all ${activePage === visIdx ? "bg-primary/5 border-primary/30" : "border-border hover:bg-secondary"}`}
+                              onClick={() => scrollToPage(visIdx)}>
+                              <span className="font-medium text-xs">Page {visIdx + 1}</span>
+                              <div className="flex items-center gap-0.5">
+                                <button onClick={e => { e.stopPropagation(); rotatePage(visIdx, -1); }} className="rounded p-1 hover:bg-secondary/80" title="Rotate CCW"><RotateCcw className="h-3 w-3" /></button>
+                                <button onClick={e => { e.stopPropagation(); rotatePage(visIdx, 1); }} className="rounded p-1 hover:bg-secondary/80" title="Rotate CW"><RotateCw className="h-3 w-3" /></button>
+                                <button onClick={e => { e.stopPropagation(); movePage(visIdx, visIdx - 1); }} disabled={visIdx === 0} className="rounded p-1 hover:bg-secondary/80 disabled:opacity-30"><ChevronLeft className="h-3 w-3" /></button>
+                                <button onClick={e => { e.stopPropagation(); movePage(visIdx, visIdx + 1); }} disabled={visIdx === state.pageOrder.length - 1} className="rounded p-1 hover:bg-secondary/80 disabled:opacity-30"><ChevronRight className="h-3 w-3" /></button>
+                                <button onClick={e => { e.stopPropagation(); deletePage(visIdx); }} className="rounded p-1 hover:bg-destructive/10 text-destructive"><Trash2 className="h-3 w-3" /></button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Annotate Tool */}
+                    {activeTab === "annotate" && (
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-sm flex items-center gap-2"><Highlighter className="h-4 w-4 text-yellow-500" /> Annotation Tool</h3>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(["highlight", "rectangle", "ellipse", "comment", "freehand"] as AnnotationKind[]).map(k => (
+                            <button key={k} onClick={() => setAnnotKind(k)} className={`rounded-lg border py-1.5 text-xs font-medium capitalize transition-all ${annotKind === k ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-secondary"}`}>{k}</button>
+                          ))}
+                        </div>
+                        {annotKind === "comment" && (
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Comment text</label>
+                            <Input value={commentText} onChange={e => setCommentText(e.target.value)} className="text-sm" />
+                          </div>
+                        )}
+                        {annotKind !== "highlight" && (
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Color</label>
+                            <input type="color" value={annotColor} onChange={e => setAnnotColor(e.target.value)} className="h-9 w-full rounded-lg border border-border cursor-pointer" />
+                          </div>
+                        )}
+                        <p className="rounded-xl bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 p-3 text-xs text-yellow-700 dark:text-yellow-300">
+                          ✏️ Drag on the page to draw. Click × to remove.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Sign Tool */}
+                    {activeTab === "sign" && (
+                      <div className="space-y-4">
+                        <h3 className="font-bold text-sm flex items-center gap-2"><PenLine className="h-4 w-4 text-indigo-500" /> Signature Pad</h3>
+                        <canvas ref={sigCanvasRef} width={240} height={120} className="w-full rounded-xl border-2 border-dashed border-indigo-300 bg-white cursor-crosshair"
+                          onMouseDown={startSig} onMouseMove={drawSig} onMouseUp={() => setSigDrawing(false)} onMouseLeave={() => setSigDrawing(false)} />
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={clearSig} className="flex-1 text-xs rounded-lg">Clear</Button>
+                          <Button size="sm" onClick={placeSig} className="flex-1 text-xs rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white gap-1">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Place
+                          </Button>
+                        </div>
+                        {sigPlaced && <p className="rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 p-3 text-xs text-indigo-700 dark:text-indigo-300 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 flex-shrink-0" /> Signature placed on page!</p>}
+                      </div>
+                    )}
+
+                    {/* Saved Versions */}
+                    {versions.length > 0 && (
+                      <div className="border-t border-border pt-4 space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Saved Versions</p>
+                        {versions.map((v, i) => (
+                          <button key={i} onClick={() => downloadVersion(v)} className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2 text-xs hover:bg-secondary/80 transition-all">
+                            <span className="font-medium truncate max-w-[160px]">{v.name}</span>
+                            <Download className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          </button>
                         ))}
                       </div>
-                      {annotKind === "comment" && (
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-muted-foreground">Comment text</label>
-                          <Input value={commentText} onChange={e => setCommentText(e.target.value)} className="text-sm" />
-                        </div>
-                      )}
-                      {annotKind !== "highlight" && (
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-muted-foreground">Color</label>
-                          <input type="color" value={annotColor} onChange={e => setAnnotColor(e.target.value)} className="h-9 w-full rounded-lg border border-border cursor-pointer" />
-                        </div>
-                      )}
-                      <p className="rounded-xl bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 p-3 text-xs text-yellow-700 dark:text-yellow-300">
-                        ✏️ Drag on the page to draw. Click × to remove.
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                </div>
 
-                  {/* Sign Tool */}
-                  {activeTab === "sign" && (
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-sm flex items-center gap-2"><PenLine className="h-4 w-4 text-indigo-500" /> Signature Pad</h3>
-                      <canvas ref={sigCanvasRef} width={240} height={120} className="w-full rounded-xl border-2 border-dashed border-indigo-300 bg-white cursor-crosshair"
-                        onMouseDown={startSig} onMouseMove={drawSig} onMouseUp={() => setSigDrawing(false)} onMouseLeave={() => setSigDrawing(false)} />
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={clearSig} className="flex-1 text-xs rounded-lg">Clear</Button>
-                        <Button size="sm" onClick={placeSig} className="flex-1 text-xs rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Place
-                        </Button>
-                      </div>
-                      {sigPlaced && <p className="rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 p-3 text-xs text-indigo-700 dark:text-indigo-300 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 flex-shrink-0" /> Signature placed on page!</p>}
-                    </div>
-                  )}
+              </div>
+              {/* End main body */}
 
-                  {/* Saved Versions */}
-                  {versions.length > 0 && (
-                    <div className="border-t border-border pt-4 space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Saved Versions</p>
-                      {versions.map((v, i) => (
-                        <button key={i} onClick={() => downloadVersion(v)} className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2 text-xs hover:bg-secondary/80 transition-all">
-                          <span className="font-medium truncate max-w-[160px]">{v.name}</span>
-                          <Download className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              {/* Bottom bar */}
+              <div className="flex items-center justify-between border-t border-border bg-background px-4 py-2 shrink-0">
+                <button onClick={() => { setFile(null); setPreviews([]); setState({ pages: [], pageOrder: [] }); setHistory([]); setFuture([]); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                  ← Edit a different PDF
+                </button>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  Page {activePage + 1} / {state.pageOrder.length} •
+                  <span className="font-medium">{file?.name}</span>
                 </div>
               </div>
 
             </div>
-            {/* End main body */}
-
-            {/* Bottom bar */}
-            <div className="flex items-center justify-between border-t border-border bg-background/80 backdrop-blur px-4 py-2">
-              <button onClick={() => { setFile(null); setPreviews([]); setState({ pages: [], pageOrder: [] }); setHistory([]); setFuture([]); }}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                ← Edit a different PDF
-              </button>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                Page {activePage + 1} / {state.pageOrder.length} •
-                <span className="font-medium">{file.name}</span>
-              </div>
-            </div>
-
           </div>
         )}
       </div>

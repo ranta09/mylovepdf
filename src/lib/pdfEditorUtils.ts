@@ -15,6 +15,7 @@ export interface TextOverlay {
     color: string;
     bold: boolean;
     italic: boolean;
+    fontFamily?: string;
 }
 
 export interface ImageOverlay {
@@ -117,8 +118,26 @@ export async function buildEditedPdf(
             pg.setRotation(degrees(pageState.rotation));
         }
 
-        const font = await outDoc.embedFont(StandardFonts.Helvetica);
-        const fontBold = await outDoc.embedFont(StandardFonts.HelveticaBold);
+        const fonts = {
+            helvetica: {
+                normal: await outDoc.embedFont(StandardFonts.Helvetica),
+                bold: await outDoc.embedFont(StandardFonts.HelveticaBold),
+                italic: await outDoc.embedFont(StandardFonts.HelveticaOblique),
+                boldItalic: await outDoc.embedFont(StandardFonts.HelveticaBoldOblique),
+            },
+            times: {
+                normal: await outDoc.embedFont(StandardFonts.TimesRoman),
+                bold: await outDoc.embedFont(StandardFonts.TimesRomanBold),
+                italic: await outDoc.embedFont(StandardFonts.TimesRomanItalic),
+                boldItalic: await outDoc.embedFont(StandardFonts.TimesRomanBoldItalic),
+            },
+            courier: {
+                normal: await outDoc.embedFont(StandardFonts.Courier),
+                bold: await outDoc.embedFont(StandardFonts.CourierBold),
+                italic: await outDoc.embedFont(StandardFonts.CourierOblique),
+                boldItalic: await outDoc.embedFont(StandardFonts.CourierBoldOblique),
+            }
+        };
 
         for (const overlay of pageState.overlays) {
             if (overlay.type === "text") {
@@ -131,17 +150,24 @@ export async function buildEditedPdf(
                     const b = parseInt(hex.slice(5, 7), 16) / 255;
                     return rgb(r, g, b);
                 };
+
+                const family = (o.fontFamily || "helvetica").toLowerCase() as keyof typeof fonts;
+                const fontSet = fonts[family] || fonts.helvetica;
+                let selectedFont = fontSet.normal;
+                if (o.bold && o.italic) selectedFont = fontSet.boldItalic;
+                else if (o.bold) selectedFont = fontSet.bold;
+                else if (o.italic) selectedFont = fontSet.italic;
+
                 try {
                     pg.drawText(o.text, {
                         x: absX,
                         y: absY,
                         size: o.fontSize,
-                        font: o.bold ? fontBold : font,
+                        font: selectedFont,
                         color: hexToRgb(o.color),
                     });
                 } catch {
-                    // font unavailable fallback — already using Helvetica so this is a safety net
-                    pg.drawText(o.text, { x: absX, y: absY, size: o.fontSize, font, color: rgb(0, 0, 0) });
+                    pg.drawText(o.text, { x: absX, y: absY, size: o.fontSize, font: fonts.helvetica.normal, color: rgb(0, 0, 0) });
                 }
             }
 
@@ -186,7 +212,7 @@ export async function buildEditedPdf(
                     pg.drawEllipse({ x: absX + absW / 2, y: absY - absH / 2, xScale: absW / 2, yScale: absH / 2, borderColor: c, borderWidth: 2 });
                 } else if (o.kind === "comment" && o.text) {
                     pg.drawRectangle({ x: absX, y: absY - 22, width: Math.max(100, o.text.length * 6), height: 20, color: rgb(1, 1, 0.6), opacity: 0.8 });
-                    pg.drawText(o.text, { x: absX + 4, y: absY - 16, size: 9, font, color: rgb(0.2, 0.2, 0.2) });
+                    pg.drawText(o.text, { x: absX + 4, y: absY - 16, size: 9, font: fonts.helvetica.normal, color: rgb(0.2, 0.2, 0.2) });
                 }
             }
 

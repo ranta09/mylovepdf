@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractDocument, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
 import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 
@@ -253,16 +254,9 @@ const TranslatePdf = () => {
       metaTitle="Translate PDF Online – AI PDF Translator | MagicDocx"
       metaDescription="Translate PDF documents instantly using AI. Upload a PDF and convert it into any language while preserving formatting."
       toolId="ai-translate"
-      hideHeader
+      hideHeader={results.length > 0 || processing}
     >
       <div className="space-y-8">
-        <ToolHeader
-          title="Translate PDF Online"
-          description="AI-powered document translation — 65+ languages, layout preserved"
-          icon={<Languages className="h-5 w-5 text-primary-foreground" />}
-          className="bg-tool-ai/5 border-tool-ai/20"
-          iconBgClass="bg-tool-ai"
-        />
 
         {/* ── UPLOAD PHASE ──────────────────────────────────────────────── */}
         {results.length === 0 && (
@@ -357,76 +351,98 @@ const TranslatePdf = () => {
 
         {/* ── RESULTS PHASE ─────────────────────────────────────────────── */}
         {results.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden relative">
 
-            {/* Multi-doc tabs */}
-            {results.length > 1 && (
-              <div className="flex gap-1.5 overflow-x-auto">
-                {results.map((r, i) => (
-                  <button key={i} onClick={() => setSelectedResult(i)}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all border ${selectedResult === i ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground bg-card"}`}>
-                    <FileText className="h-3 w-3" />{r.name}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Toolbar */}
-            {active && (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Globe className="h-4 w-4 text-primary" />
-                    <span className="text-foreground">{active.name}</span>
-                    <span className="text-muted-foreground">→</span>
-                    <span className="text-primary font-bold">{active.lang}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setViewMode(v => v === "split" ? "translated" : "split")}
-                      className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary transition-all text-muted-foreground hover:text-foreground">
-                      {viewMode === "split" ? "Full View" : "Split View"}
-                    </button>
-                    <button onClick={() => copyTranslation(active.translated)}
-                      className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary transition-all text-muted-foreground hover:text-foreground">
-                      {copied ? <><ClipboardCheck className="h-3.5 w-3.5 text-green-500" />Copied</> : <><Copy className="h-3.5 w-3.5" />Copy</>}
-                    </button>
-                    <button onClick={() => downloadTXT(active)}
-                      className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary transition-all text-muted-foreground hover:text-foreground">
-                      <Download className="h-3.5 w-3.5" />TXT
-                    </button>
-                    <button onClick={() => downloadPDF(active)}
-                      className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-all">
-                      <Download className="h-3.5 w-3.5" />PDF
-                    </button>
-                    <button onClick={reset}
-                      className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary transition-all text-muted-foreground hover:text-foreground">
-                      <RotateCcw className="h-3 w-3" />New
-                    </button>
+              {/* Toolbar */}
+              <div className="bg-background/80 backdrop-blur border-b border-border px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-3">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-black uppercase tracking-tight text-foreground truncate max-w-[200px]">{active.name}</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{active.lang} Translation</span>
                   </div>
                 </div>
 
-                {/* Side-by-side / full view */}
-                <div className={`grid gap-4 ${viewMode === "split" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => setViewMode(v => v === "split" ? "translated" : "split")}>
+                    {viewMode === "split" ? "Full View" : "Split View"}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => copyTranslation(active.translated)}>
+                    {copied ? <><ClipboardCheck className="h-3.5 w-3.5 text-green-500 mr-1.5" />Copied</> : <><Copy className="h-3.5 w-3.5 mr-1.5" />Copy</>}
+                  </Button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => downloadTXT(active)}>
+                    <Download className="h-3.5 w-3.5 mr-1.5" />TXT
+                  </Button>
+                  <Button variant="default" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => downloadPDF(active)}>
+                    <Download className="h-3.5 w-3.5 mr-1.5" />Download PDF
+                  </Button>
+                  <Button variant="secondary" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={reset}>
+                    <RotateCcw className="h-3 w-3 mr-1.5" />New
+                  </Button>
+                </div>
+              </div>
+
+              {/* Multi-doc tabs */}
+              {results.length > 1 && (
+                <div className="bg-secondary/5 border-b border-border px-6 py-2 flex gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
+                  {results.map((r, i) => (
+                    <button key={i} onClick={() => setSelectedResult(i)}
+                      className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[10px] font-black uppercase whitespace-nowrap transition-all border ${selectedResult === i ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border text-muted-foreground hover:text-foreground bg-background"}`}>
+                      <FileText className="h-3 w-3" />{r.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Side-by-side / full view */}
+              <div className="flex-1 overflow-hidden bg-secondary/5">
+                <div className={`h-full grid gap-0 ${viewMode === "split" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
                   {viewMode === "split" && (
-                    <div className="flex flex-col gap-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Original</p>
-                      <div className="rounded-2xl border border-border bg-secondary/10 p-4 max-h-[65vh] overflow-y-auto prose prose-sm max-w-none dark:prose-invert text-muted-foreground text-xs">
-                        <ReactMarkdown>{active.original}</ReactMarkdown>
+                    <div className="flex flex-col border-r border-border overflow-hidden">
+                      <div className="bg-background/50 px-6 py-2 border-b border-border">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Original Source</p>
                       </div>
+                      <ScrollArea className="flex-1 p-8">
+                        <div className="max-w-3xl mx-auto prose prose-sm dark:prose-invert text-muted-foreground text-xs leading-relaxed">
+                          <ReactMarkdown>{active.original}</ReactMarkdown>
+                        </div>
+                      </ScrollArea>
                     </div>
                   )}
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-primary px-1">
-                      Translated — {active.lang}
-                    </p>
-                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 max-h-[65vh] overflow-y-auto prose prose-sm max-w-none dark:prose-invert text-foreground text-xs">
-                      <ReactMarkdown>{active.translated}</ReactMarkdown>
+                  <div className="flex flex-col overflow-hidden">
+                    <div className="bg-primary/5 px-6 py-2 border-b border-primary/10">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-primary">Translated — {active.lang}</p>
                     </div>
+                    <ScrollArea className="flex-1 p-8 bg-background">
+                      <div className="max-w-3xl mx-auto prose prose-sm dark:prose-invert text-foreground text-xs leading-relaxed">
+                        <ReactMarkdown>{active.translated}</ReactMarkdown>
+                      </div>
+                    </ScrollArea>
                   </div>
                 </div>
-              </>
-            )}
-          </motion.div>
+              </div>
+
+              {/* Status Bar */}
+              <div className="bg-background border-t border-border px-6 py-3 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">AI Verification Secured</span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 border-l border-border pl-6">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Target Language: </span>
+                    <span className="text-[10px] font-black text-primary uppercase">{active.lang}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase">{files.length} Files Ready</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
         )}
 
         {/* ── SEO Content ─────────────────────────────────────────────────── */}

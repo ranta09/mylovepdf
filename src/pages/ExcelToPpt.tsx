@@ -1,16 +1,24 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import pptxgen from "pptxgenjs";
-import { Presentation, Loader2, Info, FileText } from "lucide-react";
+import { Presentation, Loader2, Info, FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileSpreadsheet, Upload } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
+
+const formatSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+};
 
 const ExcelToPpt = () => {
     const [files, setFiles] = useState<File[]>([]);
@@ -242,84 +250,174 @@ const ExcelToPpt = () => {
 
     return (
         <ToolLayout title="Excel to PPT (Smart Generator)" description="Turn spreadsheets into structured presentations instantly" category="convert" icon={<Presentation className="h-7 w-7" />}
-            metaTitle="Excel to PPT — Smart Presentation Generator" metaDescription="Convert Excel sheets automatically to PowerPoint presentations. Free AI-powered PPT generation." toolId="excel-to-ppt" hideHeader>
-            <div className="rounded-2xl border border-border bg-secondary/30 p-6">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-                        <Presentation className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                        <h1 className="font-display text-xl font-bold text-foreground">Smart Excel to PPT Generator</h1>
-                        <p className="text-sm text-muted-foreground">Turn spreadsheets into structured presentations instantly</p>
-                        <div className="mt-1 flex items-start gap-1"><Info className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/70" /><span className="text-xs text-muted-foreground/70">Supports .xlsx and .xls files. 100% private.</span></div>
-                    </div>
-                </div>
-            </div>
+            metaTitle="Excel to PPT — Smart Presentation Generator" metaDescription="Convert Excel sheets automatically to PowerPoint presentations. Free AI-powered PPT generation." toolId="excel-to-ppt" hideHeader={files.length > 0 || results.length > 0 || processing}>
+            {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
+            {(files.length > 0 || processing || results.length > 0) && (
+                <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
 
-            <div className="mt-5">
-                {results.length === 0 ? (
-                    <>
-                        <FileUpload multiple accept=".xlsx,.xls" files={files} onFilesChange={setFiles} label="Select spreadsheets to convert" />
+                    {/* Header Diagnostic / Execution Control */}
+                    <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800">
+                                <Presentation className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-black uppercase tracking-tighter">Smart PPT Engine</h2>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                                    {processing ? "Synthesizing Slides..." : results.length > 0 ? "Generation Terminal" : "Awaiting Execution"}
+                                </p>
+                            </div>
+                        </div>
 
-                        {files.length > 0 && (
-                            <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm mb-6">
-                                <h3 className="font-bold text-foreground mb-4">Presentation Settings</h3>
-                                <div className="space-y-4">
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <Checkbox
-                                            checked={options.generateCharts}
-                                            onCheckedChange={(c) => setOptions({ ...options, generateCharts: !!c })}
-                                        />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">Auto-generate Charts</span>
-                                            <span className="text-xs text-muted-foreground">Create charts from numeric data</span>
-                                        </div>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <Checkbox
-                                            checked={options.includeRawTables}
-                                            onCheckedChange={(c) => setOptions({ ...options, includeRawTables: !!c })}
-                                        />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">Include Data Tables</span>
-                                            <span className="text-xs text-muted-foreground">Add slides with clean table previews</span>
-                                        </div>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <Checkbox
-                                            checked={options.createSummary}
-                                            onCheckedChange={(c) => setOptions({ ...options, createSummary: !!c })}
-                                        />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">AI Summary Slides</span>
-                                            <span className="text-xs text-muted-foreground">Generate sheet summary overviews</span>
-                                        </div>
-                                    </label>
+                        <div className="flex items-center gap-3">
+                            {(results.length > 0 || !processing) && (
+                                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
+                                    <RotateCcw className="h-3.5 w-3.5" /> Start Over
+                                </Button>
+                            )}
+                            {results.length === 0 && !processing && (
+                                <Button size="sm" onClick={convert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
+                                    <ArrowRight className="h-4 w-4" /> Generate PPT
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {processing ? (
+                        <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
+                            <div className="w-full max-w-md space-y-8 text-center text-center">
+                                <div className="relative flex justify-center items-center h-32">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-24 h-24 rounded-full border-4 border-orange-500/10" />
+                                    </div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-24 h-24 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+                                    </div>
+                                    <Presentation className="h-8 w-8 text-orange-500 animate-pulse" />
+                                </div>
+                                <div className="space-y-3">
+                                    <h3 className="text-xl font-black uppercase tracking-tighter">Rasterizing Data Objects</h3>
+                                    <Progress value={progress} className="h-2 rounded-full" />
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Synthesized</p>
                                 </div>
                             </div>
-                        )}
+                        </div>
+                    ) : results.length > 0 ? (
+                        <div className="flex-1 overflow-hidden">
+                            <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex flex-row overflow-hidden">
+                            {/* LEFT PANEL: File Manifest */}
+                            <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
+                                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
+                                    <FileBox className="h-4 w-4 text-orange-500" />
+                                    <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
+                                </div>
+                                <ScrollArea className="flex-1">
+                                    <div className="p-6 space-y-3">
+                                        {files.map((file, idx) => (
+                                            <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-orange-500/30 transition-all">
+                                                <div className="h-12 w-10 bg-orange-50 dark:bg-orange-950/30 rounded border border-orange-200 dark:border-orange-800 flex items-center justify-center shrink-0">
+                                                    <FileSpreadsheet className="h-5 w-5 text-orange-500" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
+                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => setFiles([])} className="w-full p-4 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
+                                            + Resync Payload
+                                        </button>
+                                    </div>
+                                </ScrollArea>
+                            </div>
 
-                        <ProcessingView
-                            files={files}
-                            processing={processing}
-                            progress={progress}
-                            onProcess={convert}
-                            buttonText="Generate PPT"
-                            processingText="Analyzing spreadsheet and styling slides..."
-                        />
-                    </>
-                ) : (
-                    <ResultView
-                        results={results}
-                        onReset={() => {
-                            setFiles([]);
-                            setResults([]);
-                        }}
-                    />
+                            {/* CENTER: Workbench */}
+                            <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
+                                <div className="w-full max-w-4xl space-y-8">
+                                    {/* Configuration Map */}
+                                    <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
+                                        <div className="p-6 border-b border-border bg-secondary/5">
+                                            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                                                <Settings className="h-4 w-4 text-orange-500" />
+                                                Generation Parameters
+                                            </h3>
+                                        </div>
+                                        <div className="p-10 space-y-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                {[
+                                                    { key: 'generateCharts', label: 'Auto-Charts', desc: 'Numeric Data Viz', icon: <Presentation className="h-5 w-5" /> },
+                                                    { key: 'includeRawTables', label: 'Data Tables', desc: 'Structured Grids', icon: <FileSpreadsheet className="h-5 w-5" /> },
+                                                    { key: 'createSummary', label: 'AI Summary', desc: 'Sheet Overviews', icon: <Info className="h-5 w-5" /> }
+                                                ].map((opt) => (
+                                                    <button
+                                                        key={opt.key}
+                                                        onClick={() => setOptions({ ...options, [opt.key]: !options[opt.key as keyof typeof options] })}
+                                                        className={cn(
+                                                            "flex flex-col items-center text-center gap-3 p-6 rounded-3xl border-2 transition-all group",
+                                                            options[opt.key as keyof typeof options] ? "border-orange-500 bg-orange-500/5" : "border-border bg-card/50 hover:border-orange-500/30"
+                                                        )}>
+                                                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", options[opt.key as keyof typeof options] ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground")}>
+                                                            {opt.icon}
+                                                        </div>
+                                                        <div>
+                                                            <p className={cn("text-xs font-black uppercase tracking-widest", options[opt.key as keyof typeof options] ? "text-orange-600" : "text-foreground")}>{opt.label}</p>
+                                                            <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">{opt.desc}</p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <div className="p-6 bg-orange-500/5 border border-orange-500/20 rounded-2xl flex items-start gap-4 text-center justify-center">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">
+                                                    * Kernel recommendation: Enable all features for maximum presentation intelligence.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Ready State */}
+                                    <div className="flex justify-center">
+                                        <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm">
+                                            <CheckCircle2 className="h-4 w-4 text-orange-500" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for {files.length} documents · PPTX Buffer ready</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-center pt-4">
+                                        <Button size="lg" onClick={convert} className="h-16 rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95 gap-3">
+                                            Initiate Synthesis <ArrowRight className="h-6 w-6" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer Meta */}
+                    <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Secure Tunnel</span>
+                            <span className="w-1 h-1 rounded-full bg-border" />
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">MagicDocx PPT-AI v2.0.0</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest uppercase text-center">Optimized for structured tabular data with clear headers.</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="mt-5">
+                {files.length === 0 && (
+                    <div className="mt-5">
+                        <FileUpload multiple accept=".xlsx,.xls" files={files} onFilesChange={setFiles} label="Select spreadsheets to convert" />
+                        <p className="mt-6 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Works best with structured tabular data containing clear column headers.</p>
+                    </div>
                 )}
             </div>
-
-            <p className="mt-6 text-center text-xs text-muted-foreground">Works best with structured tabular data containing clear column headers.</p>
         </ToolLayout>
     );
 };

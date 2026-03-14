@@ -269,16 +269,9 @@ const QuizGenerator = () => {
       metaTitle="AI Quiz Generator – Create Quizzes from PDFs, Notes & Videos | MagicDocx"
       metaDescription="Generate quizzes instantly using AI. Upload PDFs, notes, websites, or YouTube videos and create MCQ tests, flashcards, and practice exams online for free."
       toolId="ai-quiz"
-      hideHeader
+      hideHeader={phase !== "setup"}
     >
       <div className="space-y-8">
-        <ToolHeader
-          title="AI Quiz Generator"
-          description="Create smart quizzes from any content in seconds"
-          icon={<BrainCircuit className="h-5 w-5 text-primary-foreground" />}
-          className="bg-tool-ai/5 border-tool-ai/20"
-          iconBgClass="bg-tool-ai"
-        />
 
         {/* ── SETUP PHASE ──────────────────────────────────────────────── */}
         {phase === "setup" && (
