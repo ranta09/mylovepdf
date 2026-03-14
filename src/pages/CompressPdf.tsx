@@ -150,23 +150,45 @@ const CompressPdf = () => {
     ));
   };
 
-  const estimateReduction = (): number => {
-    if (mode === 'recommended') return 40;
-    if (mode === 'high') return 95;
-    if (mode === 'low') return 15;
-    if (mode === 'custom') {
-      const target = parseFloat(customTargetKB) * 1024;
-      if (!target || files.length === 0) return 0;
-      const totalSize = files.reduce((acc, f) => acc + f.size, 0);
-      const reduction = ((totalSize - target) / totalSize) * 100;
-      return Math.max(0, Math.min(95, Math.round(reduction)));
+  // Estimate compressed size based on page count and DPI/quality settings
+  // Each page rendered as JPEG: approximate bytes = width_px * height_px * bytesPerPixelAfterJPEG
+  // For A4 at given DPI: ~8.27 x 11.69 inches
+  const estimateCompressedSize = (): number => {
+    const totalPages = fileDataList.reduce((acc, fd) => acc + fd.pageCount, 0);
+    if (totalPages === 0) return 0;
+
+    const configs: Record<string, { dpi: number; quality: number }> = {
+      recommended: { dpi: 150, quality: 0.75 },
+      high: { dpi: 96, quality: 0.60 },
+      low: { dpi: 200, quality: 0.85 },
+      custom: { dpi: 120, quality: 0.70 },
+    };
+
+    let config = configs[mode] || configs.recommended;
+
+    if (mode === 'custom' && customTargetKB) {
+      const targetBytes = parseFloat(customTargetKB) * 1024;
+      if (targetBytes > 0) return targetBytes;
     }
-    return 0;
+
+    // Approximate JPEG bytes per page: pixels * compression factor
+    // Average A4 page: 8.27 x 11.69 inches
+    const widthPx = 8.27 * config.dpi;
+    const heightPx = 11.69 * config.dpi;
+    const totalPixels = widthPx * heightPx;
+    // JPEG bytes ≈ pixels * quality * ~0.15 (empirical factor for typical PDF content)
+    const bytesPerPage = totalPixels * config.quality * 0.15;
+    // Add ~5KB per page for PDF structure overhead
+    const pdfOverhead = totalPages * 5000 + 2000;
+
+    return Math.round(bytesPerPage * totalPages + pdfOverhead);
   };
 
-  const reductionPercentage = estimateReduction();
   const totalOriginalSize = files.reduce((acc, f) => acc + f.size, 0);
-  const estimatedSize = totalOriginalSize * (1 - reductionPercentage / 100);
+  const estimatedSize = Math.min(totalOriginalSize, estimateCompressedSize());
+  const reductionPercentage = totalOriginalSize > 0
+    ? Math.round(((totalOriginalSize - estimatedSize) / totalOriginalSize) * 100)
+    : 0;
 
   // --- REAL COMPRESSION: render pages as JPEG images at target DPI/quality, rebuild PDF ---
 
