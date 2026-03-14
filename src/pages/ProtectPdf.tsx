@@ -61,7 +61,7 @@ const ProtectPdf = () => {
         icon={<Lock className="h-5 w-5 text-primary-foreground" />}
       />
       <div className="mt-5">
-        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" />
+        <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" collapsible={false} />
       </div>
       {files.length > 0 && (
         <div className="mt-6 space-y-4">

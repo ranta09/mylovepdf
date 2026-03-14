@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
-import { Mail, MessageSquare, Send, MapPin, Phone } from "lucide-react";
+import { Mail, MessageSquare, Send, MapPin, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,20 +22,21 @@ const ContactUs = () => {
 
         setLoading(true);
         try {
-            const { error } = await supabase.functions.invoke("send-contact", {
+            const { data: resultData, error: invokeError } = await supabase.functions.invoke("send-contact", {
                 body: data,
             });
 
-            if (error) {
-                console.error("Supabase Function Error:", error);
-                throw error;
+            if (invokeError) {
+                console.error("Supabase Function Error:", invokeError);
+                toast.error("Failed to send message. Please try again later.");
+            } else {
+                toast.success("Message sent! We'll get back to you soon.");
+                const form = e.target as HTMLFormElement;
+                form.reset();
             }
-
-            toast.success("Message sent! We'll get back to you soon.");
-            e.currentTarget.reset();
         } catch (err) {
             console.error("Submission Failure Detail:", err);
-            toast.error("Failed to send message. Please try again later.");
+            toast.error("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -121,7 +122,7 @@ const ContactUs = () => {
                             disabled={loading}
                             className="w-full rounded-xl py-6 font-bold gap-2 shadow-lg shadow-primary/20"
                         >
-                            {loading ? "Sending..." : <><Send className="h-4 w-4" /> Send Message</>}
+                            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Sending...</> : <><Send className="h-4 w-4" /> Send Message</>}
                         </Button>
                     </form>
                 </div>

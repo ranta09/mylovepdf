@@ -487,7 +487,7 @@ const EditPdf = () => {
         {/* Upload state */}
         {!file && !loading && (
           <FileUpload accept=".pdf" multiple={false} files={[]} onFilesChange={handleFiles}
-            label="Drop your PDF here to start editing" />
+            label="Drop your PDF here to start editing" collapsible={false} />
         )}
 
         {loading && (

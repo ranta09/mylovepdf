@@ -8,19 +8,22 @@ import { tools, aiTools } from "@/lib/tools";
 import { motion } from "framer-motion";
 import {
   Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus,
-  Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X
+  Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X, Loader2, ChevronDown
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const categoryMeta = [
   { id: "ai", labelKey: "catAi" as const, icon: Wand2, filter: (t: any) => t.category === "ai" },
-  { id: "convert", labelKey: "catConvert" as const, icon: FileText, filter: (t: any) => t.category === "convert" },
+  { id: "convert", labelKey: "catConvert" as const, icon: FileText, filter: (t: any) => t.category === "convert" || t.category === "image" },
   { id: "edit", labelKey: "catEdit" as const, icon: Edit3, filter: (t: any) => t.category === "edit" },
   { id: "merge", labelKey: "catMerge" as const, icon: Merge, filter: (t: any) => t.category === "merge" },
   { id: "split", labelKey: "catSplit" as const, icon: Scissors, filter: (t: any) => t.category === "split" },
@@ -58,8 +61,17 @@ const Index = () => {
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackEmail, setFeedbackEmail] = useState("");
   const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
-  const { toast } = useToast();
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
   const { t, tt } = useLanguage();
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(
+    categoryMeta.map(c => c.id) // All expanded by default
+  );
+
+  const toggleCategory = (id: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
 
   useEffect(() => {
     const lastTool = sessionStorage.getItem("lastVisitedTool");
@@ -78,13 +90,40 @@ const Index = () => {
     tool.description.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleFeedbackSubmit = () => {
-    if (!feedbackText.trim() || !feedbackEmail.trim()) return;
-    toast({ title: "Feedback Sent", description: "Thank you! We'll look into it." });
-    setFeedbackText("");
-    setFeedbackEmail("");
-    setFeedbackScreenshot(null);
-    setFeedbackOpen(false);
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackText.trim() || !feedbackEmail.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    setFeedbackLoading(true);
+    try {
+      const { error: invokeError } = await supabase.functions.invoke("send-contact", {
+        body: {
+          fullName: "Homepage Feedback User",
+          email: feedbackEmail,
+          subject: "🚨 Homepage Bug Report/Feedback",
+          message: feedbackText,
+        },
+      });
+
+      if (invokeError) {
+        console.error("Feedback error:", invokeError);
+        toast.error("Failed to send feedback. Please try again later.");
+        return;
+      }
+
+      toast.success("Feedback sent! Thank you for helping us improve.");
+      setFeedbackText("");
+      setFeedbackEmail("");
+      setFeedbackScreenshot(null);
+      setFeedbackOpen(false);
+    } catch (err) {
+      console.error("Feedback catch error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setFeedbackLoading(false);
+    }
   };
 
   return (
@@ -221,30 +260,51 @@ const Index = () => {
                   if (catTools.length === 0) return null;
                   const Icon = cat.icon;
                   return (
-                    <div key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-24">
-                      <motion.div
+                    <div key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-24 group">
+                      <motion.button
+                        onClick={() => toggleCategory(cat.id)}
                         initial={{ opacity: 0, y: 14 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="mb-6 flex items-center gap-3"
+                        className="mb-6 flex w-full items-center justify-between group/header cursor-pointer"
                       >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                          <Icon className="h-5 w-5 text-primary" />
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 group-hover/header:bg-primary group-hover/header:text-white transition-all duration-300">
+                            <Icon className="h-5 w-5 text-primary group-hover/header:text-white" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
+                              {t[cat.labelKey]}
+                              {cat.id === "ai" && (
+                                <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">NEW</span>
+                              )}
+                            </h2>
+                            <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
-                            {t[cat.labelKey]}
-                            {cat.id === "ai" && (
-                              <span className="rounded-full bg-gradient-to-r from-violet-500 to-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white">NEW</span>
-                            )}
-                          </h2>
-                          <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
+                        <div className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all duration-300 group-hover/header:border-primary group-hover/header:text-primary",
+                          expandedCategories.includes(cat.id) ? "rotate-180" : ""
+                        )}>
+                          <ChevronDown className="h-4 w-4" />
                         </div>
-                      </motion.div>
+                      </motion.button>
 
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-                        {catTools.map((tool, i) => <ToolCard key={tool.id} tool={tool} index={i} />)}
-                      </div>
+                      <AnimatePresence>
+                        {expandedCategories.includes(cat.id) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 pb-4">
+                              {catTools.map((tool, i) => <ToolCard key={tool.id} tool={tool} index={i} />)}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   );
                 })}
@@ -306,7 +366,9 @@ const Index = () => {
                           </span>
                           <input type="file" accept="image/*" className="hidden" onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)} />
                         </label>
-                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim()} className="w-full rounded-xl">Submit</Button>
+                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim() || feedbackLoading} className="w-full rounded-xl">
+                          {feedbackLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Sending...</> : "Submit"}
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>

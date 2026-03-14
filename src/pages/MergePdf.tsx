@@ -66,7 +66,7 @@ const MergePdf = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" />
+            <FileUpload accept=".pdf" multiple files={files} onFilesChange={setFiles} label="Select PDF files to merge" collapsible={false} />
 
             {files.length > 0 && files.length < 2 && (
               <div className="mt-4 text-center p-4 bg-orange-500/10 text-orange-600 rounded-xl border border-orange-500/20 text-sm font-medium">

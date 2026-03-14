@@ -136,7 +136,7 @@ const PdfToJpg = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
+            <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" collapsible={false} />
 
             {files.length > 0 && (
               <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm mb-6">

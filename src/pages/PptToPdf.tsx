@@ -80,7 +80,7 @@ const PptToPdf = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={setFiles} label="Select slide images (JPG/PNG) — export from PowerPoint first" />
+            <FileUpload accept=".ppt,.pptx" files={files} onFilesChange={setFiles} label="Select PowerPoint files to convert" collapsible={false} />
             <ProcessingView
               files={files}
               processing={processing}
@@ -93,12 +93,15 @@ const PptToPdf = () => {
         ) : (
           <ResultView
             results={results}
-            onReset={() => { setFiles([]); setResults([]); }}
+            onReset={() => {
+              setFiles([]);
+              setResults([]);
+            }}
           />
         )}
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">Export your PowerPoint slides as images first, then upload them here.</p>
-    </ToolLayout>
+    </ToolLayout >
   );
 };
 

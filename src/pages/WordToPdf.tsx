@@ -136,7 +136,7 @@ const WordToPdf = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".docx,.doc,.txt" multiple files={files} onFilesChange={setFiles} label="Select documents to convert (DOCX, DOC, TXT)" />
+            <FileUpload accept=".doc,.docx" files={files} onFilesChange={setFiles} label="Select Word files to convert" collapsible={false} />
             <ProcessingView
               files={files}
               processing={processing}

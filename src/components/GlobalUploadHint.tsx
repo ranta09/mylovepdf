@@ -5,25 +5,33 @@ import { useLocation } from "react-router-dom";
 
 const GlobalUploadHint = () => {
     const [isVisible, setIsVisible] = useState(false);
-    const [isDismissed, setIsDismissed] = useState(false);
+    const [isSeen, setIsSeen] = useState(() => {
+        return sessionStorage.getItem("uploadHintSeen") === "true";
+    });
+    const [hasTriggered, setHasTriggered] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
-        // Only show on the homepage, and only if it hasn't been dismissed manually
-        if (location.pathname === "/" && !isDismissed) {
-            // Delay showing the hint for a smoother entrance
-            const timer = setTimeout(() => setIsVisible(true), 100);
+        // Only trigger on the homepage if never seen before in this session
+        if (location.pathname === "/" && !isSeen && !hasTriggered) {
+            const timer = setTimeout(() => {
+                setIsVisible(true);
+                setHasTriggered(true);
+                // Mark as seen immediately so it doesn't re-trigger on navigation back to home in this session
+                sessionStorage.setItem("uploadHintSeen", "true");
+                setIsSeen(true);
+            }, 100);
             return () => clearTimeout(timer);
-        } else {
+        }
+
+        // Hide if navigating away from homepage
+        if (location.pathname !== "/") {
             setIsVisible(false);
         }
-    }, [location.pathname, isDismissed]);
+    }, [location.pathname, isSeen, hasTriggered]);
 
     const handleDismiss = () => {
         setIsVisible(false);
-        setIsDismissed(true);
-        // Optional: save to localStorage so it doesn't show again on reload
-        // localStorage.setItem("uploadHintDismissed", "true");
     };
 
     return (

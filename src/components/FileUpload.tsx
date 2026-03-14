@@ -16,6 +16,7 @@ interface FileUploadProps {
   onFilesChange: (files: File[]) => void;
   files: File[];
   label?: string;
+  collapsible?: boolean;
 }
 
 const FileUpload = ({
@@ -25,6 +26,7 @@ const FileUpload = ({
   onFilesChange,
   files,
   label = "Select files",
+  collapsible = true,
 }: FileUploadProps) => {
   const [dragging, setDragging] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -196,7 +198,7 @@ const FileUpload = ({
         </p>
 
         {/* Formats Display categorized and collapsible */}
-        <FileFormatsDisplay acceptedExtensions={acceptedExtensions} />
+        <FileFormatsDisplay acceptedExtensions={acceptedExtensions} collapsible={collapsible} />
 
         <input ref={inputRef} type="file" accept={accept} multiple={multiple} onChange={handleSelect} className="hidden" />
       </div>

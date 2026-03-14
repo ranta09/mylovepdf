@@ -96,7 +96,7 @@ const SplitPdf = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} multiple={false} label="Select a PDF to split" />
+            <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} multiple={false} label="Select PDF file to split" collapsible={false} />
 
             {totalPages > 0 && (
               <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm mb-6">

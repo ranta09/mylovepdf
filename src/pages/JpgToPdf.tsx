@@ -110,7 +110,7 @@ const JpgToPdf = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={handleFilesChange} label="Select images to convert (JPG, JPEG, PNG)" />
+            <FileUpload accept=".jpg,.jpeg,.png" multiple files={files} onFilesChange={handleFilesChange} label="Select images to convert (JPG, JPEG, PNG)" collapsible={false} />
 
             {files.length > 1 && (
               <div className="mt-6 mx-auto max-w-xl">

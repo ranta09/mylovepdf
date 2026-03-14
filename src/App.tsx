@@ -47,7 +47,6 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
-import Chatbot from "./components/Chatbot";
 import GlobalDropOverlay from "./components/GlobalDropOverlay";
 import GlobalUploadHint from "./components/GlobalUploadHint";
 import { GlobalUploadProvider } from "./components/GlobalUploadContext";
@@ -139,7 +138,6 @@ const App = () => (
                 <Route path="/blog/best-pdf-tools-online" element={<BestPdfToolsOnline />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <Chatbot />
               <GlobalDropOverlay />
               <GlobalUploadHint />
             </BrowserRouter>

@@ -24,8 +24,8 @@ export const tools: PdfTool[] = [
     { id: "merge", name: "Merge PDF", description: "Combine multiple PDFs into one document", icon: Merge, path: "/merge-pdf", category: "merge", available: true },
     { id: "split", name: "Split PDF", description: "Separate PDF pages into individual files", icon: Scissors, path: "/split-pdf", category: "split", available: true },
     { id: "compress", name: "Compress PDF", description: "Reduce file size without losing quality", icon: Minimize2, path: "/compress-pdf", category: "compress", available: true },
-    { id: "pdf-to-jpg", name: "PDF to JPG", description: "Convert PDF pages to JPG images", icon: Image, path: "/pdf-to-jpg", category: "image", available: true },
-    { id: "jpg-to-pdf", name: "JPG to PDF", description: "Convert images into a PDF document", icon: FileImage, path: "/jpg-to-pdf", category: "image", available: true },
+    { id: "pdf-to-jpg", name: "PDF to JPG", description: "Convert PDF pages to JPG images", icon: Image, path: "/pdf-to-jpg", category: "convert", available: true },
+    { id: "jpg-to-pdf", name: "JPG to PDF", description: "Convert images into a PDF document", icon: FileImage, path: "/jpg-to-pdf", category: "convert", available: true },
     { id: "pdf-to-word", name: "PDF to Word", description: "Extract text from PDF as a document", icon: FileText, path: "/pdf-to-word", category: "convert", available: true },
     { id: "word-to-pdf", name: "Word to PDF", description: "Convert text documents to PDF", icon: FileText, path: "/word-to-pdf", category: "convert", available: true },
     { id: "pdf-to-ppt", name: "PDF to PPT", description: "Convert PDF pages to presentation slides", icon: Presentation, path: "/pdf-to-ppt", category: "convert", available: true },
@@ -87,10 +87,10 @@ export const categoryColors: Record<ToolCategory, string> = {
     ai: "bg-tool-ai text-white",
     convert: "bg-tool-convert text-white",
     edit: "bg-tool-edit text-white",
-    merge: "bg-tool-pdf text-white",
-    split: "bg-tool-pdf text-white",
-    compress: "bg-tool-pdf text-white",
-    protect: "bg-tool-pdf text-white",
+    merge: "bg-tool-merge text-white",
+    split: "bg-tool-split text-white",
+    compress: "bg-tool-compress text-white",
+    protect: "bg-tool-protect text-white",
 };
 
 export const categoryTextColors: Record<ToolCategory, string> = {
@@ -99,8 +99,8 @@ export const categoryTextColors: Record<ToolCategory, string> = {
     ai: "text-tool-ai",
     convert: "text-tool-convert",
     edit: "text-tool-edit",
-    merge: "text-tool-pdf",
-    split: "text-tool-pdf",
-    compress: "text-tool-pdf",
-    protect: "text-tool-pdf",
+    merge: "text-tool-merge",
+    split: "text-tool-split",
+    compress: "text-tool-compress",
+    protect: "text-tool-protect",
 };

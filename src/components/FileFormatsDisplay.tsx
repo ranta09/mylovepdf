@@ -41,8 +41,14 @@ const formatGroups: FormatGroup[] = [
     },
 ];
 
-const FileFormatsDisplay = ({ acceptedExtensions }: { acceptedExtensions: string[] }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const FileFormatsDisplay = ({
+    acceptedExtensions,
+    collapsible = true
+}: {
+    acceptedExtensions: string[],
+    collapsible?: boolean
+}) => {
+    const [isOpen, setIsOpen] = useState(!collapsible);
 
     // Filter groups to only show extensions that are actually accepted by this tool instance
     const cleanAccepted = acceptedExtensions.map(ext => ext.replace(".", "").toUpperCase());
@@ -55,22 +61,24 @@ const FileFormatsDisplay = ({ acceptedExtensions }: { acceptedExtensions: string
     if (filteredGroups.length === 0) return null;
 
     return (
-        <div className="w-full max-w-xl mx-auto mt-4 px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl hover:bg-muted/50 transition-colors group"
-            >
-                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-                    Supported file formats
-                </span>
-                <ChevronDown className={cn(
-                    "h-3.5 w-3.5 text-muted-foreground transition-transform duration-300",
-                    isOpen ? "rotate-180" : ""
-                )} />
-            </button>
+        <div className="w-full mx-auto mt-4 px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {collapsible && (
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl hover:bg-muted/50 transition-colors group"
+                >
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+                        Supported file formats
+                    </span>
+                    <ChevronDown className={cn(
+                        "h-3.5 w-3.5 text-muted-foreground transition-transform duration-300",
+                        isOpen ? "rotate-180" : ""
+                    )} />
+                </button>
+            )}
 
             <AnimatePresence>
-                {isOpen && (
+                {(isOpen || !collapsible) && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
@@ -78,36 +86,25 @@ const FileFormatsDisplay = ({ acceptedExtensions }: { acceptedExtensions: string
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                     >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 pb-6">
-                            {filteredGroups.map((group) => (
-                                <div key={group.label} className="space-y-2.5">
-                                    <div className="flex items-center gap-1.5 px-1">
-                                        <group.icon className={cn("h-3.5 w-3.5", group.colorClass.split(" ")[1])} />
-                                        <span className="text-[10px] font-extrabold uppercase tracking-tight text-foreground/70">
-                                            {group.label}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {group.extensions.map((ext) => (
-                                            <div
-                                                key={ext}
-                                                className={cn(
-                                                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold border border-transparent shadow-sm transition-all hover:scale-105",
-                                                    getFormatStyle(ext)
-                                                )}
-                                            >
-                                                {getSmallIcon(ext)}
-                                                {ext}
-                                            </div>
-                                        ))}
-                                    </div>
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-3 pb-5">
+                            {filteredGroups.flatMap(g => g.extensions).map((ext) => (
+                                <div
+                                    key={ext}
+                                    className={cn(
+                                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold border transition-all duration-200 cursor-default hover:brightness-95",
+                                        getFormatStyle(ext)
+                                    )}
+                                >
+                                    {getSmallIcon(ext)}
+                                    {ext}
                                 </div>
                             ))}
                         </div>
-
-                        <div className="flex items-center justify-center gap-1.5 py-2 border-t border-border/50 text-[10px] text-muted-foreground font-medium italic">
-                            <ShieldCheck className="h-3 w-3 text-green-500" />
-                            All processing is local and secure
+                        <div className="mt-4 flex justify-center">
+                            <div className="flex items-center gap-1.5 px-3 py-1 text-[10px] text-muted-foreground font-medium italic opacity-80 decoration-dotted underline-offset-4 decoration-border/50">
+                                <ShieldCheck className="h-3 w-3 text-green-500" />
+                                Secure & Local
+                            </div>
                         </div>
                     </motion.div>
                 )}
@@ -116,20 +113,24 @@ const FileFormatsDisplay = ({ acceptedExtensions }: { acceptedExtensions: string
     );
 };
 
-// Helper for specific format styling to give that "Real File Icon" feel
+// Helper for specific format styling to give that "SaaS Chip" feel
 const getFormatStyle = (ext: string) => {
     switch (ext) {
-        case "PDF": return "bg-red-500/5 text-red-600 border-red-200/50 dark:border-red-500/20";
+        case "PDF": return "bg-red-50/50 text-red-600 border-red-100 dark:bg-red-500/5 dark:border-red-500/20";
         case "DOC":
-        case "DOCX": return "bg-blue-500/5 text-blue-600 border-blue-200/50 dark:border-blue-500/20";
+        case "DOCX": return "bg-blue-50/50 text-blue-600 border-blue-100 dark:bg-blue-500/5 dark:border-blue-500/20";
         case "XLS":
-        case "XLSX": return "bg-emerald-500/5 text-emerald-600 border-emerald-200/50 dark:border-emerald-500/20";
+        case "XLSX": return "bg-emerald-50/50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20";
         case "PPT":
-        case "PPTX": return "bg-orange-500/5 text-orange-600 border-orange-200/50 dark:border-orange-500/20";
-        case "TXT": return "bg-slate-500/5 text-slate-600 border-slate-200/50 dark:border-slate-500/20";
-        case "CSV": return "bg-teal-500/5 text-teal-600 border-teal-200/50 dark:border-teal-500/20";
-        case "EPUB": return "bg-indigo-500/5 text-indigo-600 border-indigo-200/50 dark:border-indigo-500/20";
-        default: return "bg-muted/50 text-muted-foreground border-border";
+        case "PPTX": return "bg-orange-50/50 text-orange-600 border-orange-100 dark:bg-orange-500/5 dark:border-orange-500/20";
+        case "TXT": return "bg-slate-50/50 text-slate-600 border-slate-100 dark:bg-slate-500/5 dark:border-slate-500/20";
+        case "CSV": return "bg-teal-50/50 text-teal-600 border-teal-100 dark:bg-teal-500/5 dark:border-teal-500/20";
+        case "EPUB": return "bg-indigo-50/50 text-indigo-600 border-indigo-100 dark:bg-indigo-500/5 dark:border-indigo-500/20";
+        case "PNG":
+        case "JPG":
+        case "JPEG":
+        case "WEBP": return "bg-purple-50/50 text-purple-600 border-purple-100 dark:bg-purple-500/5 dark:border-purple-500/20";
+        default: return "bg-secondary/50 text-muted-foreground border-border/50";
     }
 };
 

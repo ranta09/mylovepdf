@@ -118,7 +118,9 @@ const PdfToWord = () => {
       <div className="mt-5">
         {results.length === 0 ? (
           <>
-            <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} multiple label="Select PDFs to convert" />
+            <div className="mt-5">
+              <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select PDF files to convert" collapsible={false} />
+            </div>
 
             {files.length > 0 && (
               <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm mb-6">
@@ -153,7 +155,7 @@ const PdfToWord = () => {
           />
         )}
       </div>
-    </ToolLayout>
+    </ToolLayout >
   );
 };
 

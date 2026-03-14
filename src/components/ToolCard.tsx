@@ -61,7 +61,7 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
         </Badge>
       )}
       {tool.category === "ai" && (
-        <Badge className="absolute right-3 top-3 text-[10px] font-bold bg-gradient-to-r from-violet-500 to-indigo-600 text-white border-0">
+        <Badge className="absolute right-3 top-3 text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 shadow-none">
           AI
         </Badge>
       )}
