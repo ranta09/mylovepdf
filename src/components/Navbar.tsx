@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { tools, aiTools, categoryTextColors, categoryColors } from "@/lib/tools";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 const allTools = [...aiTools, ...tools];
 const byId = (id: string) => allTools.find(t => t.id === id)!;
@@ -64,7 +65,9 @@ const Navbar = () => {
   const megaRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const activeTool = allTools.find(t => t.path === location.pathname);
+  const { disableGlobalFeatures } = useGlobalUpload();
+  const activeTool = allTools.find(tool => tool.path === location.pathname);
+  const showIndicator = activeTool && disableGlobalFeatures;
 
   useEffect(() => {
     setMegaOpen(false);
@@ -89,8 +92,8 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center group">
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center group shrink-0">
             <span
               className="relative z-10 flex items-baseline gap-0"
               style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
@@ -107,22 +110,26 @@ const Navbar = () => {
               <span className="text-2xl font-black tracking-tight text-primary">DOCX</span>
             </span>
           </Link>
+        </div>
 
-          <AnimatePresence mode="wait">
-            {activeTool && (
+        {/* Centered Active Tool Indicator - Fixed/Absolute Positioning for true center */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+          <AnimatePresence>
+            {showIndicator && (
               <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="hidden sm:flex items-center gap-3"
+                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="pointer-events-auto"
               >
-                <div className="h-6 w-[1px] bg-border mx-1" />
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all duration-300",
-                  "bg-secondary/50 border-border/50 shadow-sm"
-                )}>
-                  <activeTool.icon className={cn("h-4 w-4", categoryTextColors[activeTool.category])} />
-                  <span className="text-xs font-black uppercase tracking-widest text-foreground truncate max-w-[120px]">
+                <div className="flex items-center gap-2 bg-secondary/80 backdrop-blur-md border border-border/50 px-4 py-1.5 rounded-full shadow-lg shadow-primary/5">
+                  <div className="flex items-center gap-1.5 border-r border-border/50 pr-2 mr-1">
+                    <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", activeTool.category === 'ai' ? "bg-indigo-500" : "bg-primary")} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Workspace</span>
+                  </div>
+                  <activeTool.icon className={cn("h-3.5 w-3.5", categoryTextColors[activeTool.category])} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-foreground">
                     {activeTool.name}
                   </span>
                 </div>
