@@ -3,8 +3,9 @@ import { Menu, X, LayoutGrid, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { tools, aiTools } from "@/lib/tools";
+import { tools, aiTools, categoryTextColors, categoryColors } from "@/lib/tools";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const allTools = [...aiTools, ...tools];
 const byId = (id: string) => allTools.find(t => t.id === id)!;
@@ -164,14 +165,31 @@ const Navbar = () => {
                           </h4>
                           {sectionTools.map(tool => {
                             const Icon = tool.icon;
+                            const isActive = location.pathname === tool.path;
+                            const colorClass = categoryTextColors[tool.category];
+
                             return (
                               <Link
                                 key={tool.id}
                                 to={tool.path}
-                                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground/80 hover:bg-secondary hover:text-foreground transition-colors group"
+                                className={cn(
+                                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 group relative",
+                                  isActive
+                                    ? `${colorClass} bg-secondary/80 font-bold`
+                                    : "text-foreground/80 hover:bg-secondary hover:text-foreground"
+                                )}
                               >
-                                <Icon className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
-                                <span className="text-xs font-medium truncate">{tool.name}</span>
+                                <Icon className={cn(
+                                  "h-4 w-4 shrink-0 transition-colors",
+                                  isActive ? colorClass : "text-muted-foreground group-hover:text-primary"
+                                )} />
+                                <span className="text-xs truncate">{tool.name}</span>
+                                {isActive && (
+                                  <motion.div
+                                    layoutId="active-tool-indicator"
+                                    className={cn("absolute left-0 w-0.5 h-4 rounded-full", colorClass.replace('text-', 'bg-'))}
+                                  />
+                                )}
                               </Link>
                             );
                           })}
@@ -208,13 +226,22 @@ const Navbar = () => {
                       <div className="flex flex-col gap-0.5">
                         {sectionTools.map(tool => {
                           const Icon = tool.icon;
+                          const isActive = location.pathname === tool.path;
+                          const colorClass = categoryTextColors[tool.category];
+
                           return (
                             <Link
                               key={tool.id}
                               to={tool.path}
-                              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                              className={cn(
+                                "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                                isActive
+                                  ? `${colorClass} bg-secondary font-bold`
+                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              )}
+                              onClick={() => setMobileOpen(false)}
                             >
-                              <Icon className="h-4 w-4 shrink-0" />
+                              <Icon className={cn("h-4 w-4 shrink-0", isActive ? colorClass : "")} />
                               {tool.name}
                             </Link>
                           );
