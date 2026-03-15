@@ -98,8 +98,16 @@ const JpgToPdf = () => {
       setProgress(100);
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
+      const filename = "images_converted.pdf";
 
-      setResults([{ file: blob, url, filename: "images_converted.pdf" }]);
+      setResults([{ file: blob, url, filename }]);
+
+      // Auto download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+
       toast.success("Images converted to PDF!");
     } catch {
       toast.error("Failed to convert images");

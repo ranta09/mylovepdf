@@ -132,7 +132,14 @@ const ExcelToPdf = () => {
         const pdfBytes = await doc.save();
         const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
-        newResults.push({ file: blob, url, filename: file.name.replace(/\.[^/.]+$/, "") + ".pdf" });
+        const filename = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
+        newResults.push({ file: blob, url, filename });
+
+        // Auto download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
 
         setProgress(Math.round(((newResults.length) / files.length) * 100));
       }

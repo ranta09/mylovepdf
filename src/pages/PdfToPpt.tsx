@@ -102,12 +102,19 @@ const PdfToPpt = () => {
       setProgress(95);
       const blobContent = await pptx.write({ outputType: "blob" }) as Blob;
       const url = URL.createObjectURL(blobContent);
+      const filename = files[0].name.replace(/\.pdf$/i, ".pptx");
 
       setResults([{
         file: blobContent,
         url,
-        filename: files[0].name.replace(/\.pdf$/i, ".pptx"),
+        filename,
       }]);
+
+      // Auto download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
 
       setProgress(100);
       toast.success(`Converted ${pdf.numPages} pages to PowerPoint!`);
