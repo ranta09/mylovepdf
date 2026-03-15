@@ -31,19 +31,22 @@ const UnlockPdf = () => {
     try {
       const bytes = await files[0].arrayBuffer();
       setProgress(40);
-      // Load with ignoreEncryption to bypass restrictions
       const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
       setProgress(70);
-      const pdfBytes = await doc.save();
+
+      // Re-save without encryption flags
+      const pdfBytes = await doc.save({ useObjectStreams: true });
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
+      const filename = files[0].name.replace(/\.pdf$/i, "_unlocked.pdf");
+
       const a = document.createElement("a");
       a.href = url;
-      a.download = "unlocked.pdf";
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
       setProgress(100);
-      toast.success("PDF unlocked and saved!");
+      toast.success("PDF unlocked and downloaded!");
     } catch {
       toast.error("Failed to unlock PDF. The file may have strong encryption.");
     } finally {

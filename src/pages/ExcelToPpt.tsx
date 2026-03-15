@@ -230,12 +230,20 @@ const ExcelToPpt = () => {
 
                 // Create Blob output for ResultView
                 const blobContent = await pptx.write({ outputType: "blob" }) as Blob;
+                const pptUrl = URL.createObjectURL(blobContent);
+                const pptFilename = `${pptx.title}.pptx`;
 
                 newResults.push({
                     file: blobContent,
-                    url: URL.createObjectURL(blobContent),
-                    filename: `${pptx.title}.pptx`
+                    url: pptUrl,
+                    filename: pptFilename
                 });
+
+                // Auto download
+                const a = document.createElement("a");
+                a.href = pptUrl;
+                a.download = pptFilename;
+                a.click();
             } // End of file loop
 
             if (newResults.length > 0) {
