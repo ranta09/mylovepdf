@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
+import JSZip from "jszip";
 import { Presentation, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload } from "lucide-react";
 import { useEffect } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
@@ -12,6 +14,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
