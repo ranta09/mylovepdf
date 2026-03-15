@@ -165,8 +165,8 @@ const PptToPdf = () => {
           {/* Header Diagnostic / Execution Control */}
           <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800">
-                <Presentation className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                <Presentation className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
                 <h2 className="text-sm font-black uppercase tracking-tighter">Presentation Logic Engine</h2>
@@ -195,12 +195,12 @@ const PptToPdf = () => {
               <div className="w-full max-w-md space-y-8 text-center text-center">
                 <div className="relative flex justify-center items-center h-32">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-orange-500/10" />
+                    <div className="w-24 h-24 rounded-full border-4 border-red-500/10" />
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+                    <div className="w-24 h-24 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
                   </div>
-                  <Presentation className="h-8 w-8 text-orange-500 animate-pulse" />
+                  <Presentation className="h-8 w-8 text-red-500 animate-pulse" />
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-xl font-black uppercase tracking-widest">Synthesizing Alpha Planes</h3>
@@ -218,18 +218,18 @@ const PptToPdf = () => {
               {/* LEFT PANEL: Slide Manifest */}
               <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
                 <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                  <FileBox className="h-4 w-4 text-orange-500" />
+                  <FileBox className="h-4 w-4 text-red-500" />
                   <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-6 space-y-3">
                     {files.map((file, idx) => (
-                      <div key={idx} className="p-2 bg-background rounded-2xl border border-border flex flex-col gap-3 group hover:border-orange-500/30 transition-all overflow-hidden">
+                      <div key={idx} className="p-2 bg-background rounded-2xl border border-border flex flex-col gap-3 group hover:border-red-500/30 transition-all overflow-hidden">
                         <div className="aspect-video bg-secondary/30 rounded-xl flex items-center justify-center border border-border/50 overflow-hidden relative">
                           {file.type.startsWith('image/') ? (
                             <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
                           ) : (
-                            <Presentation className="h-8 w-8 text-orange-500/30" />
+                            <Presentation className="h-8 w-8 text-red-500/30" />
                           )}
                           <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black shadow-sm">
                             SLIDE {idx + 1}
@@ -252,8 +252,8 @@ const PptToPdf = () => {
               <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center justify-center">
                 <div className="w-full max-w-2xl text-center space-y-8">
                   <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-background border border-border shadow-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-orange-500/5 group-hover:bg-orange-500/10 transition-colors" />
-                    <Presentation className="h-8 w-8 text-orange-500 relative z-10" />
+                    <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
+                    <Presentation className="h-8 w-8 text-red-500 relative z-10" />
                   </div>
 
                   <div className="space-y-2">
@@ -268,7 +268,7 @@ const PptToPdf = () => {
                     </div>
                     <div className="p-4 bg-background border border-border rounded-2xl text-center">
                       <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Target</p>
-                      <p className="text-lg font-black text-orange-600">PDF Presentation</p>
+                      <p className="text-lg font-black text-red-600">PDF Presentation</p>
                     </div>
                   </div>
 

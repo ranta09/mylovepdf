@@ -273,8 +273,8 @@ const ExcelToPpt = () => {
                     {/* Header Diagnostic / Execution Control */}
                     <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800">
-                                <Presentation className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                                <Presentation className="h-5 w-5 text-red-600 dark:text-red-400" />
                             </div>
                             <div>
                                 <h2 className="text-sm font-black uppercase tracking-tighter">Smart PPT Engine</h2>
@@ -303,12 +303,12 @@ const ExcelToPpt = () => {
                             <div className="w-full max-w-md space-y-8 text-center text-center">
                                 <div className="relative flex justify-center items-center h-32">
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-24 h-24 rounded-full border-4 border-orange-500/10" />
+                                        <div className="w-24 h-24 rounded-full border-4 border-red-500/10" />
                                     </div>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-24 h-24 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+                                        <div className="w-24 h-24 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
                                     </div>
-                                    <Presentation className="h-8 w-8 text-orange-500 animate-pulse" />
+                                    <Presentation className="h-8 w-8 text-red-500 animate-pulse" />
                                 </div>
                                 <div className="space-y-3">
                                     <h3 className="text-xl font-black uppercase tracking-tighter">Rasterizing Data Objects</h3>
@@ -326,15 +326,15 @@ const ExcelToPpt = () => {
                             {/* LEFT PANEL: File Manifest */}
                             <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
                                 <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                                    <FileBox className="h-4 w-4 text-orange-500" />
+                                    <FileBox className="h-4 w-4 text-red-500" />
                                     <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
                                 </div>
                                 <ScrollArea className="flex-1">
                                     <div className="p-6 space-y-3">
                                         {files.map((file, idx) => (
-                                            <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-orange-500/30 transition-all">
-                                                <div className="h-12 w-10 bg-orange-50 dark:bg-orange-950/30 rounded border border-orange-200 dark:border-orange-800 flex items-center justify-center shrink-0">
-                                                    <FileSpreadsheet className="h-5 w-5 text-orange-500" />
+                                            <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-red-500/30 transition-all">
+                                                <div className="h-12 w-10 bg-red-50 dark:bg-red-950/30 rounded border border-red-200 dark:border-red-800 flex items-center justify-center shrink-0">
+                                                    <FileSpreadsheet className="h-5 w-5 text-red-500" />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
@@ -356,7 +356,7 @@ const ExcelToPpt = () => {
                                     <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
                                         <div className="p-6 border-b border-border bg-secondary/5">
                                             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                                                <Settings className="h-4 w-4 text-orange-500" />
+                                                <Settings className="h-4 w-4 text-red-500" />
                                                 Generation Parameters
                                             </h3>
                                         </div>
@@ -372,21 +372,21 @@ const ExcelToPpt = () => {
                                                         onClick={() => setOptions({ ...options, [opt.key]: !options[opt.key as keyof typeof options] })}
                                                         className={cn(
                                                             "flex flex-col items-center text-center gap-3 p-6 rounded-3xl border-2 transition-all group",
-                                                            options[opt.key as keyof typeof options] ? "border-orange-500 bg-orange-500/5" : "border-border bg-card/50 hover:border-orange-500/30"
+                                                            options[opt.key as keyof typeof options] ? "border-red-500 bg-red-500/5" : "border-border bg-card/50 hover:border-red-500/30"
                                                         )}>
-                                                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", options[opt.key as keyof typeof options] ? "bg-orange-500 text-white" : "bg-secondary text-muted-foreground")}>
+                                                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", options[opt.key as keyof typeof options] ? "bg-red-500 text-white" : "bg-secondary text-muted-foreground")}>
                                                             {opt.icon}
                                                         </div>
                                                         <div>
-                                                            <p className={cn("text-xs font-black uppercase tracking-widest", options[opt.key as keyof typeof options] ? "text-orange-600" : "text-foreground")}>{opt.label}</p>
+                                                            <p className={cn("text-xs font-black uppercase tracking-widest", options[opt.key as keyof typeof options] ? "text-red-600" : "text-foreground")}>{opt.label}</p>
                                                             <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">{opt.desc}</p>
                                                         </div>
                                                     </button>
                                                 ))}
                                             </div>
 
-                                            <div className="p-6 bg-orange-500/5 border border-orange-500/20 rounded-2xl flex items-start gap-4 text-center justify-center">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">
+                                            <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl flex items-start gap-4 text-center justify-center">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">
                                                     * Kernel recommendation: Enable all features for maximum presentation intelligence.
                                                 </p>
                                             </div>
@@ -396,7 +396,7 @@ const ExcelToPpt = () => {
                                     {/* Ready State */}
                                     <div className="flex justify-center">
                                         <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm">
-                                            <CheckCircle2 className="h-4 w-4 text-orange-500" />
+                                            <CheckCircle2 className="h-4 w-4 text-red-500" />
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for {files.length} documents · PPTX Buffer ready</span>
                                         </div>
                                     </div>

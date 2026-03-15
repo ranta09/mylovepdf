@@ -85,7 +85,7 @@ const HtmlToPdf = () => {
     try {
       // Use a CORS proxy approach: fetch HTML, then render locally
       const fullUrl = url.startsWith("http") ? url : `https://${url}`;
-      
+
       // Try fetching via a public CORS proxy
       let htmlContent = "";
       try {
@@ -151,8 +151,8 @@ const HtmlToPdf = () => {
           {/* Header Diagnostic / Execution Control */}
           <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800">
-                <Globe className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                <Globe className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
                 <h2 className="text-sm font-black uppercase tracking-tighter">Web Rendering Engine</h2>
@@ -183,7 +183,7 @@ const HtmlToPdf = () => {
             <div className="w-full max-w-xl border-r border-border bg-secondary/5 flex flex-col shrink-0">
               <div className="p-4 border-b border-border bg-background/50 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
-                  <FileBox className="h-4 w-4 text-orange-500" />
+                  <FileBox className="h-4 w-4 text-red-500" />
                   <span className="text-xs font-black uppercase tracking-widest">Source Configuration</span>
                 </div>
                 <Tabs value={mode} onValueChange={setMode} className="w-auto">
@@ -202,14 +202,14 @@ const HtmlToPdf = () => {
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Web Entry Point</label>
                         <div className="relative group">
                           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
+                            <LinkIcon className="h-4 w-4 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
                           </div>
                           <Input
                             type="url"
                             placeholder="https://example.com"
                             value={url}
                             onChange={e => setUrl(e.target.value)}
-                            className="h-14 pl-12 rounded-2xl border-2 border-border bg-card font-medium text-sm focus-visible:ring-orange-500/20 focus-visible:border-orange-500 transition-all"
+                            className="h-14 pl-12 rounded-2xl border-2 border-border bg-card font-medium text-sm focus-visible:ring-red-500/20 focus-visible:border-red-500 transition-all"
                             onKeyDown={e => e.key === "Enter" && handleUrlConvert()}
                           />
                           <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
@@ -217,8 +217,8 @@ const HtmlToPdf = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="p-6 bg-orange-500/5 border border-orange-500/20 rounded-2xl space-y-3">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">Rendering Protocol</h4>
+                      <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl space-y-3">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">Rendering Protocol</h4>
                         <p className="text-[11px] leading-relaxed text-muted-foreground font-medium italic">"Note: Webpages will be opened in a high-fidelity rendering tab. Execute the print command (Ctrl+P) to capture the exact layout vectors into a PDF buffer."</p>
                       </div>
                     </div>
@@ -226,7 +226,7 @@ const HtmlToPdf = () => {
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">HTML Stream</label>
-                        <div className="relative rounded-2xl border-2 border-border bg-[#0d1117] overflow-hidden group focus-within:border-orange-500/50 transition-all shadow-2xl">
+                        <div className="relative rounded-2xl border-2 border-border bg-[#0d1117] overflow-hidden group focus-within:border-red-500/50 transition-all shadow-2xl">
                           <div className="absolute top-0 inset-x-0 h-8 bg-card/20 border-b border-white/5 flex items-center px-4 gap-1.5">
                             <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
                             <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
@@ -237,7 +237,7 @@ const HtmlToPdf = () => {
                             placeholder="<html><body><h1>Hello World</h1></body></html>"
                             value={htmlCode}
                             onChange={e => setHtmlCode(e.target.value)}
-                            className="min-h-[400px] mt-8 bg-transparent border-none text-blue-400 font-mono text-xs focus-visible:ring-0 p-6 leading-relaxed selection:bg-orange-500/30"
+                            className="min-h-[400px] mt-8 bg-transparent border-none text-blue-400 font-mono text-xs focus-visible:ring-0 p-6 leading-relaxed selection:bg-red-500/30"
                           />
                         </div>
                       </div>
@@ -266,19 +266,19 @@ const HtmlToPdf = () => {
                   <div className="w-full max-w-md space-y-8 text-center text-center">
                     <div className="relative flex justify-center items-center h-32">
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 rounded-full border-4 border-orange-500/10" />
+                        <div className="w-24 h-24 rounded-full border-4 border-red-500/10" />
                       </div>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 rounded-full border-4 border-orange-500 border-t-transparent animate-spin" />
+                        <div className="w-24 h-24 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
                       </div>
-                      <Globe className="h-8 w-8 text-orange-500 animate-pulse" />
+                      <Globe className="h-8 w-8 text-red-500 animate-pulse" />
                     </div>
                     <div className="space-y-4">
                       <h3 className="text-xl font-black uppercase tracking-widest">Compiling Visual Vectors</h3>
                       <Progress value={progress} className="h-2 rounded-full" />
                       <div className="flex justify-between items-center px-1">
                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Phase: Rasterization</span>
-                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{progress}% COMPLETED</span>
+                        <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{progress}% COMPLETED</span>
                       </div>
                     </div>
                   </div>
@@ -286,13 +286,13 @@ const HtmlToPdf = () => {
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
                   {/* Decorative elements */}
-                  <div className="absolute top-0 left-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                  <div className="absolute top-0 left-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
                   <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
                   <div className="w-full max-w-3xl space-y-8 relative z-10 text-center">
                     <div className="inline-flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-background border border-border shadow-2xl relative group overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-blue-500/5 opacity-50" />
-                      <Globe className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-blue-500/5 opacity-50" />
+                      <Globe className="h-10 w-10 text-red-500 group-hover:scale-110 transition-transform duration-500" />
                     </div>
 
                     <div className="space-y-3">
@@ -306,7 +306,7 @@ const HtmlToPdf = () => {
                         { label: 'Link Preservation', icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" /> },
                         { label: 'CSS Optimization', icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" /> }
                       ].map((feature, i) => (
-                        <div key={i} className="bg-background/50 backdrop-blur-sm border border-border p-4 rounded-2xl flex flex-col items-center gap-2 shadow-sm transition-all hover:border-orange-500/30">
+                        <div key={i} className="bg-background/50 backdrop-blur-sm border border-border p-4 rounded-2xl flex flex-col items-center gap-2 shadow-sm transition-all hover:border-red-500/30">
                           {feature.icon}
                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{feature.label}</span>
                         </div>
@@ -315,7 +315,7 @@ const HtmlToPdf = () => {
 
                     <div className="pt-8">
                       {mode === "url" ? (
-                        <Button size="lg" onClick={handleUrlConvert} disabled={loading || !url.trim()} className="h-16 rounded-[2rem] bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 gap-3">
+                        <Button size="lg" onClick={handleUrlConvert} disabled={loading || !url.trim()} className="h-16 rounded-[2rem] bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-red-500/20 transition-all hover:scale-105 active:scale-95 gap-3">
                           Open Rendering Lab <ArrowRight className="h-6 w-6" />
                         </Button>
                       ) : (
@@ -357,13 +357,13 @@ const HtmlToPdf = () => {
             </TabsList>
             <div className="mt-12 text-center max-w-xl mx-auto space-y-4 px-6 md:px-0">
               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight">
-                Web to PDF <span className="text-orange-500">Synthesis.</span>
+                Web to PDF <span className="text-red-500">Synthesis.</span>
               </h1>
               <p className="text-lg text-muted-foreground font-medium">Choose your input vector to begin the conversion process.</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                <button onClick={() => setMode('url')} className={cn("p-6 rounded-3xl border-2 text-left transition-all group", mode === 'url' ? 'border-orange-500 bg-orange-500/5' : 'border-border hover:border-orange-500/30')}>
-                  <LinkIcon className={cn("h-8 w-8 mb-4 transition-colors", mode === 'url' ? 'text-orange-500' : 'text-muted-foreground group-hover:text-orange-500')} />
+                <button onClick={() => setMode('url')} className={cn("p-6 rounded-3xl border-2 text-left transition-all group", mode === 'url' ? 'border-red-500 bg-red-500/5' : 'border-border hover:border-red-500/30')}>
+                  <LinkIcon className={cn("h-8 w-8 mb-4 transition-colors", mode === 'url' ? 'text-red-500' : 'text-muted-foreground group-hover:text-red-500')} />
                   <h3 className="text-lg font-black uppercase tracking-tight mb-1">Web URL</h3>
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Render any external page</p>
                 </button>
