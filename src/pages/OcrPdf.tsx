@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { ScanLine, Copy, Download, Loader2, Info, ShieldCheck } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { createWorker } from "tesseract.js";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +20,7 @@ const OcrPdf = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [extractedText, setExtractedText] = useState("");
+  const [results, setResults] = useState<ProcessingResult[]>([]);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
@@ -30,11 +33,12 @@ const OcrPdf = () => {
     setProcessing(true);
     setProgress(5);
     setExtractedText("");
+    setResults([]);
 
     const worker = await createWorker("eng", 1, {
       logger: (m) => {
         if (m.status === "recognizing text") {
-          setProgress(10 + Math.round(m.progress * 85));
+          setProgress(10 + Math.round(m.progress * 60));
         }
       },
     });
@@ -44,8 +48,13 @@ const OcrPdf = () => {
       const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
       let fullText = "";
 
+      // Also create a searchable PDF with text overlay
+      const outDoc = await PDFDocument.create();
+      const font = await outDoc.embedFont(StandardFonts.Helvetica);
+
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
+        const origViewport = page.getViewport({ scale: 1 });
         const viewport = page.getViewport({ scale: 2 });
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -53,11 +62,50 @@ const OcrPdf = () => {
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-
         await page.render({ canvasContext: context, viewport }).promise;
-        const { data: { text } } = await worker.recognize(canvas);
 
+        // OCR the page
+        const { data: { text } } = await worker.recognize(canvas);
         fullText += `--- Page ${i} ---\n${text}\n\n`;
+
+        // Embed page as image in output PDF
+        const jpegBlob = await new Promise<Blob>((resolve) =>
+          canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.85)
+        );
+        const jpegData = new Uint8Array(await jpegBlob.arrayBuffer());
+        const jpegImage = await outDoc.embedJpg(jpegData);
+
+        const pdfPage = outDoc.addPage([origViewport.width, origViewport.height]);
+        pdfPage.drawImage(jpegImage, {
+          x: 0, y: 0,
+          width: origViewport.width,
+          height: origViewport.height,
+        });
+
+        // Add invisible text layer for searchability
+        const lines = text.split("\n").filter((l: string) => l.trim());
+        const fontSize = 8;
+        const lineHeight = fontSize * 1.4;
+        let yPos = origViewport.height - 20;
+
+        for (const line of lines) {
+          if (yPos < 20) break;
+          try {
+            pdfPage.drawText(line, {
+              x: 10,
+              y: yPos,
+              size: fontSize,
+              font,
+              color: rgb(0, 0, 0),
+              opacity: 0.01, // Nearly invisible but searchable/selectable
+            });
+          } catch {
+            // Skip lines with unsupported characters
+          }
+          yPos -= lineHeight;
+        }
+
+        setProgress(70 + Math.round((i / pdf.numPages) * 20));
       }
 
       if (!fullText.trim()) {
@@ -67,8 +115,23 @@ const OcrPdf = () => {
       }
 
       setExtractedText(fullText);
+
+      // Save searchable PDF
+      const pdfBytes = await outDoc.save({ useObjectStreams: true });
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const filename = files[0].name.replace(/\.pdf$/i, "_searchable.pdf");
+
+      setResults([{ file: blob, url, filename }]);
+
+      // Auto download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+
       setProgress(100);
-      toast.success(`OCR complete for ${pdf.numPages} page(s)!`);
+      toast.success(`OCR complete for ${pdf.numPages} page(s)! Searchable PDF downloaded.`);
     } catch (error) {
       console.error("OCR error:", error);
       toast.error("Failed to process PDF with OCR");
