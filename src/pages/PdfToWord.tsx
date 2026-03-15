@@ -218,36 +218,10 @@ const PdfToWord = () => {
       metaTitle="PDF to Word — Convert PDF to Editable DOCX Free"
       metaDescription="Convert PDF files to editable Word documents. Preserves layout, fonts, and paragraph structure. Free online converter."
       toolId="pdf-to-word"
-      hideHeader={files.length > 0 || results.length > 0}
     >
       {(files.length > 0 || processing || results.length > 0) && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-          <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tighter">PDF to Word Engine</h2>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                  {processing ? "Mapping Paragraph Structures..." : results.length > 0 ? "Conversion Terminal" : "Awaiting Execution"}
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              {(results.length > 0 || !processing) && (
-                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                  <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                </Button>
-              )}
-              {results.length === 0 && !processing && (
-                <Button size="sm" onClick={convert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                  <ArrowRight className="h-4 w-4" /> Convert to Word
-                </Button>
-              )}
-            </div>
-          </div>
 
           {processing ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
@@ -273,16 +247,28 @@ const PdfToWord = () => {
               <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
             </div>
           ) : (
-            <div className="flex-1 flex flex-row overflow-hidden">
-              <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                  <FileBox className="h-4 w-4 text-blue-500" />
-                  <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-3">
+            <div className="flex-1 overflow-y-auto bg-secondary/5">
+              <div className="max-w-5xl mx-auto p-8 space-y-12">
+                {/* File List Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+                        <FileBox className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-tight">Selected Documents</h3>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{files.length} {files.length === 1 ? 'File' : 'Files'} Loaded</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setFiles([])} className="rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
+                      <RotateCcw className="h-3.5 w-3.5" /> Clear Files
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {files.map((file, idx) => (
-                      <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-blue-500/30 transition-all">
+                      <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group transition-all hover:border-blue-500/30">
                         <div className="h-12 w-10 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0">
                           <FileText className="h-5 w-5 text-blue-500" />
                         </div>
@@ -292,63 +278,56 @@ const PdfToWord = () => {
                         </div>
                       </div>
                     ))}
-                    <button onClick={() => setFiles([])} className="w-full p-4 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
-                      + Resync Payload
-                    </button>
                   </div>
-                </ScrollArea>
-              </div>
+                </div>
 
-              <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
-                <div className="w-full max-w-2xl space-y-8">
-                  <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
-                    <div className="p-6 border-b border-border bg-secondary/5">
-                      <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                        <Settings className="h-4 w-4 text-blue-500" />
-                        Formatting Protocol
-                      </h3>
+                {/* Settings Section */}
+                <div className="space-y-8">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                      <Settings className="h-5 w-5 text-indigo-500" />
                     </div>
-                    <div className="p-10 space-y-8 text-center">
-                      <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Document Layout Mode</Label>
-                        <div className="grid grid-cols-1 gap-3">
-                          {[
-                            { id: 'standard', label: 'Standard Mode', desc: 'Recommended for most documents. Balanced layout.', icon: <Sparkles className="h-4 w-4" /> },
-                            { id: 'exact', label: 'Exact Fidelity', desc: 'Prioritizes original visual position. Best for complex forms.', icon: <Layout className="h-4 w-4" /> },
-                            { id: 'continuous', label: 'Continuous Flow', desc: 'Best for simple text. Easier to edit later.', icon: <FileText className="h-4 w-4" /> }
-                          ].map((mode) => (
-                            <button
-                              key={mode.id}
-                              onClick={() => setConversionMode(mode.id)}
-                              className={cn(
-                                "flex items-center gap-4 p-5 rounded-2xl border-2 transition-all group text-left",
-                                conversionMode === mode.id ? "border-blue-500 bg-blue-500/5" : "border-border bg-card/50 hover:border-blue-500/30"
-                              )}>
-                              <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === mode.id ? "bg-blue-500 text-white" : "bg-secondary text-muted-foreground")}>
-                                {mode.icon}
-                              </div>
-                              <div className="flex-1">
-                                <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === mode.id ? "text-blue-600" : "text-foreground")}>{mode.label}</p>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">{mode.desc}</p>
-                              </div>
-                              {conversionMode === mode.id && <CheckCircle2 className="h-5 w-5 text-blue-500" />}
-                            </button>
-                          ))}
+                    <div>
+                      <h3 className="text-lg font-black uppercase tracking-tight">Conversion Protocol</h3>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Configure Output fidelity</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                      { id: 'standard', label: 'Standard Mode', desc: 'Balanced layout & speed.', icon: <Sparkles className="h-4 w-4" /> },
+                      { id: 'exact', label: 'Exact Fidelity', desc: 'Perfect visual positioning.', icon: <Layout className="h-4 w-4" /> },
+                      { id: 'continuous', label: 'Continuous Flow', desc: 'Easiest for text editing.', icon: <FileText className="h-4 w-4" /> }
+                    ].map((mode) => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setConversionMode(mode.id)}
+                        className={cn(
+                          "flex flex-col gap-4 p-6 rounded-3xl border-2 transition-all group text-left",
+                          conversionMode === mode.id ? "border-blue-500 bg-blue-500/5 shadow-xl shadow-blue-500/10" : "border-border bg-card/50 hover:border-blue-500/30"
+                        )}>
+                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === mode.id ? "bg-blue-500 text-white" : "bg-secondary text-muted-foreground")}>
+                          {mode.icon}
                         </div>
-                      </div>
-                    </div>
+                        <div>
+                          <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === mode.id ? "text-blue-600" : "text-foreground")}>{mode.label}</p>
+                          <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 leading-relaxed">{mode.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Execution Block */}
+                <div className="flex flex-col items-center gap-6 py-12 border-t border-border/50">
+                  <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm text-center">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Ready for Processing</span>
                   </div>
 
-                  <div className="flex flex-col items-center gap-6 pt-4">
-                    <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm text-center">
-                      <CheckCircle2 className="h-4 w-4 text-blue-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for {files.length} PDF sources · {conversionMode.toUpperCase()} Logic</span>
-                    </div>
-
-                    <Button size="lg" onClick={convert} className="h-16 rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95 gap-3">
-                      Initiate Conversion <ArrowRight className="h-6 w-6" />
-                    </Button>
-                  </div>
+                  <Button size="lg" onClick={convert} className="h-20 rounded-[2.5rem] bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-[0.2em] px-24 shadow-2xl shadow-blue-500/30 transition-all hover:scale-105 active:scale-95 gap-4 text-base">
+                    Convert to Word <ArrowRight className="h-7 w-7" />
+                  </Button>
                 </div>
               </div>
             </div>
