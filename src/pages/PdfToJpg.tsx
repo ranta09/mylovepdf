@@ -125,6 +125,15 @@ const PdfToJpg = () => {
 
       setResults(newResults);
       setProgress(100);
+
+      // Auto download (ZIP if multiple, single if one)
+      if (newResults.length > 0) {
+        const a = document.createElement("a");
+        a.href = newResults[0].url;
+        a.download = newResults[0].filename;
+        a.click();
+      }
+
       toast.success(`Converted ${totalPages} page${totalPages > 1 ? "s" : ""} to JPG!`);
     } catch (err) {
       console.error(err);

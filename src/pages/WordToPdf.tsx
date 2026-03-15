@@ -45,9 +45,38 @@ const WordToPdf = () => {
         setProgress(10 + (f / files.length) * 20);
 
         let text = "";
-        if (file.name.endsWith(".docx")) {
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          text = result.value;
+        if (file.name.toLowerCase().endsWith(".docx")) {
+          // Use mammoth to get HTML for better formatting
+          const htmlResult = await mammoth.convertToHtml({ arrayBuffer });
+          // Also get raw text for fallback
+          const textResult = await mammoth.extractRawText({ arrayBuffer });
+          text = textResult.value;
+          
+          // If HTML conversion produced content, use it for layout
+          if (htmlResult.value && htmlResult.value.trim().length > 10) {
+            // Parse HTML to extract structured text with formatting
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(htmlResult.value, "text/html");
+            const elements = htmlDoc.body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, tr, td, th, table");
+            
+            if (elements.length > 0) {
+              text = "";
+              elements.forEach(el => {
+                const tag = el.tagName.toLowerCase();
+                if (tag.startsWith("h")) {
+                  text += "\n" + el.textContent?.toUpperCase() + "\n";
+                } else if (tag === "li") {
+                  text += "• " + el.textContent + "\n";
+                } else if (tag === "td" || tag === "th") {
+                  text += el.textContent + "\t";
+                } else if (tag === "tr") {
+                  text += "\n";
+                } else if (el.textContent?.trim()) {
+                  text += el.textContent + "\n";
+                }
+              });
+            }
+          }
         } else {
           text = await file.text();
         }
@@ -63,16 +92,15 @@ const WordToPdf = () => {
         const maxWidth = pageWidth - margin * 2;
         const lineHeight = fontSize * 1.5;
 
-        const lines: { text: string; bold: boolean }[] = [];
+        const lines: { text: string; bold: boolean; size: number }[] = [];
         const paragraphs = text.split("\n");
 
         for (const para of paragraphs) {
           if (!para.trim()) {
-            lines.push({ text: "", bold: false });
+            lines.push({ text: "", bold: false, size: fontSize });
             continue;
           }
 
-          // Detect headings (short lines, often all caps or title-like)
           const isHeading = para.length < 80 && para === para.toUpperCase() && para.length > 3;
           const currentFont = isHeading ? boldFont : font;
           const currentSize = isHeading ? 14 : fontSize;
@@ -84,13 +112,13 @@ const WordToPdf = () => {
             const testLine = currentLine ? `${currentLine} ${word}` : word;
             const width = currentFont.widthOfTextAtSize(testLine, currentSize);
             if (width > maxWidth && currentLine) {
-              lines.push({ text: currentLine, bold: isHeading });
+              lines.push({ text: currentLine, bold: isHeading, size: currentSize });
               currentLine = word;
             } else {
               currentLine = testLine;
             }
           }
-          if (currentLine) lines.push({ text: currentLine, bold: isHeading });
+          if (currentLine) lines.push({ text: currentLine, bold: isHeading, size: currentSize });
         }
 
         const linesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
@@ -102,7 +130,7 @@ const WordToPdf = () => {
               page.drawText(line.text, {
                 x: margin,
                 y: pageHeight - margin - idx * lineHeight,
-                size: line.bold ? 14 : fontSize,
+                size: line.size,
                 font: line.bold ? boldFont : font,
                 color: rgb(0.1, 0.1, 0.1),
               });
@@ -113,11 +141,14 @@ const WordToPdf = () => {
         const pdfBytes = await doc.save();
         const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
-        newResults.push({
-          file: blob,
-          url,
-          filename: file.name.replace(/\.[^/.]+$/, "") + ".pdf",
-        });
+        const filename = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
+        newResults.push({ file: blob, url, filename });
+
+        // Auto download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
 
         setProgress(50 + ((f + 1) / files.length) * 50);
       }

@@ -128,12 +128,16 @@ const SignPdf = () => {
       setProgress(100);
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
+      const filename = files[0].name.replace(/\.pdf$/i, "_signed.pdf");
+
+      // Auto download
       const a = document.createElement("a");
       a.href = url;
-      a.download = "signed.pdf";
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("PDF signed successfully!");
+
+      toast.success("PDF signed and downloaded!");
     } catch (err) {
       console.error(err);
       toast.error("Failed to sign PDF");

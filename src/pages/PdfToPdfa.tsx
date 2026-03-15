@@ -61,18 +61,25 @@ const PdfToPdfa = () => {
 
       setProgress(60);
 
-      // Re-serialize the document
-      const pdfBytes = await pdfDoc.save();
+      // Re-serialize the document with object streams for optimization
+      const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
       setProgress(90);
 
       const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
+      const filename = file.name.replace(".pdf", `_${compliance}.pdf`);
 
       setResults([{
         file: blob,
         url,
-        filename: file.name.replace(".pdf", `_${compliance}.pdf`),
+        filename,
       }]);
+
+      // Auto download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
 
       setProgress(100);
       toast.success(`PDF/A (${compliance.toUpperCase()}) file generated!`);

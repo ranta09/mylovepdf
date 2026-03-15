@@ -83,16 +83,35 @@ const HtmlToPdf = () => {
     setLoading(true);
     setProgress(10);
     try {
-      // For cross-origin URLs, we open in a new tab with print dialog
-      const printWindow = window.open(url, "_blank");
-      if (printWindow) {
-        toast.success("Page opened! Use Ctrl+P / ⌘+P to save as PDF.");
+      // Use a CORS proxy approach: fetch HTML, then render locally
+      const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+      
+      // Try fetching via a public CORS proxy
+      let htmlContent = "";
+      try {
+        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`);
+        if (response.ok) {
+          htmlContent = await response.text();
+        }
+      } catch {
+        // Proxy failed
+      }
+
+      if (htmlContent) {
+        setProgress(30);
+        await convertHtmlToPdf(htmlContent, url.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30) + ".pdf");
       } else {
-        toast.error("Pop-up blocked. Please allow pop-ups for this site.");
+        // Fallback: open in new tab for manual print
+        const printWindow = window.open(fullUrl, "_blank");
+        if (printWindow) {
+          toast.info("Page opened in new tab. Use Ctrl+P / ⌘+P to save as PDF.");
+        } else {
+          toast.error("Pop-up blocked. Please allow pop-ups for this site.");
+        }
       }
       setProgress(100);
     } catch {
-      toast.error("Failed to open the webpage.");
+      toast.error("Failed to fetch the webpage. Try the HTML code mode instead.");
     } finally {
       setLoading(false);
       setProgress(0);

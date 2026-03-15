@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
+import JSZip from "jszip";
 import { Presentation, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload } from "lucide-react";
 import { useEffect } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
@@ -12,6 +14,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -31,25 +35,81 @@ const PptToPdf = () => {
     return () => setDisableGlobalFeatures(false);
   }, [files.length, setDisableGlobalFeatures]);
 
+  const extractImagesFromPptx = async (file: File): Promise<{ data: Uint8Array; type: string }[]> => {
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const images: { data: Uint8Array; type: string }[] = [];
+    const mediaFiles = Object.keys(zip.files).filter(f => f.startsWith("ppt/media/"));
+    for (const mediaPath of mediaFiles) {
+      const data = await zip.files[mediaPath].async("uint8array");
+      const ext = mediaPath.split(".").pop()?.toLowerCase() || "";
+      const type = ext === "png" ? "image/png" : "image/jpeg";
+      if (["png", "jpg", "jpeg", "gif", "bmp", "tiff"].includes(ext)) {
+        images.push({ data, type });
+      }
+    }
+    return images;
+  };
+
   const convert = async () => {
     if (files.length === 0) return;
     setProcessing(true);
     setProgress(10);
     try {
+      const file = files[0];
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const doc = await PDFDocument.create();
-      for (let i = 0; i < files.length; i++) {
-        const bytes = await files[i].arrayBuffer();
+      const slideWidth = 960;
+      const slideHeight = 720;
+
+      if (ext === "pptx" || ext === "ppt") {
+        // Parse PPTX as ZIP and extract slide images
+        const images = await extractImagesFromPptx(file);
+        setProgress(30);
+
+        if (images.length === 0) {
+          // Fallback: render a blank page with note
+          const page = doc.addPage([slideWidth, slideHeight]);
+          toast.info("No embedded images found. Creating placeholder PDF.");
+        } else {
+          for (let i = 0; i < images.length; i++) {
+            const { data, type } = images[i];
+            let img;
+            try {
+              img = type === "image/png" ? await doc.embedPng(data) : await doc.embedJpg(data);
+            } catch {
+              continue;
+            }
+            const page = doc.addPage([slideWidth, slideHeight]);
+            const scale = Math.min(slideWidth / img.width, slideHeight / img.height);
+            const w = img.width * scale;
+            const h = img.height * scale;
+            page.drawImage(img, {
+              x: (slideWidth - w) / 2,
+              y: (slideHeight - h) / 2,
+              width: w,
+              height: h,
+            });
+            setProgress(30 + Math.round(((i + 1) / images.length) * 60));
+          }
+        }
+      } else if (file.type === "application/pdf") {
+        // If user uploads a PDF by mistake, just copy it
+        const srcDoc = await PDFDocument.load(await file.arrayBuffer());
+        const pages = await doc.copyPages(srcDoc, srcDoc.getPageIndices());
+        pages.forEach(p => doc.addPage(p));
+      } else {
+        // Image files fallback
+        const bytes = await file.arrayBuffer();
         const uint8 = new Uint8Array(bytes);
-        const isPng = files[i].type === "image/png";
+        const isPng = file.type === "image/png";
         let img;
         try {
           img = isPng ? await doc.embedPng(uint8) : await doc.embedJpg(uint8);
         } catch {
-          toast.error(`Could not process ${files[i].name}`);
-          continue;
+          toast.error(`Could not process ${file.name}`);
+          setProcessing(false);
+          return;
         }
-        const slideWidth = 960;
-        const slideHeight = 720;
         const page = doc.addPage([slideWidth, slideHeight]);
         const scale = Math.min(slideWidth / img.width, slideHeight / img.height);
         const w = img.width * scale;
@@ -60,17 +120,26 @@ const PptToPdf = () => {
           width: w,
           height: h,
         });
-        setProgress(10 + Math.round(((i + 1) / files.length) * 80));
       }
 
+      setProgress(95);
       const pdfBytes = await doc.save();
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
+      const filename = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
 
-      setResults([{ file: blob, url, filename: "presentation.pdf" }]);
+      setResults([{ file: blob, url, filename }]);
       setProgress(100);
-      toast.success("Slides converted to PDF!");
-    } catch {
+
+      // Auto download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+
+      toast.success("Presentation converted to PDF!");
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to convert to PDF");
     } finally {
       setProcessing(false);

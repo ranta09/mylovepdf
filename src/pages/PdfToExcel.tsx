@@ -107,6 +107,15 @@ const PdfToExcel = () => {
 
       setResults(newResults);
       setProgress(100);
+
+      // Auto download primary result
+      if (newResults.length > 0) {
+        const a = document.createElement("a");
+        a.href = newResults[0].url;
+        a.download = newResults[0].filename;
+        a.click();
+      }
+
       toast.success(`Extracted ${allRows.length} rows from PDF!`);
     } catch {
       toast.error("Failed to extract data from PDF");
