@@ -17,10 +17,11 @@ import {
   BrainCircuit, FileText, Link2, Youtube, Type, Loader2, ShieldCheck,
   CheckCircle2, XCircle, Download, RotateCcw, ChevronLeft, ChevronRight,
   Timer, Star, Zap, BookOpen, GraduationCap, X, Plus, ChevronDown,
-  Wand2, MessageSquare, Search
+  Wand2, MessageSquare, Search, BookMarked
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DocumentInfoCard from "@/components/DocumentInfoCard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ interface Question {
   answer: string;
   explanation: string;
   difficulty: string;
+  sectionRef?: string;
 }
 
 interface Flashcard {
@@ -78,6 +80,8 @@ const QuizGenerator = () => {
   const [urlInput, setUrlInput] = useState("");
   const [textInput, setTextInput] = useState("");
   const [extractedText, setExtractedText] = useState("");
+  const [docTopic, setDocTopic] = useState("");
+  const [focusTopic, setFocusTopic] = useState("");
 
   // Settings
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
@@ -158,18 +162,19 @@ const QuizGenerator = () => {
 
       setStatusText("Generating quiz with AI…"); setProgress(55);
       const { data, error } = await supabase.functions.invoke("ai-quiz", {
-        body: { text, questionTypes: selectedTypes, difficulty, count },
+        body: { text, questionTypes: selectedTypes, difficulty, count, focusTopic: focusTopic.trim() || undefined },
       });
       if (error) throw error;
 
       setProgress(95);
+      setDocTopic(data.topic ?? "");
       setQuestions(data.questions ?? []);
       setFlashcards(data.flashcards ?? []);
       setKeyConcepts(data.keyConcepts ?? []);
       setSelected({}); setRevealed({});
       setProgress(100);
       setPhase("quiz");
-      toast({ title: "Quiz ready!", description: `${data.questions?.length ?? 0} questions generated.` });
+      toast({ title: "Quiz ready!", description: `${data.questions?.length ?? 0} questions generated.${data.topic ? ` Topic: ${data.topic}` : ""}` });
     } catch (e: any) {
       setPhase("setup");
       toast({ title: "Error", description: e.message ?? "Failed to generate quiz.", variant: "destructive" });
@@ -449,7 +454,14 @@ const QuizGenerator = () => {
                       <p className="font-semibold text-sm text-foreground flex-1">
                         <span className="text-muted-foreground mr-1">Q{i + 1}.</span>{q.question}
                       </p>
-                      <span className="text-[10px] rounded-full bg-secondary px-2 py-0.5 text-muted-foreground capitalize flex-shrink-0">{q.type}</span>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className="text-[10px] rounded-full bg-secondary px-2 py-0.5 text-muted-foreground capitalize">{q.type}</span>
+                        {q.sectionRef && (
+                          <span className="text-[9px] rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium max-w-[120px] text-right truncate" title={q.sectionRef}>
+                            📍 {q.sectionRef}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {q.options.length > 0 && (
                       <div className="grid gap-2">

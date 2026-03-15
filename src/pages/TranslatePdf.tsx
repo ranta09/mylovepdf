@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Languages, Download, Loader2, ShieldCheck, FileText, X,
   Copy, ClipboardCheck, RotateCcw, Globe, ChevronDown, CheckCircle2,
-  Zap, Wand2, BrainCircuit, MessageSquare, Search, Layout
+  Zap, Wand2, BrainCircuit, MessageSquare, Search, Layout, Hash
 } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
@@ -16,9 +16,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractDocument, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
 import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
+import { Document, Packer, Paragraph, TextRun } from "docx";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import DocumentInfoCard from "@/components/DocumentInfoCard";
 
 // ─── Language list (50+ languages with flag emojis) ───────────────────────────
 
@@ -107,7 +109,7 @@ function chunkText(text: string, maxChars = 4000): string[] {
   return chunks.length ? chunks : [text.slice(0, maxChars)];
 }
 
-interface DocResult { name: string; original: string; translated: string; lang: string }
+interface DocResult { name: string; original: string; translated: string; lang: string; wordCount?: number }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -116,6 +118,7 @@ const TranslatePdf = () => {
   const [targetLang, setTargetLang] = useState("Spanish");
   const [sourceLang, setSourceLang] = useState<string | null>(null);
   const [detectedLang, setDetectedLang] = useState<string | null>(null);
+  const [fileMeta, setFileMeta] = useState<{ name: string; size: number; pageCount?: number } | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -126,6 +129,7 @@ const TranslatePdf = () => {
   const [langSearch, setLangSearch] = useState("");
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [totalWordCount, setTotalWordCount] = useState(0);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
@@ -192,6 +196,7 @@ const TranslatePdf = () => {
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
           translated.push(data.translation ?? "");
+          if (data?.wordCount) setTotalWordCount(prev => prev + (data.wordCount ?? 0));
         }
 
         allResults.push({
@@ -199,6 +204,7 @@ const TranslatePdf = () => {
           original: originalText,
           translated: translated.join("\n\n"),
           lang: targetLang,
+          wordCount: totalWordCount,
         });
       } catch (e: any) {
         toast.error(`Failed to translate ${file.name}: ${e.message}`);
@@ -218,6 +224,7 @@ const TranslatePdf = () => {
     if (incoming.length > 0) {
       try {
         const res = await extractDocument(incoming[0], () => { });
+        setFileMeta({ name: incoming[0].name, size: incoming[0].size, pageCount: res.pageCount });
         if (res.text.trim()) detectLanguage(res.text);
       } catch { /* ignore */ }
     }
@@ -244,11 +251,28 @@ const TranslatePdf = () => {
     saveAs(new Blob([result.translated], { type: "text/plain;charset=utf-8" }), `translated-${result.lang.toLowerCase()}.txt`);
   };
 
+  const downloadDOCX = async (result: DocResult) => {
+    try {
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: result.translated.split("\n").map(text => 
+            new Paragraph({ children: [new TextRun(text)] })
+          )
+        }]
+      });
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `translated-${result.lang.toLowerCase()}.docx`);
+    } catch {
+      toast.error("Failed to generate DOCX");
+    }
+  };
+
   const copyTranslation = (text: string) => {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
-  const reset = () => { setFiles([]); setResults([]); setDetectedLang(null); setSourceLang(null); setProgress(0); setStatusText(""); };
+  const reset = () => { setFiles([]); setResults([]); setDetectedLang(null); setSourceLang(null); setProgress(0); setStatusText(""); setFileMeta(null); setTotalWordCount(0); };
 
   const active = results[selectedResult];
 
@@ -278,6 +302,16 @@ const TranslatePdf = () => {
               accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.rtf,.odt"
               label="Upload documents"
             />
+
+            {/* Document Info Card — shown after upload */}
+            {fileMeta && (
+              <DocumentInfoCard
+                name={fileMeta.name}
+                sizeBytes={fileMeta.size}
+                pageCount={fileMeta.pageCount}
+                language={detecting ? "Detecting…" : detectedLang ?? undefined}
+              />
+            )}
 
             {/* Language pickers */}
             {files.length > 0 && (
@@ -384,6 +418,9 @@ const TranslatePdf = () => {
                   <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => downloadTXT(active)}>
                     <Download className="h-3.5 w-3.5 mr-1.5" />TXT
                   </Button>
+                  <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => downloadDOCX(active)}>
+                    <Download className="h-3.5 w-3.5 mr-1.5" />DOCX
+                  </Button>
                   <Button variant="default" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter" onClick={() => downloadPDF(active)}>
                     <Download className="h-3.5 w-3.5 mr-1.5" />Download PDF
                   </Button>
@@ -446,6 +483,11 @@ const TranslatePdf = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
+                  {totalWordCount > 0 && (
+                    <span className="text-[10px] font-black text-muted-foreground uppercase">
+                      <Hash className="inline h-3 w-3 mr-1" />{totalWordCount.toLocaleString()} words
+                    </span>
+                  )}
                   <span className="text-[10px] font-black text-muted-foreground uppercase">{files.length} Files Ready</span>
                 </div>
               </div>

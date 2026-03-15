@@ -15,7 +15,7 @@ import {
   Loader2, ShieldCheck, FileText, Type, X, ChevronDown,
   Sparkles, RotateCcw, Clipboard, ClipboardCheck,
   LinkedinIcon, BriefcaseBusiness, Wand2, Layout, Info,
-  BrainCircuit, MessageSquare, Search
+  BrainCircuit, MessageSquare, Search, ListChecks
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import ToolSeoSection from "@/components/ToolSeoSection";
@@ -23,6 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import DocumentInfoCard from "@/components/DocumentInfoCard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,13 +37,14 @@ interface ATSResult {
   bulletRewrites: { original: string; improved: string }[];
   jobMatch: { score: number; matchedSkills: string[]; missingSkills: string[]; suggestedRoles: { role: string; match: number; missingFor: string[] }[] };
   linkedInSuggestions: { headline: string; about: string };
+  actionPlan?: string[];
   grammarIssues: string[];
   lengthAdvice: string;
   overallSuggestions: string[];
 }
 
 type InputMode = "file" | "paste";
-type ActiveTab = "overview" | "keywords" | "bullets" | "jobmatch" | "linkedin";
+type ActiveTab = "overview" | "keywords" | "bullets" | "jobmatch" | "linkedin" | "actionplan";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -86,13 +88,14 @@ const AtsChecker = () => {
     setProcessing(true); setProgress(10); setResult(null); setStatusText("Extracting text…");
     try {
       let text = "";
-      if (inputMode === "file") {
+    if (inputMode === "file") {
         const res = await extractDocument(files[0], (p, s) => { setProgress(10 + p * 0.4); setStatusText(s); });
         text = res.text;
+        if (!text.trim()) throw new Error("No text could be extracted from the file. If this is a scanned PDF, try converting it to DOCX first.");
       } else {
         text = pastedText;
+        if (!text.trim()) throw new Error("Please paste your resume text before analyzing.");
       }
-      if (!text.trim()) throw new Error("No text could be extracted from the file.");
       setProgress(55); setStatusText("Running AI analysis…");
       const { data, error } = await supabase.functions.invoke("ai-ats-checker", {
         body: { text, jobDescription: jobDescription.trim() || undefined },
@@ -149,6 +152,7 @@ const AtsChecker = () => {
     { id: "bullets", label: "Bullet Fixes", icon: <Wand2 className="h-3.5 w-3.5" /> },
     { id: "jobmatch", label: "Job Match", icon: <BriefcaseBusiness className="h-3.5 w-3.5" /> },
     { id: "linkedin", label: "LinkedIn", icon: <LinkedinIcon className="h-3.5 w-3.5" /> },
+    { id: "actionplan", label: "Action Plan", icon: <ListChecks className="h-3.5 w-3.5" /> },
   ];
 
   const canAnalyze = inputMode === "file" ? files.length > 0 : pastedText.trim().length > 50;
@@ -183,13 +187,21 @@ const AtsChecker = () => {
             </div>
 
             {inputMode === "file" && (
-              <FileUpload
-                onFilesChange={setFiles}
-                files={files}
-                accept=".pdf,.docx,.doc,.txt,.rtf,.odt"
-                multiple={false}
-                label="Upload resume"
-              />
+              <>
+                <FileUpload
+                  onFilesChange={setFiles}
+                  files={files}
+                  accept=".pdf,.docx,.doc,.txt,.rtf,.odt"
+                  multiple={false}
+                  label="Upload resume"
+                />
+                {files.length > 0 && (
+                  <DocumentInfoCard
+                    name={files[0].name}
+                    sizeBytes={files[0].size}
+                  />
+                )}
+              </>
             )}
 
             {inputMode === "paste" && (
@@ -505,6 +517,41 @@ const AtsChecker = () => {
                                   </div>
                                 </div>
                               </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Action Plan Tab ── */}
+                        {activeTab === "actionplan" && (
+                          <div className="space-y-4 max-w-3xl mx-auto">
+                            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                              <h3 className="text-[11px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                                <ListChecks className="h-3.5 w-3.5" />
+                                Your Prioritized Action Plan
+                              </h3>
+                              {(result.actionPlan && result.actionPlan.length > 0) ? (
+                                <div className="space-y-3">
+                                  {result.actionPlan.map((step, i) => (
+                                    <div key={i} className="flex gap-4 p-4 bg-background rounded-xl border border-border hover:border-primary/30 transition-all">
+                                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center">
+                                        {i + 1}
+                                      </div>
+                                      <p className="text-sm font-medium text-foreground leading-relaxed mt-1">{step.replace(/^Priority \d+:\s*/i, "")}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {(result.overallSuggestions ?? []).slice(0, 5).map((s, i) => (
+                                    <div key={i} className="flex gap-4 p-4 bg-background rounded-xl border border-border hover:border-primary/30 transition-all">
+                                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center">
+                                        {i + 1}
+                                      </div>
+                                      <p className="text-sm font-medium text-foreground leading-relaxed mt-1">{s}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}

@@ -20,6 +20,7 @@ import {
 import FileUpload from "@/components/FileUpload";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import DocumentInfoCard from "@/components/DocumentInfoCard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,7 @@ const ChatWithPdf = () => {
   const [extracting, setExtracting] = useState(false);
   const [extractProgress, setExtractProgress] = useState(0);
   const [extractStatus, setExtractStatus] = useState("");
+  const [docMeta, setDocMeta] = useState<{ name: string; size: number; pageCount?: number } | null>(null);
 
   // Chat state
   const [documentText, setDocumentText] = useState("");
@@ -131,6 +133,9 @@ const ChatWithPdf = () => {
 
       setDocumentText(combined);
       setDocNames(names);
+      if (inputMode === "file" && files.length > 0) {
+        setDocMeta({ name: files[0].name, size: files[0].size, pageCount: combined.length / 3000 }); // Estimating page count if not returned
+      }
       setExtractProgress(100);
       setMessages([{
         role: "assistant",
@@ -382,7 +387,15 @@ const ChatWithPdf = () => {
                   <div className="p-6 space-y-8">
                     {/* Active Documents */}
                     <div className="space-y-3">
-                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Active Documents</h3>
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Active Intelligence</h3>
+                      {docMeta && (
+                        <DocumentInfoCard
+                          name={docMeta.name}
+                          sizeBytes={docMeta.size}
+                          pageCount={docMeta.pageCount ? Math.ceil(docMeta.pageCount) : undefined}
+                          language="English"
+                        />
+                      )}
                       <div className="space-y-2">
                         {docNames.map((name, i) => (
                           <div key={i} className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-center gap-3">
@@ -519,7 +532,7 @@ const ChatWithPdf = () => {
                           rows={1}
                           onChange={e => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
                           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                          placeholder="Interrogate your document stream..."
+                          placeholder="Interrogate your document stream... Try: 'Summarize page 4' or 'Explain section 2'"
                           disabled={isStreaming}
                           className="w-full rounded-2xl border-2 border-border bg-secondary/20 px-6 py-4 pr-14 text-xs font-bold uppercase tracking-tight resize-none focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 disabled:opacity-60 max-h-[120px] transition-all placeholder:text-muted-foreground/50"
                         />

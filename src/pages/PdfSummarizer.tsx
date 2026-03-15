@@ -10,21 +10,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { saveAs } from "file-saver";
+import { Document, Packer, Paragraph, TextRun } from "docx";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Wand2, Copy, Download, FileText, Loader2, ShieldCheck,
   CheckCircle2, AlertCircle, Link2, X, Plus, MessageSquare,
   BookOpen, Highlighter, ListChecks, GraduationCap, ClipboardList,
-  FileBarChart, Search, Send, ChevronDown, BrainCircuit
+  FileBarChart, Search, Send, ChevronDown, BrainCircuit,
+  Zap, AlignLeft, BarChart3
 } from "lucide-react";
 import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DocumentInfoCard from "@/components/DocumentInfoCard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Status = "idle" | "extracting" | "summarizing" | "completed" | "error";
+type SummaryMode = "quick" | "full" | "executive";
+type SummaryLength = "short" | "medium" | "long";
 
 type TabId = "overview" | "bullets" | "insights" | "study" | "chat" | "glossary" | "actions" | "quiz";
 
@@ -33,6 +38,13 @@ interface FileResult {
   text: string;
   pageCount?: number;
   method: string;
+}
+
+interface DocMeta {
+  title?: string;
+  topic?: string;
+  language?: string;
+  type?: string;
 }
 
 interface SummaryResults {
@@ -47,6 +59,19 @@ interface SummaryResults {
 
 const EMPTY_RESULTS: SummaryResults = {
   overview: "", bullets: "", insights: "", study: "", glossary: "", actions: "", quiz: "",
+};
+
+// Modes to generate per summary mode
+const MODE_TABS: Record<SummaryMode, (keyof SummaryResults)[]> = {
+  quick: ["overview", "bullets"],
+  executive: ["overview"],
+  full: ["overview", "bullets", "insights", "study", "glossary", "actions", "quiz"],
+};
+
+const MODE_AI_MODES: Record<SummaryMode, string[]> = {
+  quick: ["overview", "bullets_full"],
+  executive: ["executive"],
+  full: ["overview", "bullets_full", "insights", "study", "glossary", "actions", "quiz"],
 };
 
 // ─── File type icons ──────────────────────────────────────────────────────────
@@ -98,35 +123,23 @@ const SUMMARY_MODES: { key: keyof SummaryResults; aiMode: string }[] = [
 
 // ─── AI Call helper ───────────────────────────────────────────────────────────
 
-const MAX_CHUNK = 45000;
-
-async function callAI(text: string, mode: string, question?: string): Promise<string> {
-  if (text.length <= MAX_CHUNK) {
-    const { data, error } = await supabase.functions.invoke("ai-summarize", {
-      body: { text, mode, ...(question ? { question } : {}) },
-    });
-    if (error) throw error;
-    return data.summary as string;
-  }
-
-  // Chunked processing for large documents
-  const chunks: string[] = [];
-  for (let i = 0; i < text.length; i += MAX_CHUNK) chunks.push(text.slice(i, i + MAX_CHUNK));
-
-  const partials: string[] = [];
-  for (const chunk of chunks) {
-    const { data, error } = await supabase.functions.invoke("ai-summarize", {
-      body: { text: chunk, mode: "short" },
-    });
-    if (error) throw error;
-    partials.push(data.summary);
-  }
-
-  // Final synthesis
-  const combined = "Below are partial summaries of segments of a document. Merge them into one final, coherent output:\n\n" + partials.join("\n\n---\n\n");
-  const { data, error } = await supabase.functions.invoke("ai-summarize", { body: { text: combined, mode } });
+async function callAI(text: string, mode: string, question?: string, length: SummaryLength = "medium"): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("ai-summarize", {
+    body: { text, mode, length, ...(question ? { question } : {}) },
+  });
   if (error) throw error;
   return data.summary as string;
+}
+
+async function detectDocMeta(text: string): Promise<DocMeta> {
+  try {
+    const { data } = await supabase.functions.invoke("ai-summarize", {
+      body: { text: text.slice(0, 2000), mode: "detect" },
+    });
+    return data ?? {};
+  } catch {
+    return {};
+  }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -142,6 +155,9 @@ const DocSummarizer = () => {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [loadingTabs, setLoadingTabs] = useState<Set<TabId>>(new Set());
   const [extractedFiles, setExtractedFiles] = useState<FileResult[]>([]);
+  const [docMeta, setDocMeta] = useState<DocMeta>({});
+  const [summaryMode, setSummaryMode] = useState<SummaryMode>("full");
+  const [summaryLength, setSummaryLength] = useState<SummaryLength>("medium");
 
   // Chat state
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; text: string }[]>([]);
@@ -181,6 +197,7 @@ const DocSummarizer = () => {
     setProgress(0);
     setResults(EMPTY_RESULTS);
     setChatHistory([]);
+    setDocMeta({});
 
     const sources: FileResult[] = [];
 
@@ -194,9 +211,9 @@ const DocSummarizer = () => {
         for (let i = 0; i < files.length; i++) {
           const f = files[i];
           setStatusText(`Extracting ${f.name} (${i + 1}/${files.length})…`);
-          setProgress(Math.round((i / files.length) * 35));
+          setProgress(Math.round((i / files.length) * 30));
           const res = await extractDocument(f, (p, s) => {
-            setProgress(Math.round((i / files.length) * 35 + (p / files.length) * 0.35));
+            setProgress(Math.round((i / files.length) * 30 + (p / files.length) * 0.30));
             setStatusText(s);
           });
           sources.push({ name: f.name, text: res.text, pageCount: res.pageCount, method: res.method });
@@ -205,7 +222,7 @@ const DocSummarizer = () => {
       }
 
       if (sources.every(s => !s.text.trim())) {
-        throw new Error("No text could be extracted from the provided document(s).");
+        throw new Error("No text could be extracted from the provided document(s). The file may be a scanned image PDF — try uploading a text-based PDF.");
       }
 
       setExtractedFiles(sources);
@@ -213,20 +230,31 @@ const DocSummarizer = () => {
       // Combine texts for multi-file
       const combinedText = sources.length === 1
         ? sources[0].text
-        : sources.map((s, i) => `-- - Document ${i + 1}: ${s.name} ---\n${s.text} `).join("\n\n");
+        : sources.map((s, i) => `--- Document ${i + 1}: ${s.name} ---\n${s.text}`).join("\n\n");
+
+      // Detect document metadata in parallel with starting summarization
+      setProgress(32);
+      setStatusText("Detecting document topic…");
+      const meta = await detectDocMeta(combinedText);
+      setDocMeta(meta);
 
       setStatus("summarizing");
-      setProgress(40);
+      setProgress(38);
 
-      // Generate all summary tabs
+      // Determine which tabs to generate based on summaryMode
+      const tabKeys = MODE_TABS[summaryMode];
+      const aiModes = MODE_AI_MODES[summaryMode];
+
+      // Generate selected summary tabs
       const newResults: SummaryResults = { ...EMPTY_RESULTS };
-      for (let i = 0; i < SUMMARY_MODES.length; i++) {
-        const { key, aiMode } = SUMMARY_MODES[i];
-        setStatusText(`Generating ${key} summary(${i + 1}/${SUMMARY_MODES.length})…`);
-        setProgress(40 + Math.round((i / SUMMARY_MODES.length) * 55));
+      for (let i = 0; i < tabKeys.length; i++) {
+        const key = tabKeys[i];
+        const aiMode = aiModes[i];
+        setStatusText(`Generating ${key} (${i + 1}/${tabKeys.length})…`);
+        setProgress(38 + Math.round((i / tabKeys.length) * 57));
         setLoadingTabs(prev => new Set([...prev, key as TabId]));
         try {
-          newResults[key] = await callAI(combinedText, aiMode);
+          newResults[key] = await callAI(combinedText, aiMode, undefined, summaryLength);
         } catch {
           newResults[key] = "*Could not generate this section.*";
         }
@@ -236,8 +264,9 @@ const DocSummarizer = () => {
 
       setProgress(100);
       setStatus("completed");
-      setActiveTab("overview");
-      toast({ title: "Done!", description: "All summaries generated successfully." });
+      setActiveTab(tabKeys[0] as TabId);
+      const modeLabel = summaryMode === "quick" ? "Quick Summary" : summaryMode === "executive" ? "Executive Brief" : "Full Analysis";
+      toast({ title: "Done!", description: `${modeLabel} generated successfully.` });
     } catch (e: any) {
       console.error(e);
       setStatus("error");
@@ -285,6 +314,24 @@ const DocSummarizer = () => {
   const downloadTxt = () => {
     const content = TABS.map(t => `${t.label.toUpperCase()} \n${"=".repeat(40)} \n${results[t.id as keyof SummaryResults] ?? ""} `).join("\n\n");
     saveAs(new Blob([content], { type: "text/plain" }), "summary.txt");
+  };
+
+  const downloadDocx = async () => {
+    try {
+      const content = TABS.map(t => `${t.label.toUpperCase()} \n${"=".repeat(40)} \n${results[t.id as keyof SummaryResults] ?? ""} `).join("\n\n");
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: content.split("\n").map(text => 
+            new Paragraph({ children: [new TextRun(text)] })
+          )
+        }]
+      });
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, "summary.docx");
+    } catch {
+      toast({ title: "Error", description: "Failed to generate DOCX", variant: "destructive" });
+    }
   };
 
   const downloadPdf = async () => {
@@ -356,10 +403,10 @@ const DocSummarizer = () => {
 
             {/* Mode toggle */}
             <div className="flex gap-2">
-              <button onClick={() => setUrlMode(false)} className={`flex items - center gap - 1.5 rounded - full px - 4 py - 1.5 text - sm font - medium transition - all ${!urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"} `}>
+              <button onClick={() => setUrlMode(false)} className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${!urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
                 <FileText className="h-3.5 w-3.5" /> Upload Files
               </button>
-              <button onClick={() => setUrlMode(true)} className={`flex items - center gap - 1.5 rounded - full px - 4 py - 1.5 text - sm font - medium transition - all ${urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"} `}>
+              <button onClick={() => setUrlMode(true)} className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
                 <Link2 className="h-3.5 w-3.5" /> Paste URL
               </button>
             </div>
@@ -389,6 +436,53 @@ const DocSummarizer = () => {
               </div>
             )}
 
+            {/* Document info card — shown after files are added */}
+            {files.length > 0 && !urlMode && (
+              <DocumentInfoCard
+                name={files.length === 1 ? files[0].name : `${files.length} documents selected`}
+                sizeBytes={files.reduce((acc, f) => acc + f.size, 0)}
+              />
+            )}
+
+            {/* Summary Mode & Length — shown when files are ready */}
+            {(files.length > 0 || (urlMode && urlInput.trim().length > 5)) && (
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm">
+                <h3 className="text-sm font-bold text-foreground">Analysis Settings</h3>
+
+                {/* Summary Mode */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Summary Mode</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { id: "quick" as SummaryMode, label: "Quick", icon: <Zap className="h-3.5 w-3.5" />, desc: "Overview + Bullets" },
+                      { id: "full" as SummaryMode, label: "Full Analysis", icon: <BarChart3 className="h-3.5 w-3.5" />, desc: "All 7 sections" },
+                      { id: "executive" as SummaryMode, label: "Executive", icon: <BrainCircuit className="h-3.5 w-3.5" />, desc: "Board-level brief" },
+                    ] as const).map(m => (
+                      <button key={m.id} onClick={() => setSummaryMode(m.id)}
+                        className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-center text-xs font-semibold transition-all ${summaryMode === m.id ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40"}`}>
+                        {m.icon}
+                        <span className="font-bold">{m.label}</span>
+                        <span className={`text-[10px] ${summaryMode === m.id ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{m.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary Length */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Output Length</label>
+                  <div className="flex gap-2">
+                    {(["short", "medium", "long"] as SummaryLength[]).map(l => (
+                      <button key={l} onClick={() => setSummaryLength(l)}
+                        className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-all ${summaryLength === l ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Summarize button */}
             <Button
               onClick={handleSummarize}
@@ -397,7 +491,7 @@ const DocSummarizer = () => {
               className="w-full rounded-2xl py-6 text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 gap-2.5"
             >
               <Wand2 className="h-5 w-5" />
-              {files.length > 1 ? `Summarize ${files.length} Documents` : "Summarize with AI"}
+              {files.length > 1 ? `Summarize ${files.length} Documents` : summaryMode === "quick" ? "Quick Summarize" : summaryMode === "executive" ? "Generate Executive Brief" : "Summarize with AI"}
             </Button>
 
             <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
@@ -417,7 +511,7 @@ const DocSummarizer = () => {
                 <Wand2 className="h-9 w-9 animate-pulse text-primary" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold">{status === "extracting" ? "Extracting Content" : "Generating AI Summaries"}</h3>
+                <h3 className="text-xl font-bold">{status === "extracting" ? "Extracting Content" : "Generating AI Summary"}</h3>
                 <p className="text-sm text-muted-foreground">{statusText}</p>
               </div>
               <div className="space-y-1.5 max-w-md mx-auto">
@@ -425,7 +519,9 @@ const DocSummarizer = () => {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{Math.round(progress)}% Complete</p>
               </div>
               {status === "summarizing" && (
-                <p className="text-xs text-muted-foreground">Generating all 7 summary types simultaneously…</p>
+                <p className="text-xs text-muted-foreground">
+                  {summaryMode === "quick" ? "Generating quick summary…" : summaryMode === "executive" ? "Generating executive brief…" : "Generating comprehensive analysis…"}
+                </p>
               )}
             </motion.div>
           )}
@@ -460,12 +556,19 @@ const DocSummarizer = () => {
                   <div className="flex flex-col">
                     <span className="text-[11px] font-black uppercase tracking-tight text-foreground">AI Intelligence Report</span>
                     <div className="flex flex-wrap items-center gap-2">
+                      {docMeta.topic && (
+                        <span className="text-[9px] font-bold text-primary uppercase tracking-widest">📚 {docMeta.topic}</span>
+                      )}
+                      {docMeta.language && docMeta.language !== "English" && (
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">🌐 {docMeta.language}</span>
+                      )}
                       {extractedFiles.map((f, i) => {
                         const { icon } = getFileIcon(f.name);
                         return (
                           <div key={i} className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
                             <span>{icon}</span>
                             <span className="max-w-[100px] truncate">{f.name.split("/").pop()}</span>
+                            {f.pageCount && <span className="text-primary/60">({f.pageCount}p)</span>}
                             {i < extractedFiles.length - 1 && <span>•</span>}
                           </div>
                         );
@@ -484,6 +587,9 @@ const DocSummarizer = () => {
                   </Button>
                   <Button variant="ghost" size="sm" onClick={downloadTxt} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
                     <Download className="h-3.5 w-3.5 mr-1.5" /> TXT
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={downloadDocx} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> DOCX
                   </Button>
                   <Button variant="default" size="sm" onClick={downloadPdf} className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter">
                     <FileText className="h-3.5 w-3.5 mr-1.5" /> Download PDF

@@ -13,9 +13,11 @@ serve(async (req) => {
     const KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const jobCtx = jobDescription ? `\n\nJOB DESCRIPTION:\n${String(jobDescription).slice(0, 6000)}` : "";
+    const jobCtx = jobDescription
+      ? `\n\nJOB DESCRIPTION PROVIDED:\n${String(jobDescription).slice(0, 6000)}\nUse this to tailor keyword matching and role suggestions.`
+      : "\n\nNo job description provided — use general industry best practices for scoring.";
 
-    const sys = `You are a world-class ATS resume analyst and career coach. Analyze the resume comprehensively and return ONLY valid JSON (no markdown, no fences) matching this exact schema:
+    const sys = `You are a world-class ATS resume analyst and career coach with 15+ years of experience in hiring and recruitment. Analyze the resume comprehensively and return ONLY valid JSON (no markdown, no fences) matching this exact schema:
 
 {
   "overallScore": <0-100>,
@@ -27,10 +29,10 @@ serve(async (req) => {
     "impactStatements": <0-100>
   },
   "sections": {
-    "contact": { "score": <0-100>, "found": ["email","phone",...], "issues": [], "suggestions": [] },
-    "summary": { "score": <0-100>, "issues": [], "suggestions": [], "rewrite": "<improved summary text>" },
+    "contact": { "score": <0-100>, "found": ["email","phone","LinkedIn",...], "issues": [], "suggestions": [] },
+    "summary": { "score": <0-100>, "issues": [], "suggestions": [], "rewrite": "<improved professional summary — 3-4 sentences using strong keywords and quantified value proposition>" },
     "experience": { "score": <0-100>, "issues": [], "suggestions": [] },
-    "skills": { "score": <0-100>, "technical": ["skill1",...], "soft": ["skill1",...], "missing": ["skill1",...] },
+    "skills": { "score": <0-100>, "technical": ["skill1",...], "soft": ["skill1",...], "missing": ["recommended skill1",...] },
     "education": { "score": <0-100>, "issues": [], "suggestions": [] }
   },
   "keywords": {
@@ -40,7 +42,7 @@ serve(async (req) => {
   },
   "atsWarnings": ["warning1",...],
   "bulletRewrites": [
-    {"original": "Responsible for managing...", "improved": "Managed X that achieved Y by Z%"}
+    {"original": "Responsible for managing...", "improved": "Managed X initiative, achieving Y% improvement in Z metric"}
   ],
   "jobMatch": {
     "score": <0-100>,
@@ -49,22 +51,31 @@ serve(async (req) => {
     "suggestedRoles": [{"role":"Data Analyst","match":<0-100>,"missingFor":["skill1",...]}]
   },
   "linkedInSuggestions": {
-    "headline": "<optimized headline>",
-    "about": "<optimized about section>"
+    "headline": "<compelling LinkedIn headline — 120 chars max, includes role + value prop + key skills>",
+    "about": "<optimized About section — 3 paragraphs: who you are, what you do, what you're looking for>"
   },
+  "actionPlan": [
+    "Priority 1: [Most critical action to take immediately]",
+    "Priority 2: [Second most important improvement]",
+    "Priority 3: [Third action]",
+    "Priority 4: [Fourth action]",
+    "Priority 5: [Fifth action]"
+  ],
   "grammarIssues": ["issue1",...],
-  "lengthAdvice": "<advice on resume length>",
+  "lengthAdvice": "<specific advice on resume length and density>",
   "overallSuggestions": ["suggestion1",...]
 }
 
-SCORING RULES:
-- atsCompatibility: Check for tables, columns, headers/footers, images, non-standard fonts, special characters
-- keywordMatch: Based on job description keyword frequency and semantic similarity (if no JD, score general industry keywords)
-- contentQuality: Presence of measurable achievements, strong action verbs, professional language
-- formatting: Clean sections, consistent formatting, ATS-parseable structure
-- impactStatements: Quantified results (numbers, %, $), leadership words, outcome-focused bullets
+PRECISION SCORING RULES:
+- atsCompatibility (0-100): Deduct for tables(-20), multi-column layout(-15), headers/footers content(-10), images/graphics(-15), special Unicode chars(-5), non-standard section names(-10), text boxes(-15)
+- keywordMatch (0-100): Based on job description keyword frequency + semantic match; if no JD, score common industry keywords for their apparent field
+- contentQuality (0-100): Presence of measurable achievements(+30), strong action verbs at bullet start(+20), professional vocabulary(+15), no personal pronouns(+10), no filler phrases(+10), adequate detail(+15)
+- formatting (0-100): Clear labeled sections(+25), consistent date formats(+15), logical reverse-chronological order(+20), proper spacing(+15), ATS-parseable structure(+25)
+- impactStatements (0-100): Each quantified result with number/%(+10 each, max 60), outcome-focused bullets(+20), leadership/ownership language(+20)
 
-Provide 3-5 bulletRewrites from the weakest bullets found. Provide 3 suggestedRoles. Return ONLY the JSON.`;
+BULLET REWRITE RULES: Find 5-8 of the weakest bullets (vague, responsibility-focused, no metrics). Rewrite each with: strong action verb + specific task + measurable result.
+
+Provide 3 suggestedRoles that match the candidate's profile. Return ONLY the JSON — no other text.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -73,7 +84,10 @@ Provide 3-5 bulletRewrites from the weakest bullets found. Provide 3 suggestedRo
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: sys },
-          { role: "user", content: `Analyze this resume:${jobCtx}\n\nRESUME:\n${String(text).slice(0, 30000)}` },
+          {
+            role: "user",
+            content: `Analyze this resume comprehensively:${jobCtx}\n\nRESUME TEXT:\n${String(text).slice(0, 30000)}`,
+          },
         ],
         temperature: 0.15,
       }),
@@ -81,7 +95,10 @@ Provide 3-5 bulletRewrites from the weakest bullets found. Provide 3 suggestedRo
 
     if (!res.ok) {
       const t = await res.text();
-      return new Response(JSON.stringify({ error: `AI error: ${res.status}: ${t}` }), { status: res.status, headers: { ...cors, "Content-Type": "application/json" } });
+      return new Response(
+        JSON.stringify({ error: `AI error: ${res.status}: ${t}` }),
+        { status: res.status, headers: { ...cors, "Content-Type": "application/json" } }
+      );
     }
 
     const d = await res.json();
@@ -96,8 +113,20 @@ Provide 3-5 bulletRewrites from the weakest bullets found. Provide 3 suggestedRo
       try { analysis = m ? JSON.parse(m[0]) : {}; } catch { analysis = {}; }
     }
 
-    return new Response(JSON.stringify({ analysis }), { headers: { ...cors, "Content-Type": "application/json" } });
+    // Ensure actionPlan is present
+    if (!analysis.actionPlan) {
+      analysis.actionPlan = analysis.overallSuggestions?.slice(0, 5).map(
+        (s: string, i: number) => `Priority ${i + 1}: ${s}`
+      ) ?? [];
+    }
+
+    return new Response(JSON.stringify({ analysis }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } }
+    );
   }
 });
