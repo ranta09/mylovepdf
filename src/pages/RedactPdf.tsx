@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import { createWorker } from "tesseract.js";
@@ -985,6 +986,28 @@ const RedactPdf = () => {
           </div>
         )}
       </div>
+      {files.length === 0 && (
+        <ToolSeoSection
+          toolName="Redact PDF Online"
+          category="edit"
+          intro="MagicDocx Redact PDF is a professional workspace for permanently removing sensitive information from your PDF documents. Choose from four redaction modes: draw a rectangle over any area, click on text blocks to redact individual words or sentences, search the entire document for a keyword and redact all occurrences at once, or redact an entire page. Four appearance styles are available: solid black, white cover, blur effect, or a custom label. The output PDF has the information permanently deleted — not just hidden."
+          steps={[
+            "Upload your PDF using the file upload area.",
+            "Select your redaction tool from the toolbar: Area (draw box), Text (click words), Search & Redact All, or Full Page.",
+            "For scanned PDFs, use the 'Scan Page for Text (OCR)' button to make text selectable first.",
+            "Click 'Finalize & Apply' to permanently remove all marked content and download your redacted PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: EyeOff },
+            { name: "OCR PDF", path: "/ocr-pdf", icon: EyeOff },
+            { name: "Add Watermark", path: "/watermark", icon: EyeOff },
+            { name: "Compress PDF", path: "/compress-pdf", icon: EyeOff },
+          ]}
+          schemaName="Redact PDF Online"
+          schemaDescription="Free online PDF redaction tool. Permanently remove sensitive text and areas using area, text, search, or full-page redaction modes."
+        />
+      )}
     </ToolLayout>
   );
 };

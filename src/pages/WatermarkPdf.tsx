@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
@@ -270,7 +271,9 @@ const WatermarkPdf = () => {
 
   return (
     <ToolLayout title="Add Watermark" description="Professional PDF Watermarking" category="edit" icon={<Droplets className="h-7 w-7" />}
-      metaTitle="Add Watermark to PDF Online — MagicDOCX" metaDescription="Add text or image watermarks to your PDF documents." toolId="watermark" hideHeader={files.length > 0}>
+      metaTitle="Add Watermark to PDF Online Free – Text & Image | MagicDocx"
+      metaDescription="Add text or image watermarks to your PDF online for free. Customize position, opacity, rotation, and tiling. Apply to all pages or a custom range. No sign-up."
+      toolId="watermark" hideHeader={files.length > 0}>
 
       <div className="mt-5">
         {!files.length && <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to watermark" />}
@@ -575,6 +578,28 @@ const WatermarkPdf = () => {
             <Progress value={progress} className="h-1.5" />
           </div>
         </div>
+      )}
+      {!files.length && (
+        <ToolSeoSection
+          toolName="Add Watermark to PDF"
+          category="edit"
+          intro="MagicDocx Add Watermark tool lets you brand and protect your PDF documents with professional text or image watermarks. Configure the watermark text, font, size, color, opacity, rotation, and position. Use tiling mode to repeat the watermark across the entire page. Apply watermarks to all pages, first page only, last page only, or a custom range — all in your browser without any software."
+          steps={[
+            "Upload a PDF file using the file upload area.",
+            "Choose your watermark type: Text (enter your text, font, size, and color) or Image (upload a PNG/JPG).",
+            "Configure position, opacity, rotation, and whether to tile the watermark across the page.",
+            "Click 'Add Watermark' to download your watermarked PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: Droplets },
+            { name: "Rotate PDF", path: "/rotate-pdf", icon: Droplets },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Droplets },
+            { name: "Merge PDF", path: "/merge-pdf", icon: Droplets },
+          ]}
+          schemaName="Add Watermark to PDF Online"
+          schemaDescription="Free online PDF watermark tool. Add text or image watermarks to PDF pages with custom opacity, position, and rotation."
+        />
       )}
     </ToolLayout>
   );

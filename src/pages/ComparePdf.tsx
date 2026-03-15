@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, rgb, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -256,7 +257,7 @@ const ComparePdf = () => {
 
   return (
     <ToolLayout title="Compare PDF" description="High-Precision Delta Analysis" category="edit" icon={<GitCompare className="h-7 w-7" />}
-      metaTitle="Compare PDF Online — MagicDOCX" metaDescription="Compare two PDF documents side-by-side and highlight differences." toolId="compare-pdf" hideHeader={fileA.length > 0 && fileB.length > 0}>
+      metaTitle="Compare PDF Online Free – Side-by-Side Diff | MagicDocx" metaDescription="Compare two PDF documents side-by-side. Detect text and visual differences, page count changes, and word count shifts. Download a comparison report." toolId="compare-pdf" hideHeader={fileA.length > 0 && fileB.length > 0}>
 
       {(!fileA.length || !fileB.length) && (
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto px-4">
@@ -576,6 +577,28 @@ const ComparePdf = () => {
             </div>
           </div>
         </div>
+      )}
+      {(!fileA.length || !fileB.length) && (
+        <ToolSeoSection
+          toolName="Compare PDF Online"
+          category="edit"
+          intro="MagicDocx Compare PDF is a high-precision delta analysis tool that loads two PDF documents and renders them side-by-side for visual or text-based comparison. Toggle overlay mode to superimpose the two documents and spot pixel-level differences. The difference panel lists all detected deltas with page references. When done, download a professionally formatted PDF comparison report summarizing all identified changes."
+          steps={[
+            "Upload the original PDF in the left panel and the revised PDF in the right panel.",
+            "Wait for the automatic delta analysis to complete (visible in the right sidebar).",
+            "Browse the difference list and click any item to jump to its page. Toggle Overlay Mode to superimpose both documents.",
+            "Click 'Comparison Report' to download a formatted PDF summary of all detected changes."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: GitCompare },
+            { name: "Redact PDF", path: "/redact-pdf", icon: GitCompare },
+            { name: "OCR PDF", path: "/ocr-pdf", icon: GitCompare },
+            { name: "Merge PDF", path: "/merge-pdf", icon: GitCompare },
+          ]}
+          schemaName="Compare PDF Online"
+          schemaDescription="Free online PDF comparison tool. Side-by-side view, overlay mode, delta analysis, and downloadable comparison reports."
+        />
       )}
     </ToolLayout>
   );

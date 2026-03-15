@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import * as pdfjsLib from "pdfjs-dist";
 import pptxgen from "pptxgenjs";
 import { Presentation, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileText, Sparkles, Upload, Plus } from "lucide-react";
@@ -308,8 +309,8 @@ const PdfToPpt = () => {
       description="Convert PDF pages into editable PowerPoint slides"
       category="convert"
       icon={<Presentation className="h-7 w-7" />}
-      metaTitle="PDF to PPT — Convert PDF to PowerPoint Free"
-      metaDescription="Convert PDF pages to editable PowerPoint slides. Each page becomes a slide with images and text. Free online converter."
+      metaTitle="PDF to PowerPoint Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert PDF pages to editable PowerPoint slides online for free. Each PDF page becomes a PPTX slide. Fast, secure, and no software needed."
       toolId="pdf-to-ppt"
       hideHeader={files.length > 0 || processing || results.length > 0}
     >
@@ -535,6 +536,26 @@ const PdfToPpt = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ToolSeoSection
+        toolName="PDF to PowerPoint Converter"
+        category="convert"
+        intro="MagicDocx PDF to PowerPoint converter transforms your PDF pages into fully editable PPTX slides. Each PDF page is intelligently reconstructed as a 16:9 slide with text blocks, images, and layout preserved. Ideal for re-purposing reports, academic papers, or any document into a presentation — no Acrobat required, no software to install."
+        steps={[
+          "Upload a PDF file by dragging and dropping or clicking the upload area.",
+          "Wait for auto-detection — our engine checks whether the PDF is text-based or scanned.",
+          "For scanned PDFs, choose whether to apply OCR or convert pages as images.",
+          "Download your PPTX file with each PDF page as a fully editable slide."
+        ]}
+        formats={["PDF", "PPTX"]}
+        relatedTools={[
+          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileText },
+          { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
+          { name: "Merge PDF", path: "/merge-pdf", icon: Presentation },
+        ]}
+        schemaName="PDF to PowerPoint Converter Online"
+        schemaDescription="Free online PDF to PowerPoint converter. Transform PDF pages into editable PPTX slides with text and image preservation."
+      />
     </ToolLayout>
   );
 };

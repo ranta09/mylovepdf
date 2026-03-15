@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
@@ -642,6 +643,26 @@ const ExtractPages = () => {
       <input ref={fileInputRef} type="file" className="hidden" multiple={false} accept=".pdf" onChange={(e) => {
         if (e.target.files?.length) handleFilesChange(Array.from(e.target.files));
       }} />
+      <ToolSeoSection
+        toolName="Extract PDF Pages"
+        category="edit"
+        intro="MagicDocx Extract PDF Pages lets you pull specific pages from any PDF document and save them as a new PDF or as individual files packaged in a ZIP archive. Use the visual grid to click-select pages, type a range like '1-3, 5', or use Select All. You can also rotate pages before extracting. All processing happens entirely in your browser — no uploads, no servers, no data retention."
+        steps={[
+          "Upload your PDF using the drag-and-drop area.",
+          "Click thumbnails to select pages, or type a range (e.g. '1-3, 5') to auto-select.",
+          "Choose your output mode: merge extracted pages into one PDF, or get each page as a separate PDF in a ZIP.",
+          "Click 'Extract Pages' to download your extracted document(s)."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Delete Pages", path: "/delete-pages", icon: FileDown },
+          { name: "Split PDF", path: "/split-pdf", icon: FileDown },
+          { name: "Organize PDF", path: "/organize-pdf", icon: FileDown },
+          { name: "Merge PDF", path: "/merge-pdf", icon: FileDown },
+        ]}
+        schemaName="Extract PDF Pages Online"
+        schemaDescription="Free online tool to extract specific pages from a PDF. Download as a merged PDF or individual pages in a ZIP archive."
+      />
     </ToolLayout>
   );
 };

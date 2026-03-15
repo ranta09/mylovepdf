@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import mammoth from "mammoth";
 import { FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload } from "lucide-react";
@@ -51,14 +52,14 @@ const WordToPdf = () => {
           // Also get raw text for fallback
           const textResult = await mammoth.extractRawText({ arrayBuffer });
           text = textResult.value;
-          
+
           // If HTML conversion produced content, use it for layout
           if (htmlResult.value && htmlResult.value.trim().length > 10) {
             // Parse HTML to extract structured text with formatting
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(htmlResult.value, "text/html");
             const elements = htmlDoc.body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, tr, td, th, table");
-            
+
             if (elements.length > 0) {
               text = "";
               elements.forEach(el => {
@@ -171,8 +172,8 @@ const WordToPdf = () => {
       description="Convert Word and text documents to PDF format"
       category="convert"
       icon={<FileText className="h-7 w-7" />}
-      metaTitle="Word to PDF — Convert DOCX to PDF Free"
-      metaDescription="Convert Word DOCX and text documents to PDF. Preserves formatting, fonts, and structure. Free online converter."
+      metaTitle="Word to PDF Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert Word documents (DOC, DOCX) to PDF online for free. Preserve formatting, fonts, and structure. Fast, secure Word to PDF conversion — no sign-up."
       toolId="word-to-pdf"
       hideHeader={files.length > 0 || results.length > 0}
     >
@@ -326,6 +327,26 @@ const WordToPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Word to PDF Converter"
+        category="convert"
+        intro="MagicDocx Word to PDF converter turns your Microsoft Word documents (DOC and DOCX) into professional PDF files in seconds. All formatting, fonts, paragraph styles, and structure are faithfully preserved. Whether you need a shareable contract, a polished report, or a print-ready document, our free online tool delivers a consistent PDF output — no installation, no account required."
+        steps={[
+          "Upload one or more Word files (DOC or DOCX) by dragging and dropping or clicking the upload area.",
+          "The tool automatically analyzes headings, paragraphs, lists, and tables.",
+          "Click \"Initiate Conversion\" to start the conversion process.",
+          "Your PDF files will download automatically."
+        ]}
+        formats={["DOC", "DOCX", "TXT", "PDF"]}
+        relatedTools={[
+          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          { name: "Excel to PDF", path: "/excel-to-pdf", icon: FileText },
+          { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
+          { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
+        ]}
+        schemaName="Word to PDF Converter Online"
+        schemaDescription="Free online Word to PDF converter. Convert DOC and DOCX files to PDF with formatting, fonts, and structure preserved."
+      />
     </ToolLayout>
   );
 };

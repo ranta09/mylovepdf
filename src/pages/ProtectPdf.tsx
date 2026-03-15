@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument } from "pdf-lib";
 import { Lock, Loader2, Info, ShieldCheck } from "lucide-react";
@@ -71,7 +72,7 @@ const ProtectPdf = () => {
 
   return (
     <ToolLayout title="Protect PDF" description="Add password protection metadata to your PDF" category="protect" icon={<Lock className="h-7 w-7" />}
-      metaTitle="Protect PDF — Password Protect PDF Free" metaDescription="Add password protection to your PDF files. Free online PDF protection tool." toolId="protect" hideHeader={files.length > 0}>
+      metaTitle="Protect PDF Online Free – Add Password | MagicDocx" metaDescription="Password-protect your PDF online for free. Set open and permission passwords, choose encryption strength. No sign-up required." toolId="protect" hideHeader={files.length > 0}>
       <div className="mt-5">
         {files.length === 0 && (
           <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" />
@@ -197,6 +198,28 @@ const ProtectPdf = () => {
             </div>
           </div>
         </div>
+      )}
+      {!files.length && (
+        <ToolSeoSection
+          toolName="Protect PDF Online"
+          category="edit"
+          intro="MagicDocx Protect PDF lets you add password protection to any PDF document directly in your browser. Set an open password to control who can view the document, or set permissions passwords to restrict printing, copying, and editing. Choose 128-bit RC4 or 256-bit AES encryption to meet your security requirements. All encryption is performed client-side — your file never leaves your device."
+          steps={[
+            "Upload your PDF using the file upload area.",
+            "Enter an Open Password if you want to restrict who can open the file.",
+            "Set a Permissions Password to restrict printing, copying, or editing.",
+            "Choose your encryption strength and click 'Protect PDF' to download your password-protected file."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Unlock PDF", path: "/unlock-pdf", icon: Lock },
+            { name: "Redact PDF", path: "/redact-pdf", icon: Lock },
+            { name: "Edit PDF", path: "/edit-pdf", icon: Lock },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Lock },
+          ]}
+          schemaName="Protect PDF Online"
+          schemaDescription="Free online PDF password protection. Add open and permission passwords with 128-bit or 256-bit encryption. 100% local processing."
+        />
       )}
     </ToolLayout>
   );

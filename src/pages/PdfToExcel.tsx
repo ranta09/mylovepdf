@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import * as pdfjsLib from "pdfjs-dist";
 import * as XLSX from "xlsx";
 import { FileSpreadsheet, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileText, Upload, Plus } from "lucide-react";
@@ -332,8 +333,8 @@ const PdfToExcel = () => {
       description="Extract tables and data from PDF to Excel spreadsheet"
       category="convert"
       icon={<FileSpreadsheet className="h-7 w-7" />}
-      metaTitle="PDF to Excel — Extract PDF Tables to Spreadsheet Free"
-      metaDescription="Extract tables and data from PDF files to Excel XLSX or CSV format. Free online tool."
+      metaTitle="PDF to Excel Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Extract tables and data from PDF to Excel or CSV online for free. Accurate PDF to spreadsheet conversion with OCR support. No sign-up required."
       toolId="pdf-to-excel"
       hideHeader={files.length > 0 || processing || results.length > 0}
     >
@@ -528,6 +529,26 @@ const PdfToExcel = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ToolSeoSection
+        toolName="PDF to Excel Converter"
+        category="convert"
+        intro="MagicDocx PDF to Excel converter intelligently extracts tables, data, and numerical content from any PDF file and converts them into structured Excel spreadsheets or CSV files. Whether you're pulling data from financial reports, invoices, or scanned forms, our tool uses smart spatial analysis and optional OCR to deliver clean, accurate results in XLSX or CSV format — instantly and for free."
+        steps={[
+          "Upload a PDF containing tables or data by dragging and dropping or clicking the upload area.",
+          "Choose your output format: Standard Excel (XLSX) or CSV for universal compatibility.",
+          "Click \"Convert to EXCEL\" — our engine extracts and structures the data.",
+          "Download your spreadsheet immediately."
+        ]}
+        formats={["PDF", "XLSX", "CSV"]}
+        relatedTools={[
+          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          { name: "PDF to PPT", path: "/pdf-to-ppt", icon: FileText },
+          { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
+          { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
+        ]}
+        schemaName="PDF to Excel Converter Online"
+        schemaDescription="Free online PDF to Excel converter. Extract tables and data from PDF files to XLSX or CSV with OCR support."
+      />
     </ToolLayout>
   );
 };

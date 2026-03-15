@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -216,7 +217,7 @@ const RepairPdf = () => {
 
   return (
     <ToolLayout title="Repair PDF" description="Advanced Structural Recovery" category="edit" icon={<Wrench className="h-7 w-7" />}
-      metaTitle="Repair PDF Online — MagicDOCX" metaDescription="Fix corrupted or broken PDF documents with professional diagnostics." toolId="repair" hideHeader={files.length > 0}>
+      metaTitle="Repair PDF Online Free – Fix Corrupted PDFs | MagicDocx" metaDescription="Repair corrupted or broken PDF files online for free. Advanced structural recovery with automatic diagnostics. No sign-up required." toolId="repair" hideHeader={files.length > 0}>
 
       <div className="mt-5">
         {!files.length && <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a corrupted PDF" />}
@@ -460,6 +461,28 @@ const RepairPdf = () => {
           </div>
         )
       }
+      {!files.length && (
+        <ToolSeoSection
+          toolName="Repair PDF Online"
+          category="edit"
+          intro="MagicDocx Repair PDF runs automatic structural diagnostics on your PDF document and attempts to recover content from corrupted, damaged, or incomplete PDF files. The repair engine analyzes the internal structure, re-links cross-reference tables, reconstructs the document catalog, and rebuilds the output PDF. Detailed diagnostic logs are shown so you can understand exactly what was fixed. All repairs happen locally in your browser."
+          steps={[
+            "Upload your corrupted or damaged PDF using the file upload area.",
+            "Click 'Repair PDF' to start the structural analysis and repair process.",
+            "Review the diagnostic report showing what issues were detected and how they were resolved.",
+            "Download your repaired PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Compress PDF", path: "/compress-pdf", icon: Wrench },
+            { name: "Flatten PDF", path: "/flatten-pdf", icon: Wrench },
+            { name: "Protect PDF", path: "/protect-pdf", icon: Wrench },
+            { name: "Unlock PDF", path: "/unlock-pdf", icon: Wrench },
+          ]}
+          schemaName="Repair PDF Online"
+          schemaDescription="Free online PDF repair tool. Structural diagnostics and recovery for corrupted, damaged, or incomplete PDF files. 100% local processing."
+        />
+      )}
     </ToolLayout >
   );
 };

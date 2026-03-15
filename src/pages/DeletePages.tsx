@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -619,6 +620,26 @@ const DeletePages = () => {
       <input ref={fileInputRef} type="file" className="hidden" multiple={false} accept=".pdf" onChange={(e) => {
         if (e.target.files?.length) handleFilesChange(Array.from(e.target.files));
       }} />
+      <ToolSeoSection
+        toolName="Delete PDF Pages"
+        category="edit"
+        intro="MagicDocx Delete PDF Pages tool gives you a visual grid workspace to precisely remove unwanted pages from any PDF document. Click individual page thumbnails to mark them for deletion, use the range field to remove pages like '1-3, 5', select all and delete in bulk, or hover over a thumbnail to delete it instantly with one click. Undo the last deletion or restore all pages if you change your mind. Changes are applied client-side — your file never leaves your browser."
+        steps={[
+          "Upload your PDF using the file upload area.",
+          "Click page thumbnails to select them, or type a range like '1-3, 5' in the Range Deletion field.",
+          "Use 'Delete Selected' or 'Remove Range' to remove the chosen pages from the preview.",
+          "Click 'Apply Changes' to create and download your new PDF with those pages removed."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Organize PDF", path: "/organize-pdf", icon: Trash2 },
+          { name: "Extract Pages", path: "/extract-pages", icon: Trash2 },
+          { name: "Split PDF", path: "/split-pdf", icon: Trash2 },
+          { name: "Rotate PDF", path: "/rotate-pdf", icon: Trash2 },
+        ]}
+        schemaName="Delete PDF Pages Online"
+        schemaDescription="Free online tool to delete specific pages from a PDF. Use a visual grid, click to select, range input, or instant hover deletion."
+      />
     </ToolLayout>
   );
 };

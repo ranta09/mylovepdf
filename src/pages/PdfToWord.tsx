@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import * as pdfjsLib from "pdfjs-dist";
 import {
   FileText, FileBox, CheckCircle2, RotateCcw,
@@ -509,8 +510,8 @@ const PdfToWord = () => {
       description="Convert PDF documents into editable Word files"
       category="convert"
       icon={<FileText className="h-7 w-7" />}
-      metaTitle="PDF to Word — Convert PDF to Editable DOCX Free"
-      metaDescription="Convert PDF files to editable Word documents."
+      metaTitle="PDF to Word Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert PDF to Word (DOCX) online for free. Extract text and preserve layout. Fast, accurate, and secure PDF to Word conversion — no sign-up needed."
       toolId="pdf-to-word"
       hideHeader={results.length > 0}
     >
@@ -708,6 +709,26 @@ const PdfToWord = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ToolSeoSection
+        toolName="PDF to Word Converter"
+        category="convert"
+        intro="MagicDocx PDF to Word converter lets you transform any PDF document into a fully editable Microsoft Word file in seconds. Whether you need to extract text for editing, reuse content from a report, or update an old document, our tool handles standard PDFs and scanned PDFs with OCR support. Download your converted DOCX file instantly — no email, no sign-up, no software required."
+        steps={[
+          "Upload your PDF file by dragging and dropping or clicking the upload zone.",
+          "Choose a conversion mode: Exact Layout or OCR (for scanned PDFs).",
+          "Click \"Convert to WORD\" — the conversion runs in your browser.",
+          "Download your editable DOCX file immediately."
+        ]}
+        formats={["PDF", "DOC", "DOCX"]}
+        relatedTools={[
+          { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileText },
+          { name: "PDF to PPT", path: "/pdf-to-ppt", icon: FileText },
+          { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
+          { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
+        ]}
+        schemaName="PDF to Word Converter Online"
+        schemaDescription="Free online PDF to Word converter. Convert PDF documents to editable DOCX files with layout preservation and OCR support."
+      />
     </ToolLayout >
   );
 };

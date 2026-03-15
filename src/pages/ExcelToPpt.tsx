@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import * as XLSX from "xlsx";
 import pptxgen from "pptxgenjs";
 import { Presentation, Loader2, Info, FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileSpreadsheet, Upload } from "lucide-react";
@@ -433,6 +434,28 @@ const ExcelToPpt = () => {
                     </div>
                 )}
             </div>
+            {!files.length && !results.length && !processing && (
+                <ToolSeoSection
+                    toolName="Excel to PPT Online"
+                    category="convert"
+                    intro="MagicDocx Excel to PPT automatically transforms your spreadsheet data into a professionally structured PowerPoint presentation. Each worksheet is turned into its own slide with the data formatted into readable tables. Ideal for quickly turning financial models, dashboards, or data reports into presentation-ready slides without manual copy-pasting."
+                    steps={[
+                        "Upload your Excel file (.xlsx or .xls) using the file upload area.",
+                        "Review the detected sheets. Each sheet will become its own slide.",
+                        "Click 'Convert to PPT' to generate your PowerPoint presentation.",
+                        "Download your .pptx file automatically."
+                    ]}
+                    formats={["XLSX", "XLS"]}
+                    relatedTools={[
+                        { name: "Excel to PDF", path: "/excel-to-pdf", icon: Presentation },
+                        { name: "PPT to PDF", path: "/ppt-to-pdf", icon: Presentation },
+                        { name: "PDF to PPT", path: "/pdf-to-ppt", icon: Presentation },
+                        { name: "Word to PDF", path: "/word-to-pdf", icon: Presentation },
+                    ]}
+                    schemaName="Excel to PowerPoint Online"
+                    schemaDescription="Free online Excel to PPT converter. Automatically transforms spreadsheet worksheets into PowerPoint slides. No sign-up required."
+                />
+            )}
         </ToolLayout>
     );
 };

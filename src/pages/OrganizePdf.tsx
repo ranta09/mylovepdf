@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -370,8 +371,8 @@ const OrganizePdf = () => {
       description="Modern workspace for reordering, rotating, and managing your PDF pages"
       category="edit"
       icon={<LayoutGrid className="h-7 w-7" />}
-      metaTitle="Organize PDF Online — Drag & Drop Pages"
-      metaDescription="Professional PDF organizer. Reorder, rotate, delete and duplicate pages. Drag and drop interface for seamless document management."
+      metaTitle="Organize PDF Online Free – Reorder, Delete & Rotate Pages | MagicDocx"
+      metaDescription="Organize PDF pages online for free. Reorder with drag-and-drop, rotate, delete, duplicate, or insert blank pages. Multi-file support with undo/redo. No sign-up."
       toolId="organize"
       hideHeader={files.length > 0}
     >
@@ -637,6 +638,26 @@ const OrganizePdf = () => {
       <input ref={fileInputRef} type="file" className="hidden" multiple={true} accept=".pdf" onChange={(e) => {
         if (e.target.files?.length) handleFilesChange(Array.from(e.target.files));
       }} />
+      <ToolSeoSection
+        toolName="Organize PDF Online"
+        category="edit"
+        intro="MagicDocx Organize PDF is a professional drag-and-drop workspace for rearranging, rotating, deleting, and duplicating the pages of any PDF document. Upload multiple PDFs to combine them, drag pages into the perfect order, insert blank pages, and download your reorganized document instantly. Undo/redo history lets you experiment freely, and every action happens locally in your browser — your files are never uploaded to any server."
+        steps={[
+          "Upload one or more PDF files using the drag-and-drop area.",
+          "Drag page thumbnails into your desired order, or select multiple pages for bulk actions.",
+          "Rotate, delete, or duplicate selected pages using the toolbar.",
+          "Click 'Apply Changes' to download your perfectly organized PDF."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Merge PDF", path: "/merge-pdf", icon: LayoutGrid },
+          { name: "Split PDF", path: "/split-pdf", icon: LayoutGrid },
+          { name: "Delete Pages", path: "/delete-pages", icon: LayoutGrid },
+          { name: "Rotate PDF", path: "/rotate-pdf", icon: LayoutGrid },
+        ]}
+        schemaName="Organize PDF Online"
+        schemaDescription="Free online PDF organizer. Drag and drop to reorder, rotate, delete, and duplicate PDF pages with multi-file and undo/redo support."
+      />
     </ToolLayout>
   );
 };

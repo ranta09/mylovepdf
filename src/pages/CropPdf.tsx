@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -706,6 +707,28 @@ const CropPdf = () => {
           </div>
         )}
       </div>
+      {files.length === 0 && (
+        <ToolSeoSection
+          toolName="Crop PDF Online"
+          category="edit"
+          intro="MagicDocx Crop PDF provides a professional interactive workspace for trimming the margins of any PDF. Use the drag-and-drop crop box on the page preview to visually define your crop area, or enter precise percentage-based margins for top, bottom, left, and right. Apply the crop to the current page, all pages, or a custom page range. Choose from preset aspect ratios (1:1, 4:3, 16:9) or a fully custom ratio. All processing is lossless and entirely local."
+          steps={[
+            "Upload your PDF using the file upload area.",
+            "Drag the crop box handles on the preview to define your crop area, or enter margin percentages manually.",
+            "Choose the crop mode: current page, all pages, or a custom range.",
+            "Click 'Apply Crop' to download your trimmed PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: Crop },
+            { name: "Rotate PDF", path: "/rotate-pdf", icon: Crop },
+            { name: "Organize PDF", path: "/organize-pdf", icon: Crop },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Crop },
+          ]}
+          schemaName="Crop PDF Online"
+          schemaDescription="Free online PDF cropper. Interactively trim PDF page margins by dragging a crop box or entering precise percentages. Apply to one or all pages."
+        />
+      )}
     </ToolLayout>
   );
 };

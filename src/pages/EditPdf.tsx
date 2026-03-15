@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useId } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import ToolLayout from "@/components/ToolLayout";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
@@ -945,6 +946,26 @@ const EditPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Edit PDF Online"
+        category="edit"
+        intro="MagicDocx PDF Editor lets you edit any PDF directly in your browser — no download, no registration. Add custom text in your chosen font, size, and color. Insert images by drawing a region and picking your file. Annotate with highlights, rectangles, ellipses, comments, and freehand drawings. Sign with your finger or mouse. Manage pages by reordering, rotating, or deleting them. All changes are embedded into a downloaded PDF that you own."
+        steps={[
+          "Upload your PDF using the file upload area — it opens in the full editor workspace.",
+          "Use the toolbar tabs to switch between: Text, Image, Annotate, Pages, and Sign.",
+          "Click on the page canvas to add text, draw image regions, or place annotations.",
+          "Click Download to save your fully edited PDF with all changes embedded."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Rotate PDF", path: "/rotate-pdf", icon: Edit3 },
+          { name: "Add Watermark", path: "/watermark", icon: Edit3 },
+          { name: "Add Page Numbers", path: "/page-numbers", icon: Edit3 },
+          { name: "Organize PDF", path: "/organize-pdf", icon: Edit3 },
+        ]}
+        schemaName="Edit PDF Online"
+        schemaDescription="Free online PDF editor. Add text, images, annotations, and signatures to any PDF document directly in your browser."
+      />
     </ToolLayout>
   );
 };

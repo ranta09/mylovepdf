@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import * as XLSX from "xlsx";
 import { FileSpreadsheet, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, Settings, Layout, Layers, RotateCcw, ShieldCheck } from "lucide-react";
@@ -161,8 +162,8 @@ const ExcelToPdf = () => {
       description="Convert spreadsheets into professional PDF tables"
       category="convert"
       icon={<FileSpreadsheet className="h-7 w-7" />}
-      metaTitle="Excel to PDF — Convert Spreadsheets to PDF Free"
-      metaDescription="Convert Excel XLSX, XLS, and CSV spreadsheets to PDF tables. Free online converter."
+      metaTitle="Excel to PDF Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert Excel spreadsheets (XLSX, XLS) to PDF online for free. Preserve tables, formatting, and data. Landscape or portrait layout. No sign-up needed."
       toolId="excel-to-pdf"
       hideHeader={files.length > 0 || processing || results.length > 0}
     >
@@ -354,6 +355,26 @@ const ExcelToPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Excel to PDF Converter"
+        category="convert"
+        intro="MagicDocx Excel to PDF converter transforms your Excel spreadsheets into clean, professionally formatted PDF documents. Choose between landscape and portrait orientation, select individual sheets or convert all at once. Your table data, headers, and cell formatting are preserved — making this perfect for reports, financial statements, and data exports."
+        steps={[
+          "Upload one or more Excel files (XLSX or XLS) using the file upload area.",
+          "Select your preferred page orientation: Landscape or Portrait.",
+          "If your file has multiple sheets, choose which sheets to include.",
+          "Click \"Convert to PDF\" and your file will download automatically."
+        ]}
+        formats={["XLS", "XLSX", "PDF"]}
+        relatedTools={[
+          { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileSpreadsheet },
+          { name: "Word to PDF", path: "/word-to-pdf", icon: FileSpreadsheet },
+          { name: "Merge PDF", path: "/merge-pdf", icon: FileSpreadsheet },
+          { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
+        ]}
+        schemaName="Excel to PDF Converter Online"
+        schemaDescription="Free online Excel to PDF converter. Convert XLS and XLSX spreadsheets to PDF with table formatting preserved."
+      />
     </ToolLayout>
   );
 };

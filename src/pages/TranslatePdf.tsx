@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Languages, Download, Loader2, ShieldCheck, FileText, X,
-  Copy, ClipboardCheck, RotateCcw, Globe, ChevronDown, CheckCircle2
+  Copy, ClipboardCheck, RotateCcw, Globe, ChevronDown, CheckCircle2,
+  Zap, Wand2, BrainCircuit, MessageSquare, Search, Layout
 } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
@@ -453,72 +455,38 @@ const TranslatePdf = () => {
         )}
 
         {/* ── SEO Content ─────────────────────────────────────────────────── */}
-        <div className="mt-16 space-y-10 text-sm text-muted-foreground border-t border-border pt-10">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl font-display font-bold text-foreground">Translate PDF Online</h1>
-            <p className="text-base max-w-2xl mx-auto">The most powerful free AI PDF translator. Upload any document and translate it into 65+ languages while preserving headings, paragraphs, bullet points, and tables.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">How to translate PDF documents</h2>
-              <ol className="space-y-2 list-decimal list-inside text-sm">
-                <li>Upload your document (PDF, DOCX, PPTX, XLSX, TXT…)</li>
-                <li>The source language is automatically detected</li>
-                <li>Select your target language from 65+ options</li>
-                <li>Click <strong>Translate Document</strong></li>
-                <li>Preview the side-by-side result</li>
-                <li>Download as PDF or TXT</li>
-              </ol>
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">Supported languages (selection)</h2>
-              <div className="grid grid-cols-2 gap-1 text-xs">
-                {["🇪🇸 Spanish", "🇫🇷 French", "🇩🇪 German", "🇮🇳 Hindi", "🇨🇳 Chinese", "🇯🇵 Japanese", "🇸🇦 Arabic", "🇵🇹 Portuguese", "🇷🇺 Russian", "🇰🇷 Korean", "🇮🇹 Italian", "🇳🇱 Dutch"].map(l => (
-                  <span key={l} className="flex items-center gap-1.5"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />{l}</span>
-                ))}
-                <span className="text-muted-foreground">+ 50 more languages</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Features of MagicDocx PDF Translator</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { icon: <Languages className="h-4 w-4" />, t: "65+ Languages", d: "Including right-to-left languages like Arabic, Hebrew, Urdu" },
-                { icon: <Globe className="h-4 w-4" />, t: "Auto Language Detection", d: "Automatically identifies the source language of your document" },
-                { icon: <FileText className="h-4 w-4" />, t: "Layout Preserved", d: "Headings, bullets, tables, and paragraph structure kept intact" },
-                { icon: <CheckCircle2 className="h-4 w-4" />, t: "Multi-Format Support", d: "Works with PDF, DOCX, PPTX, XLSX, TXT, and more" },
-                { icon: <Download className="h-4 w-4" />, t: "Download as PDF or TXT", d: "Export your translated document in your preferred format" },
-                { icon: <ShieldCheck className="h-4 w-4" />, t: "100% Private", d: "Files deleted after processing — never stored" },
-              ].map(({ icon, t, d }) => (
-                <div key={t} className="rounded-xl border border-border bg-card p-4 space-y-1.5">
-                  <div className="text-primary">{icon}</div>
-                  <p className="font-semibold text-foreground text-xs">{t}</p>
-                  <p className="text-xs text-muted-foreground">{d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Frequently Asked Questions</h2>
-            {[
-              { q: "How do I translate a PDF?", a: "Upload your PDF to MagicDocx, select your target language, and click Translate. The AI reads the document, translates all text while keeping the structure intact, and shows you a side-by-side preview you can download." },
-              { q: "Can I translate scanned PDFs?", a: "Yes — MagicDocx uses OCR (Optical Character Recognition) to extract text from scanned or image-based PDFs before translating. The full document is converted to searchable text first." },
-              { q: "Does the tool preserve formatting?", a: "Yes. The AI translation engine is specifically instructed to preserve headings, bullet points, numbered lists, paragraph spacing, and table structure. The translated output matches the original document layout." },
-              { q: "Is my document secure?", a: "Absolutely. Your files are encrypted during processing and automatically deleted after translation. MagicDocx never stores your documents and never uses them for AI training." },
-            ].map(({ q, a }) => (
-              <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
-                <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">
-                  {q} <ChevronDown className="h-4 w-4 text-muted-foreground group-open:rotate-180 transition-transform" />
-                </summary>
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+        <ToolSeoSection
+          toolName="Translate PDF"
+          category="ai"
+          intro="The most powerful free AI PDF translator. Upload any document and translate it into 65+ languages while preserving headings, paragraphs, bullet points, and tables."
+          features={[
+            { icon: Languages, title: "65+ Languages", desc: "All major languages including right-to-left languages (Arabic, Hebrew)" },
+            { icon: Zap, title: "Precision Machine Learning", desc: "Context-aware AI translation that understands technical and academic terms" },
+            { icon: ShieldCheck, title: "Secure & Private", desc: "Your documents are never stored or used to train AI models" },
+            { icon: Layout, title: "Layout Preservation", desc: "Automatically keeps your document's original formatting and structure" },
+          ]}
+          steps={[
+            "Upload your document (PDF, DOCX, PPTX, etc.)",
+            "MagicDocx automatically detects the source language",
+            "Select your target language from the list",
+            "Download your professional translation as a PDF or TXT"
+          ]}
+          formats={["PDF", "DOCX", "PPTX", "XLSX", "TXT", "RTF", "ODT"]}
+          relatedTools={[
+            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          faqs={[
+            { q: "Is the PDF translator free?", a: "Yes, MagicDocx PDF Translator is 100% free to use with no hidden costs." },
+            { q: "Will the layout of my document change?", a: "No. Our AI engine is specifically designed to maintain the original layout, including tables, lists, and headings." },
+            { q: "What is the maximum file size?", a: "We support documents up to 50MB and several hundred pages long." },
+            { q: "Do I need to sign up?", a: "No account or login is required. You can start translating immediately." },
+            { q: "Are my documents secure?", a: "Yes. All processing happens over SSL, and files are automatically deleted as soon as you finish your session." },
+          ]}
+        />
       </div>
     </ToolLayout>
   );

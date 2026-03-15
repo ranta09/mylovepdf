@@ -16,9 +16,11 @@ import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtr
 import {
   BrainCircuit, FileText, Link2, Youtube, Type, Loader2, ShieldCheck,
   CheckCircle2, XCircle, Download, RotateCcw, ChevronLeft, ChevronRight,
-  Timer, Star, Zap, BookOpen, GraduationCap, X, Plus, ChevronDown
+  Timer, Star, Zap, BookOpen, GraduationCap, X, Plus, ChevronDown,
+  Wand2, MessageSquare, Search
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import ToolSeoSection from "@/components/ToolSeoSection";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -638,80 +640,37 @@ const QuizGenerator = () => {
         )}
 
         {/* ── SEO Content ──────────────────────────────────────────────── */}
-        <div className="mt-16 space-y-10 text-sm text-muted-foreground border-t border-border pt-10">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl font-display font-bold text-foreground">AI Quiz Generator</h1>
-            <p className="text-base max-w-2xl mx-auto">The most powerful AI quiz generator online. Create MCQ, true/false, fill-in-the-blank, and scenario-based quizzes from any document, video, or website in seconds.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">How to generate quizzes with AI</h2>
-              <ol className="space-y-2 list-decimal list-inside">
-                <li>Upload a document, paste a URL, or enter a YouTube link</li>
-                <li>Choose difficulty, question count, and question types</li>
-                <li>Click <strong>Generate Questions</strong></li>
-                <li>Take the quiz in Review or Exam mode</li>
-                <li>Study with Flashcards and download your report</li>
-              </ol>
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">Supported File Formats</h2>
-              <div className="grid grid-cols-2 gap-1 text-xs">
-                {["PDF", "DOCX / DOC", "PPTX / PPT", "XLSX / XLS", "CSV", "TXT / RTF", "PNG / JPG images", "YouTube videos", "Website URLs", "Plain text"].map(f => (
-                  <span key={f} className="flex items-center gap-1.5"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />{f}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Features of MagicDocx AI Quiz Generator</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { icon: <BrainCircuit className="h-4 w-4" />, t: "7 Question Types", d: "MCQ, True/False, Fill-in-blank, Short answer, Scenario, Conceptual" },
-                { icon: <Timer className="h-4 w-4" />, t: "Exam Mode", d: "Timed exam with question navigator and streak counter" },
-                { icon: <BookOpen className="h-4 w-4" />, t: "Flashcard Mode", d: "Flip-card study with Know It / Still Learning tracking" },
-                { icon: <Youtube className="h-4 w-4" />, t: "YouTube Quizzes", d: "Paste any YouTube link and generate a quiz from the video" },
-                { icon: <Download className="h-4 w-4" />, t: "Export Options", d: "Download quiz as PDF or CSV with full answer keys" },
-                { icon: <ShieldCheck className="h-4 w-4" />, t: "100% Private", d: "Files processed locally and never stored on servers" },
-              ].map(({ icon, t, d }) => (
-                <div key={t} className="rounded-xl border border-border bg-card p-4 space-y-1.5">
-                  <div className="text-primary">{icon}</div>
-                  <p className="font-semibold text-foreground text-xs">{t}</p>
-                  <p className="text-xs text-muted-foreground">{d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Use cases for students and teachers</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-              {["Students — Create practice tests from textbooks", "Teachers — Generate exams from lesson plans", "Exam Prep — Simulate real exam conditions", "Corporate Training — Test employee knowledge", "YouTube Learners — Quiz yourself on video content", "Self-learners — Turn any article into a quiz"].map(u => (
-                <div key={u} className="rounded-lg border border-border bg-secondary/30 px-3 py-2 font-medium text-foreground">{u}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Frequently Asked Questions</h2>
-            {[
-              { q: "How does the AI quiz generator work?", a: "MagicDocx extracts text from your uploaded file, URL, or YouTube transcript, then sends it to an AI model that generates questions tailored to your chosen difficulty and question types." },
-              { q: "Can I generate quizzes from PDFs?", a: "Yes — PDFs are fully supported. The tool extracts text from text-based PDFs automatically, and uses OCR for scanned or image-based PDFs." },
-              { q: "Can teachers use this tool for exams?", a: "Absolutely. You can generate up to 50 questions per quiz, customize difficulty to Exam level, and download the full quiz with answer key as a formatted PDF." },
-              { q: "Is the quiz generator free?", a: "Yes, MagicDocx AI Quiz Generator is completely free to use. No account required." },
-              { q: "Can I generate a quiz from a YouTube video?", a: "Yes — paste any YouTube video URL (with English captions enabled) and the tool will extract the transcript and generate a quiz from the video content." },
-            ].map(({ q, a }) => (
-              <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
-                <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">
-                  {q}<ChevronDown className="h-4 w-4 text-muted-foreground group-open:rotate-180 transition-transform" />
-                </summary>
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+        <ToolSeoSection
+          toolName="AI Quiz Generator"
+          category="ai"
+          intro="The most powerful AI quiz generator online. Create MCQ, true/false, fill-in-the-blank, and scenario-based quizzes from any document, video, or website in seconds."
+          features={[
+            { icon: BrainCircuit, title: "7 Question Types", desc: "MCQ, True/False, Fill-in-blank, Short answer, Scenario, Conceptual" },
+            { icon: Timer, title: "Exam Mode", desc: "Timed exam with question navigator and streak counter" },
+            { icon: BookOpen, title: "Flashcard Mode", desc: "Flip-card study with Know It / Still Learning tracking" },
+            { icon: Youtube, title: "YouTube Quizzes", desc: "Paste any YouTube link and generate a quiz from the video" },
+          ]}
+          steps={[
+            "Upload a document, paste a URL, or enter a YouTube link",
+            "Choose difficulty, question count, and question types",
+            "Click Generate Questions",
+            "Take the quiz in Review or Exam mode"
+          ]}
+          formats={["PDF", "DOCX", "PPTX", "XLSX", "CSV", "TXT", "PNG", "JPG", "YouTube videos", "URLs"]}
+          relatedTools={[
+            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          faqs={[
+            { q: "How does the AI quiz generator work?", a: "MagicDocx extracts text from your uploaded file, URL, or YouTube transcript, then sends it to an AI model that generates questions tailored to your chosen difficulty and question types." },
+            { q: "Can I generate quizzes from PDFs?", a: "Yes — PDFs are fully supported. The tool extracts text from text-based PDFs automatically, and uses OCR for scanned or image-based PDFs." },
+            { q: "Can teachers use this tool for exams?", a: "Absolutely. You can generate up to 50 questions per quiz, customize difficulty to Exam level, and download the full quiz with answer key as a formatted PDF." },
+            { q: "Is the quiz generator free?", a: "Yes, MagicDocx AI Quiz Generator is completely free to use. No account required." },
+            { q: "Can I generate a quiz from a YouTube video?", a: "Yes — paste any YouTube video URL (with English captions enabled) and the tool will extract the transcript and generate a quiz from the video content." },
+          ]}
+        />
       </div>
     </ToolLayout>
   );

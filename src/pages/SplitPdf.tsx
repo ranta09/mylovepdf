@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Scissors, Loader2, Info, ShieldCheck, Download, Trash2, Plus, ArrowRight, Layout, CheckCircle2, FileBox, FileText, X, LayoutGrid, Layers, Settings, Zap } from "lucide-react";
+import { Scissors, Loader2, Info, ShieldCheck, Download, Trash2, Plus, ArrowRight, Layout, CheckCircle2, FileBox, FileText, X, LayoutGrid, Layers, Settings, Zap, Merge, FileOutput } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -287,7 +288,7 @@ const SplitPdf = () => {
 
   return (
     <ToolLayout title="Split PDF Online" description="Extract specific pages or split one PDF into multiple files" category="split" icon={<Scissors className="h-7 w-7" />}
-      metaTitle="Split PDF Online — Extract PDF Pages Free" metaDescription="Split PDF files and extract pages with our professional online PDF splitter. Support for ranges, fixed splits, and ZIP downloads." toolId="split" hideHeader={files.length > 0}>
+      metaTitle="Split PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Split PDF files into multiple documents online for free. Extract pages, define ranges, or split every page. Fast and secure — no software needed." toolId="split" hideHeader={files.length > 0}>
 
       <div className="mt-2">
         {files.length === 0 ? (
@@ -692,6 +693,26 @@ const SplitPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Split PDF"
+        category="split"
+        intro="MagicDocx Split PDF allows you to break any PDF file into smaller, separate documents instantly. Whether you need to extract specific pages, define custom ranges, split every page into its own file, or create fixed-size chunks, our free tool gives you full control. No software installation required — just upload your PDF, configure your split settings, and download all results in a ZIP file or individual PDFs."
+        steps={[
+          "Upload a PDF file by clicking the upload area or dragging and dropping it.",
+          "Select your split mode: Extract, Range, Every Page, or Fixed Split.",
+          "Choose the pages or ranges you want to extract or split.",
+          "Click \"Split PDF\" to process and download your results automatically."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+          { name: "Extract Pages", path: "/extract-pages", icon: FileOutput },
+          { name: "Delete Pages", path: "/delete-pages", icon: Trash2 },
+          { name: "Organize Pages", path: "/organize-pdf", icon: Layout },
+        ]}
+        schemaName="Split PDF Online"
+        schemaDescription="Free online tool to split PDF files into multiple documents. Extract pages, define ranges, or split every page."
+      />
     </ToolLayout>
   );
 };

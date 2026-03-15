@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument } from "pdf-lib";
 import { Unlock, Loader2, Info, ShieldCheck } from "lucide-react";
@@ -57,7 +58,7 @@ const UnlockPdf = () => {
 
   return (
     <ToolLayout title="Unlock PDF" description="Remove restrictions from protected PDF files" category="protect" icon={<Unlock className="h-7 w-7" />}
-      metaTitle="Unlock PDF — Remove PDF Password Free" metaDescription="Remove password protection from PDF files. Free online PDF unlocker." toolId="unlock" hideHeader={files.length > 0}>
+      metaTitle="Unlock PDF Online Free – Remove Password | MagicDocx" metaDescription="Remove the open password from your PDF online for free. Instantly unlock user-password protected PDFs. No sign-up required." toolId="unlock" hideHeader={files.length > 0}>
       <div className="mt-5">
         {files.length === 0 && (
           <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a protected PDF" />
@@ -183,6 +184,28 @@ const UnlockPdf = () => {
             </div>
           </div>
         </div>
+      )}
+      {!files.length && (
+        <ToolSeoSection
+          toolName="Unlock PDF Online"
+          category="edit"
+          intro="MagicDocx Unlock PDF removes the open password (user password) from any password-protected PDF document. Enter the correct password, and MagicDocx will generate an unlocked version of your PDF that can be opened without any password in the future. The entire process happens locally in your browser — no files are sent to any server. Note: MagicDocx cannot bypass or crack an unknown password."
+          steps={[
+            "Upload your password-protected PDF using the file upload area.",
+            "Enter the correct password in the password field.",
+            "Click 'Unlock PDF' to remove the password protection.",
+            "Your unlocked PDF will download automatically."
+          ]}
+          formats={["PDF (password-protected)"]}
+          relatedTools={[
+            { name: "Protect PDF", path: "/protect-pdf", icon: Unlock },
+            { name: "Redact PDF", path: "/redact-pdf", icon: Unlock },
+            { name: "Edit PDF", path: "/edit-pdf", icon: Unlock },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Unlock },
+          ]}
+          schemaName="Unlock PDF Online"
+          schemaDescription="Free online PDF password remover. Enter the correct password to unlock and download an unrestricted version of your PDF."
+        />
       )}
     </ToolLayout>
   );

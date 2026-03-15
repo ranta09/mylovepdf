@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { ScanLine, Copy, Download, Loader2, Info, ShieldCheck } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
@@ -316,6 +317,28 @@ const OcrPdf = () => {
             </div>
           </div>
         </div>
+      )}
+      {!files.length && !extractedText && (
+        <ToolSeoSection
+          toolName="OCR PDF Online"
+          category="edit"
+          intro="MagicDocx OCR PDF uses Tesseract OCR v5 to convert scanned or image-based PDF documents into searchable, selectable text — all within your browser. Upload any scanned PDF and our neural-network-based text recognition engine processes each page at 288 DPI, embeds an invisible text layer into the output PDF, and provides the full extracted text for copying or downloading as a .txt file. No upload to any server — 100% local processing."
+          steps={[
+            "Upload your scanned PDF using the file upload area.",
+            "Review the file details in the Analysis Engine panel on the left.",
+            "Click 'Run Neural OCR' to start the recognition process.",
+            "When complete, copy the extracted text or download it as a .txt file. A searchable PDF is also auto-downloaded."
+          ]}
+          formats={["PDF (scanned)", "PDF (image-based)"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: ScanLine },
+            { name: "Redact PDF", path: "/redact-pdf", icon: ScanLine },
+            { name: "Compress PDF", path: "/compress-pdf", icon: ScanLine },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: ScanLine },
+          ]}
+          schemaName="OCR PDF Online"
+          schemaDescription="Free online OCR PDF tool. Convert scanned PDFs to searchable text using Tesseract OCR v5. 100% browser-based, no upload."
+        />
       )}
     </ToolLayout>
   );

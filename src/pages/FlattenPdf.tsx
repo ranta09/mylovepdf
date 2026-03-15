@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import { Layers, Loader2, Info, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, FileText } from "lucide-react";
@@ -99,7 +100,8 @@ const FlattenPdf = () => {
 
   return (
     <ToolLayout title="Flatten PDF" description="Flatten form fields and annotations into the PDF" category="edit" icon={<Layers className="h-7 w-7" />}
-      metaTitle="Flatten PDF — Remove Form Fields Online Free" metaDescription="Flatten PDF form fields and annotations. Free online tool." toolId="flatten-pdf"
+      metaTitle="Flatten PDF Online Free – Remove Form Fields | MagicDocx" metaDescription="Flatten PDF form fields, annotations, and interactive elements online for free. Makes your PDF static and printer-ready. No sign-up."
+      toolId="flatten-pdf"
       hideHeader={files.length > 0 || results.length > 0 || processing}>
 
       {(files.length > 0 || processing || results.length > 0) && (
@@ -224,6 +226,28 @@ const FlattenPdf = () => {
           </div>
         )}
       </div>
+      {!files.length && (
+        <ToolSeoSection
+          toolName="Flatten PDF Online"
+          category="edit"
+          intro="MagicDocx Flatten PDF permanently merges all interactive form fields, annotations, and digital signatures into the PDF's static page content. Once flattened, form fields can no longer be edited, and the document appears the same in every PDF viewer. This is essential before archiving, sharing, or printing documents with filled-in forms that must not be modified. All processing is 100% client-side."
+          steps={[
+            "Upload your PDF form using the file upload area.",
+            "Review the detected element counts (form fields, annotations, etc.).",
+            "Click 'Flatten PDF' to merge all interactive elements into static content.",
+            "Your flattened PDF will download automatically."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: Layers },
+            { name: "Protect PDF", path: "/protect-pdf", icon: Layers },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Layers },
+            { name: "Repair PDF", path: "/repair-pdf", icon: Layers },
+          ]}
+          schemaName="Flatten PDF Online"
+          schemaDescription="Free online PDF flattener. Permanently merge form fields, annotations, and interactive elements into a static PDF document."
+        />
+      )}
     </ToolLayout>
   );
 };

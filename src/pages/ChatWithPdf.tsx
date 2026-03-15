@@ -14,11 +14,12 @@ import {
   MessageSquare, Send, Loader2, User, Bot, ShieldCheck,
   FileText, Link2, X, Mic, MicOff, Download, Clipboard,
   Sparkles, BookOpen, ListChecks, HelpCircle, Lightbulb,
-  RotateCcw, FileQuestion, ChevronDown, CheckCircle2
+  RotateCcw, FileQuestion, ChevronDown, CheckCircle2,
+  Zap, Wand2, BrainCircuit, Search, Layout
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Layout } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -594,80 +595,37 @@ const ChatWithPdf = () => {
           </div>
         )}
 
-        {/* ── SEO Content ──────────────────────────────────────────────────── */}
-        <div className="mt-16 space-y-10 text-sm text-muted-foreground border-t border-border pt-10">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl font-display font-bold text-foreground">Chat With PDF</h1>
-            <p className="text-base max-w-2xl mx-auto">The most powerful AI document chat assistant. Upload any document and get instant answers, summaries, insights, and study materials — no waiting, no sign-up required.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">How to chat with a document</h2>
-              <ol className="space-y-2 list-decimal list-inside text-sm">
-                <li>Upload your document (PDF, DOCX, PPTX, image, or paste a URL)</li>
-                <li>Click <strong>Start Chatting</strong> — AI reads your file instantly</li>
-                <li>Ask any question or use a quick action (Summarize, Key Points, Quiz…)</li>
-                <li>Copy or export your answers as PDF, Markdown, or TXT</li>
-              </ol>
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">Supported file formats</h2>
-              <div className="grid grid-cols-2 gap-1 text-xs">
-                {["PDF", "DOCX / DOC", "PPTX / PPT", "XLSX / XLS / CSV", "TXT / RTF / ODT", "EPUB", "PNG / JPG / TIFF (OCR)", "Website URLs", "Markdown files"].map(f => (
-                  <span key={f} className="flex items-center gap-1.5"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />{f}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Features of MagicDocx AI document chat</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { icon: <Sparkles className="h-4 w-4" />, t: "Instant Summaries", d: "Generate comprehensive summaries in seconds" },
-                { icon: <ListChecks className="h-4 w-4" />, t: "Key Point Extraction", d: "Automatically identify the most important information" },
-                { icon: <Mic className="h-4 w-4" />, t: "Voice Questions", d: "Ask questions by speaking — no typing required" },
-                { icon: <FileText className="h-4 w-4" />, t: "Multi-Format Support", d: "Works with PDFs, Word, PowerPoint, spreadsheets, and more" },
-                { icon: <Download className="h-4 w-4" />, t: "Export Conversations", d: "Save your chat as PDF, Markdown, or plain text" },
-                { icon: <ShieldCheck className="h-4 w-4" />, t: "100% Private", d: "Files deleted automatically — never stored or trained on" },
-              ].map(({ icon, t, d }) => (
-                <div key={t} className="rounded-xl border border-border bg-card p-4 space-y-1.5">
-                  <div className="text-primary">{icon}</div>
-                  <p className="font-semibold text-foreground text-xs">{t}</p>
-                  <p className="text-xs text-muted-foreground">{d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Use cases — students, researchers, professionals</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-              {["Students — Chat with textbooks and papers", "Researchers — Ask questions across academic papers", "Professionals — Extract insights from reports", "Legal — Analyze contracts and legal documents", "Finance — Understand financial documents", "HR — Review and summarize CVs and policies"].map(u => (
-                <div key={u} className="rounded-lg border border-border bg-secondary/30 px-3 py-2 font-medium text-foreground">{u}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Frequently Asked Questions</h2>
-            {[
-              { q: "How does Chat With PDF work?", a: "You upload a document (or paste a URL), MagicDocx extracts all the text, and then you can ask any question. Our AI reads the document and answers specifically from its content — not from general knowledge." },
-              { q: "Can I chat with Word or PowerPoint files?", a: "Yes! MagicDocx supports PDF, DOCX, DOC, PPTX, PPT, XLSX, XLS, CSV, TXT, RTF, EPUB, and image files (with OCR for scanned documents). You can also paste any website URL." },
-              { q: "Is my document secure?", a: "Absolutely. Your files are encrypted during processing and automatically deleted within 1 hour. We never store document contents, and your files are never used for AI training." },
-              { q: "Can I upload large documents?", a: "Yes — MagicDocx handles large documents through intelligent chunking. For very large documents, the AI focuses on the most relevant sections to give accurate, fast answers." },
-              { q: "Can I export my chat conversation?", a: "Yes — you can download the full conversation as a PDF report, Markdown file, or plain text at any time using the export buttons in the chat header." },
-            ].map(({ q, a }) => (
-              <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
-                <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">
-                  {q} <ChevronDown className="h-4 w-4 text-muted-foreground group-open:rotate-180 transition-transform" />
-                </summary>
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+        <ToolSeoSection
+          toolName="Chat With PDF"
+          category="ai"
+          intro="The best free online tool to chat with PDF. Ask questions, get summaries, and extract insights from your documents instantly using advanced AI."
+          features={[
+            { icon: MessageSquare, title: "Intelligent Chat", desc: "Natural conversation with your documents — ask anything and get accurate answers" },
+            { icon: Zap, title: "Instant Summaries", desc: "Get a high-level overview of long documents in seconds" },
+            { icon: ShieldCheck, title: "Privacy First", desc: "Your documents are processed securely and never stored on our servers" },
+            { icon: Layout, title: "Interactive Interface", desc: "Clean, fast, and easy-to-use chat interface with file preview" },
+          ]}
+          steps={[
+            "Upload your PDF document",
+            "Wait for the AI to analyze the content",
+            "Type your questions in the chat box",
+            "Get instant, accurate answers based on the document"
+          ]}
+          formats={["PDF", "DOCX", "PPTX", "XLSX", "TXT", "PNG", "JPG", "URLs"]}
+          relatedTools={[
+            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          faqs={[
+            { q: "Is Chat with PDF free?", a: "Yes, MagicDocx Chat With PDF is completely free to use. There are no limits on the number of questions you can ask." },
+            { q: "Can it handle large PDF files?", a: "Yes, our AI can process large documents. For extremely long PDFs, it focuses on the most relevant sections to provide accurate answers." },
+            { q: "Are my files secure?", a: "Absolutely. Files are processed securely, and we do not store your documents permanently. Your privacy is our priority." },
+            { q: "Do I need to create an account?", a: "No account or sign-up is required to use the Chat with PDF tool." },
+            { q: "Which languages are supported?", a: "You can chat with your PDF in any language supported by the AI, including English, Spanish, French, German, and many more." },
+          ]}
+        />
       </div>
     </ToolLayout>
   );

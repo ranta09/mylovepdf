@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -265,8 +266,8 @@ const RotatePdf = () => {
       description="Permanently rotate pages in your PDF document"
       category="edit"
       icon={<RotateCw className="h-7 w-7" />}
-      metaTitle="Rotate PDF Online — Permanently Rotate PDF Pages"
-      metaDescription="Rotate PDF pages individually or in bulk. Select specific pages, ranges, or rotate the entire document. High-quality lossless rotation."
+      metaTitle="Rotate PDF Online Free – Permanent Page Rotation | MagicDocx"
+      metaDescription="Rotate PDF pages individually, in bulk, or by custom range online for free. Lossless rotation with select-all and custom range support. No sign-up needed."
       toolId="rotate"
       hideHeader={files.length > 0}
     >
@@ -648,6 +649,26 @@ const RotatePdf = () => {
             handleFilesChange(Array.from(e.target.files));
           }
         }}
+      />
+      <ToolSeoSection
+        toolName="Rotate PDF Online"
+        category="edit"
+        intro="MagicDocx Rotate PDF tool permanently rotates pages in your PDF without any loss of quality. Select specific pages by clicking, choose a range like '1-3, 5', or rotate the entire document at once. Individually rotate pages using the hover buttons, or use the bulk rotation controls to apply 90°, 180°, or -90° to all selected pages. Your PDF is processed locally — files never leave your device."
+        steps={[
+          "Upload your PDF file using the file upload area.",
+          "Click on page thumbnails to select pages, or use 'Select All' for bulk rotation.",
+          "Use the rotation controls on the right: rotate left (-90°), right (+90°), or flip (180°).",
+          "Click 'Apply Rotation' to download your permanently rotated PDF."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Organize PDF", path: "/organize-pdf", icon: RotateCw },
+          { name: "Edit PDF", path: "/edit-pdf", icon: RotateCw },
+          { name: "Compress PDF", path: "/compress-pdf", icon: RotateCw },
+          { name: "Merge PDF", path: "/merge-pdf", icon: RotateCw },
+        ]}
+        schemaName="Rotate PDF Online"
+        schemaDescription="Free online PDF page rotation. Permanently rotate PDF pages individually, in bulk, or by custom range without quality loss."
       />
     </ToolLayout>
   );

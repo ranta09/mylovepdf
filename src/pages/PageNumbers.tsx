@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -373,8 +374,8 @@ const PageNumbers = () => {
       description="Professional PDF page numbering at your fingertips."
       category="edit"
       icon={<Hash className="h-7 w-7" />}
-      metaTitle="Add Page Numbers to PDF Online | MagicDOCX"
-      metaDescription="Number PDF pages easily with customizable fonts, positions, and styles."
+      metaTitle="Add Page Numbers to PDF Online Free | MagicDocx"
+      metaDescription="Add page numbers to any PDF online for free. Customize font, size, position, format, and range. Live preview included. No sign-up required."
       toolId="page-numbers"
       hideHeader={files.length > 0}
     >
@@ -701,6 +702,26 @@ const PageNumbers = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Add Page Numbers to PDF"
+        category="edit"
+        intro="MagicDocx Add Page Numbers tool makes it easy to number the pages of any PDF document. Choose from 6 placement positions, multiple number formats (1, 01, Page 1, Page 1 of N), full typography controls (font, size, color, bold, opacity), and even specify horizontal and vertical margin offsets. A live preview shows exactly where your page numbers will appear before you process the file."
+        steps={[
+          "Upload your PDF file using the drag-and-drop area.",
+          "Set your page number position, format (e.g. 'Page 1 of N'), and typography settings.",
+          "Specify the page range to number (e.g. 1-10) and the starting number.",
+          "Click 'Add Page Numbers' to download your numbered PDF."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Edit PDF", path: "/edit-pdf", icon: Hash },
+          { name: "Add Watermark", path: "/watermark", icon: Hash },
+          { name: "Organize PDF", path: "/organize-pdf", icon: Hash },
+          { name: "Rotate PDF", path: "/rotate-pdf", icon: Hash },
+        ]}
+        schemaName="Add Page Numbers to PDF Online"
+        schemaDescription="Free online tool to add page numbers to PDF. Customize font, size, position, format and range with live preview."
+      />
     </ToolLayout>
   );
 };

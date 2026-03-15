@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -26,7 +27,9 @@ import {
   RefreshCw,
   Search,
   Settings,
-  Eye
+  Eye,
+  Scissors,
+  Minimize2
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import ToolHeader from "@/components/ToolHeader";
@@ -552,7 +555,7 @@ const MergePdf = () => {
 
   return (
     <ToolLayout title="Merge PDF Online" description="Combine multiple PDFs into one document" category="merge" icon={<Merge className="h-7 w-7" />}
-      metaTitle="Merge PDF Online — Combine PDF Files Free" metaDescription="Merge multiple PDF files into one document with our professional online PDF tool. Drag and drop files, reorder pages, and build your custom PDF." toolId="merge" hideHeader={files.length > 0}>
+      metaTitle="Merge PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Merge multiple PDF files into one document online for free. Combine PDFs instantly, reorder pages, and download your merged document. No registration required." toolId="merge" hideHeader={files.length > 0}>
 
       <div className="mt-2 flex flex-col h-full">
         {files.length === 0 ? (
@@ -754,6 +757,26 @@ const MergePdf = () => {
           </>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Merge PDF"
+        category="merge"
+        intro="MagicDocx Merge PDF lets you combine multiple PDF files into a single, organized document in seconds. Whether you're assembling reports, collating contracts, or joining presentation slides, our free online tool handles it all. Simply drag and drop your PDFs, arrange the order you need, and merge with one click — no software installation required, no file size limits for basic use, and no sign-up needed."
+        steps={[
+          "Upload two or more PDF files by dragging and dropping or clicking the upload area.",
+          "Reorder files or individual pages by dragging them into your desired sequence.",
+          "Choose between Full Document Merge or Custom Page Merge mode.",
+          "Click \"Merge PDF\" and your combined file will download automatically."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+          { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+          { name: "Organize Pages", path: "/organize-pdf", icon: LayoutGrid },
+          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+        ]}
+        schemaName="Merge PDF Online"
+        schemaDescription="Free online tool to merge multiple PDF files into one document. Drag, drop, and combine PDFs instantly."
+      />
     </ToolLayout>
   );
 };

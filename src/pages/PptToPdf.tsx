@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
@@ -153,8 +154,8 @@ const PptToPdf = () => {
       description="Convert presentation slide images into a PDF document"
       category="convert"
       icon={<Presentation className="h-7 w-7" />}
-      metaTitle="PPT to PDF — Convert PowerPoint to PDF Free"
-      metaDescription="Convert PowerPoint presentation slides to PDF. Free online converter."
+      metaTitle="PowerPoint to PDF Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert PowerPoint presentations (PPT, PPTX) to PDF online for free. Each slide becomes a PDF page. Fast, secure, and no software needed."
       toolId="ppt-to-pdf"
       hideHeader={files.length > 0 || results.length > 0}
     >
@@ -316,6 +317,26 @@ const PptToPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="PowerPoint to PDF Converter"
+        category="convert"
+        intro="MagicDocx PowerPoint to PDF converter transforms your PPTX and PPT presentations into professional PDF files. Each embedded slide image is extracted and placed into a perfectly sized PDF page. Share your presentations in a universally readable format — no PowerPoint installed needed, and your design, fonts, and layout are preserved exactly as designed."
+        steps={[
+          "Upload your PowerPoint file (PPTX or PPT) using the upload area.",
+          "Our engine automatically extracts slide images from the presentation.",
+          "Click \"Initiate Synthesis\" and each slide becomes a PDF page.",
+          "Download your complete PDF presentation immediately."
+        ]}
+        formats={["PPT", "PPTX", "PDF"]}
+        relatedTools={[
+          { name: "PDF to PPT", path: "/pdf-to-ppt", icon: Presentation },
+          { name: "Word to PDF", path: "/word-to-pdf", icon: Presentation },
+          { name: "Merge PDF", path: "/merge-pdf", icon: Presentation },
+          { name: "Compress PDF", path: "/compress-pdf", icon: Presentation },
+        ]}
+        schemaName="PowerPoint to PDF Converter Online"
+        schemaDescription="Free online PowerPoint to PDF converter. Convert PPT and PPTX presentations to PDF with slide layout preserved."
+      />
     </ToolLayout >
   );
 };

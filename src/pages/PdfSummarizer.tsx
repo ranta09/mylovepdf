@@ -15,11 +15,12 @@ import {
   Wand2, Copy, Download, FileText, Loader2, ShieldCheck,
   CheckCircle2, AlertCircle, Link2, X, Plus, MessageSquare,
   BookOpen, Highlighter, ListChecks, GraduationCap, ClipboardList,
-  FileBarChart, Search, Send, ChevronDown
+  FileBarChart, Search, Send, ChevronDown, BrainCircuit
 } from "lucide-react";
 import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ToolSeoSection from "@/components/ToolSeoSection";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -620,81 +621,37 @@ const DocSummarizer = () => {
         )}
 
         {/* ── SEO Content ──────────────────────────────────────────────── */}
-        <div className="mt-16 space-y-10 text-sm text-muted-foreground border-t border-border pt-10">
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl font-display font-bold text-foreground">AI Document Summarizer</h1>
-            <p className="text-base max-w-2xl mx-auto">The most powerful online tool to instantly summarize any document. Powered by AI — supports PDF, Word, PowerPoint, Excel, images, and URLs.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">How to summarize a document online</h2>
-              <ol className="space-y-2 list-decimal list-inside">
-                <li>Upload your document or paste a URL above</li>
-                <li>Click <strong>Summarize with AI</strong></li>
-                <li>Wait a few seconds while AI processes your document</li>
-                <li>View results across 7 intelligent tabs</li>
-                <li>Export your summary as PDF, Markdown, or TXT</li>
-              </ol>
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">Supported File Formats</h2>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                {["PDF", "DOCX / DOC", "XLSX / XLS", "CSV", "TXT / RTF", "PPTX / PPT", "EPUB", "PNG / JPG / TIFF", "BMP / WEBP", "URLs"].map(f => (
-                  <span key={f} className="flex items-center gap-1.5"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />{f}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Features of MagicDocx AI Summarizer</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { icon: <FileBarChart className="h-4 w-4" />, t: "9 Summary Types", d: "Overview, bullets, insights, executive, study notes, actions, TLDR, glossary, quiz" },
-                { icon: <MessageSquare className="h-4 w-4" />, t: "Chat with Document", d: "Ask any question and get accurate answers based on your document" },
-                { icon: <GraduationCap className="h-4 w-4" />, t: "Study & Quiz Mode", d: "Flashcards, quiz questions, and study guides generated automatically" },
-                { icon: <Search className="h-4 w-4" />, t: "Knowledge Extraction", d: "Key terms, statistics, people, organizations, and dates extracted" },
-                { icon: <Wand2 className="h-4 w-4" />, t: "OCR for Images", d: "Automatic OCR for scanned PDFs and image files" },
-                { icon: <ShieldCheck className="h-4 w-4" />, t: "100% Private", d: "Files are encrypted and automatically deleted. Never stored." },
-              ].map(({ icon, t, d }) => (
-                <div key={t} className="rounded-xl border border-border bg-card p-4 space-y-1.5">
-                  <div className="text-primary">{icon}</div>
-                  <p className="font-semibold text-foreground text-xs">{t}</p>
-                  <p className="text-xs text-muted-foreground">{d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Who should use this tool?</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {["Students — Summarize textbooks and lecture notes", "Researchers — Extract key findings from papers", "Business Professionals — Summarize reports fast", "Lawyers — Review lengthy contracts", "Journalists — Summarize news documents", "Teachers — Create study guides quickly", "Anyone — Summarize any document in seconds"].map(u => (
-                <div key={u} className="rounded-lg border border-border bg-secondary/30 px-3 py-2 font-medium text-foreground">{u}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Frequently Asked Questions</h2>
-            {[
-              { q: "How does the AI summarizer work?", a: "MagicDocx extracts text from your document using advanced parsing and OCR, then sends it to an AI model that generates structured summaries across 9 different formats." },
-              { q: "Can I summarize Word or PowerPoint files?", a: "Yes — DOCX, DOC, PPTX, and PPT files are all supported. Simply upload the file and the AI will process it automatically." },
-              { q: "Is my document secure?", a: "Absolutely. Your files are processed entirely in your browser for extraction, and no document content is ever stored on our servers. Files are automatically deleted after processing." },
-              { q: "Can I summarize large PDFs?", a: "Yes. MagicDocx uses intelligent chunk processing to handle documents up to 300+ pages. Large documents are split, summarized in parts, and then combined into a coherent output." },
-              { q: "Can I summarize multiple files at once?", a: "Yes — upload multiple files and the AI will generate both individual summaries and a combined summary across all documents." },
-            ].map(({ q, a }) => (
-              <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
-                <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">
-                  {q}
-                  <ChevronDown className="h-4 w-4 text-muted-foreground group-open:rotate-180 transition-transform" />
-                </summary>
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+        <ToolSeoSection
+          toolName="AI Document Summarizer"
+          category="ai"
+          intro="The most powerful online tool to instantly summarize any document. Powered by AI — supports PDF, Word, PowerPoint, Excel, images, and URLs."
+          features={[
+            { icon: FileBarChart, title: "9 Summary Types", desc: "Overview, bullets, insights, executive, study notes, actions, TLDR, glossary, quiz" },
+            { icon: MessageSquare, title: "Chat with Document", desc: "Ask any question and get accurate answers based on your document" },
+            { icon: GraduationCap, title: "Study & Quiz Mode", desc: "Flashcards, quiz questions, and study guides generated automatically" },
+            { icon: Search, title: "Knowledge Extraction", desc: "Key terms, statistics, people, organizations, and dates extracted" },
+          ]}
+          steps={[
+            "Upload your document or paste a URL above",
+            "Click Summarize with AI",
+            "Wait a few seconds while AI processes your document",
+            "View results across 7 intelligent tabs"
+          ]}
+          formats={["PDF", "DOCX", "PPTX", "XLSX", "CSV", "TXT", "PNG", "JPG", "URLs"]}
+          relatedTools={[
+            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          faqs={[
+            { q: "How does the AI summarizer work?", a: "MagicDocx extracts text from your document using advanced parsing and OCR, then sends it to an AI model that generates structured summaries across 9 different formats." },
+            { q: "Can I summarize Word or PowerPoint files?", a: "Yes — DOCX, DOC, PPTX, and PPT files are all supported. Simply upload the file and the AI will process it automatically." },
+            { q: "Is my document secure?", a: "Absolutely. Your files are processed entirely in your browser for extraction, and no document content is ever stored on our servers. Files are automatically deleted after processing." },
+            { q: "Can I summarize large PDFs?", a: "Yes. MagicDocx uses intelligent chunk processing to handle documents up to 300+ pages. Large documents are split, summarized in parts, and then combined into a coherent output." },
+            { q: "Can I summarize multiple files at once?", a: "Yes — upload multiple files and the AI will generate both individual summaries and a combined summary across all documents." },
+          ]}
+        />
 
       </div>
     </ToolLayout>

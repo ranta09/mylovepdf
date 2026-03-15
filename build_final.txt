@@ -1,0 +1,36 @@
+
+> vite_react_shadcn_ts@0.0.0 build
+> vite build
+
+vite v5.4.19 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+) doesn't exist at build time, it will remain unchanged to be resolved at runtime. If this is intended, you can use the /* @vite-ignore */ comment to suppress this warning.
+node_modules/pdfjs-dist/build/pdf.js (1982:23): Use of eval in "node_modules/pdfjs-dist/build/pdf.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+node_modules/bluebird/js/release/util.js (165:2): Use of eval in "node_modules/bluebird/js/release/util.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+✓ 3597 modules transformed.
+rendering chunks...
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/divaykumar/Desktop/Divay/MagicDOCX/node_modules/mammoth/lib/index.js is dynamically imported by /Users/divaykumar/Desktop/Divay/MagicDOCX/src/lib/docExtract.ts but also statically imported by /Users/divaykumar/Desktop/Divay/MagicDOCX/src/pages/WordToPdf.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/divaykumar/Desktop/Divay/MagicDOCX/node_modules/xlsx/xlsx.mjs is dynamically imported by /Users/divaykumar/Desktop/Divay/MagicDOCX/src/lib/docExtract.ts but also statically imported by /Users/divaykumar/Desktop/Divay/MagicDOCX/src/pages/ExcelToPdf.tsx, /Users/divaykumar/Desktop/Divay/MagicDOCX/src/pages/ExcelToPpt.tsx, /Users/divaykumar/Desktop/Divay/MagicDOCX/src/pages/PdfToExcel.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                        2.98 kB │ gzip:     1.14 kB
+dist/assets/index-DkmivrMl.css       138.81 kB │ gzip:    21.80 kB
+dist/assets/purify.es-KBy9Vb4R.js     22.88 kB │ gzip:     8.84 kB
+dist/assets/index.es-OR1Ek_46.js     150.58 kB │ gzip:    51.53 kB
+dist/assets/index-CKvU7NGd.js      5,578.55 kB │ gzip: 1,556.32 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.86s

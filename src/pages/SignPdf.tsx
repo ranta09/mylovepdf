@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument } from "pdf-lib";
 import { PenTool, Loader2, Info, ShieldCheck, X, Layout } from "lucide-react";
@@ -149,7 +150,7 @@ const SignPdf = () => {
 
   return (
     <ToolLayout title="Sign PDF" description="Draw or type your signature and place it on your PDF" category="edit" icon={<PenTool className="h-7 w-7" />}
-      metaTitle="Sign PDF — Add Signature Online Free" metaDescription="Sign PDF documents online for free. Draw or type your signature." toolId="sign-pdf" hideHeader={files.length > 0}>
+      metaTitle="Sign PDF Online Free – Draw or Type Signature | MagicDocx" metaDescription="Add your signature to any PDF online for free. Draw with mouse/touch, type a stylized signature, or upload an image. No sign-up required." toolId="sign-pdf" hideHeader={files.length > 0}>
       {files.length > 0 && !processing && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-row overflow-hidden relative">
@@ -355,6 +356,28 @@ const SignPdf = () => {
             </div>
           </div>
         </div>
+      )}
+      {!files.length && (
+        <ToolSeoSection
+          toolName="Sign PDF Online"
+          category="edit"
+          intro="MagicDocx Sign PDF lets you add your handwritten or typed signature to any PDF document directly in your browser. Draw your signature using your mouse or finger on a canvas pad, type out a signature in a stylized script font, or upload an existing signature image. Drag the signature onto any position on any page, resize it, and download your signed PDF instantly. All signing is done client-side — no file is ever uploaded."
+          steps={[
+            "Upload your PDF using the file upload area.",
+            "In the Sign panel, draw your signature on the canvas pad, type a signature, or upload a signature image.",
+            "Use the document preview to click where you want to place the signature.",
+            "Click 'Apply Signature' to download your signed PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: PenTool },
+            { name: "Redact PDF", path: "/redact-pdf", icon: PenTool },
+            { name: "Protect PDF", path: "/protect-pdf", icon: PenTool },
+            { name: "Add Watermark", path: "/watermark", icon: PenTool },
+          ]}
+          schemaName="Sign PDF Online"
+          schemaDescription="Free online PDF signing tool. Draw, type, or upload your signature and place it on any PDF page. 100% browser-based, no upload."
+        />
       )}
     </ToolLayout>
   );

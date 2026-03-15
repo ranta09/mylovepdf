@@ -14,9 +14,11 @@ import {
   ScanSearch, Download, CheckCircle2, AlertTriangle, XCircle,
   Loader2, ShieldCheck, FileText, Type, X, ChevronDown,
   Sparkles, RotateCcw, Clipboard, ClipboardCheck,
-  LinkedinIcon, BriefcaseBusiness, Wand2, Layout, Info
+  LinkedinIcon, BriefcaseBusiness, Wand2, Layout, Info,
+  BrainCircuit, MessageSquare, Search
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -588,71 +590,36 @@ const AtsChecker = () => {
         )}
 
         {/* ── SEO Content ─────────────────────────────────────────────────── */}
-        <div className="mt-16 space-y-10 text-sm text-muted-foreground border-t border-border pt-10">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl font-display font-bold text-foreground">ATS Resume Checker</h1>
-            <p className="text-base max-w-2xl mx-auto">The most powerful free ATS resume checker online. Analyze your resume against real ATS algorithms, get keyword insights, bullet point improvements, and LinkedIn optimization — all in one tool.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">How to check your resume for ATS</h2>
-              <ol className="space-y-2 list-decimal list-inside text-sm">
-                <li>Upload your resume (PDF, DOCX, TXT) or paste the text</li>
-                <li>Optionally paste the job description for tailored matching</li>
-                <li>Click <strong>Analyze My Resume</strong></li>
-                <li>Review your ATS score across 5 dimensions</li>
-                <li>Apply bullet rewrites and keyword suggestions</li>
-                <li>Download the full PDF improvement report</li>
-              </ol>
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground">What the ATS score measures</h2>
-              <div className="space-y-2">
-                {Object.entries(BREAKDOWN_LABELS).map(([, label]) => (
-                  <div key={label} className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />{label}</div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-foreground">Features of MagicDocx ATS Resume Checker</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { icon: <ScanSearch className="h-4 w-4" />, t: "5-Dimension Scoring", d: "ATS, keyword match, content, formatting, and impact" },
-                { icon: <Wand2 className="h-4 w-4" />, t: "AI Bullet Rewrites", d: "Before/after improved bullet points with strong action verbs" },
-                { icon: <BriefcaseBusiness className="h-4 w-4" />, t: "Job Match Analysis", d: "Match % + missing skills + suggested job roles" },
-                { icon: <LinkedinIcon className="h-4 w-4" />, t: "LinkedIn Optimizer", d: "AI-optimized headline and About section" },
-                { icon: <Download className="h-4 w-4" />, t: "PDF Report", d: "Full downloadable report with all insights and suggestions" },
-                { icon: <ShieldCheck className="h-4 w-4" />, t: "100% Private", d: "Resume deleted automatically after analysis" },
-              ].map(({ icon, t, d }) => (
-                <div key={t} className="rounded-xl border border-border bg-card p-4 space-y-1.5">
-                  <div className="text-primary">{icon}</div>
-                  <p className="font-semibold text-foreground text-xs">{t}</p>
-                  <p className="text-xs text-muted-foreground">{d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Frequently Asked Questions</h2>
-            {[
-              { q: "What is an ATS resume checker?", a: "An ATS (Applicant Tracking System) resume checker analyzes your resume the same way employer software does — checking for keywords, formatting issues, section completeness, and relevance to a job description to predict how likely your resume is to pass automated screening." },
-              { q: "How do ATS systems scan resumes?", a: "ATS systems parse resume text and look for relevant keywords, job titles, skills, and qualifications. They struggle with tables, columns, images, and unusual fonts. MagicDocx simulates this process and tells you exactly what to fix." },
-              { q: "How can I improve my resume for ATS?", a: "Use a single-column format, include keywords from the job description, start bullet points with strong action verbs, quantify achievements, and ensure all standard sections (Contact, Summary, Experience, Skills, Education) are clearly labeled." },
-              { q: "Is this tool free?", a: "Yes — MagicDocx ATS Resume Checker is completely free to use. No account or credit card required. Upload your resume and get results in seconds." },
-            ].map(({ q, a }) => (
-              <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
-                <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">
-                  {q} <ChevronDown className="h-4 w-4 text-muted-foreground group-open:rotate-180 transition-transform" />
-                </summary>
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+        <ToolSeoSection
+          toolName="ATS Resume Checker"
+          category="ai"
+          intro="The most powerful free ATS resume checker online. Analyze your resume against real ATS algorithms, get keyword insights, bullet point improvements, and LinkedIn optimization — all in one tool."
+          features={[
+            { icon: ScanSearch, title: "5-Dimension Scoring", desc: "ATS, keyword match, content, formatting, and impact" },
+            { icon: Wand2, title: "AI Bullet Rewrites", desc: "Before/after improved bullet points with strong action verbs" },
+            { icon: BriefcaseBusiness, title: "Job Match Analysis", desc: "Match % + missing skills + suggested job roles" },
+            { icon: LinkedinIcon, title: "LinkedIn Optimizer", desc: "AI-optimized headline and About section" },
+          ]}
+          steps={[
+            "Upload your resume (PDF, DOCX, TXT) or paste the text",
+            "Optionally paste the job description for tailored matching",
+            "Click Analyze My Resume",
+            "Apply improvements based on AI feedback"
+          ]}
+          formats={["PDF", "DOCX", "TXT", "RTF", "ODT"]}
+          relatedTools={[
+            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          faqs={[
+            { q: "What is an ATS resume checker?", a: "An ATS (Applicant Tracking System) resume checker analyzes your resume the same way employer software does — checking for keywords, formatting issues, section completeness, and relevance to a job description to predict how likely your resume is to pass automated screening." },
+            { q: "How do ATS systems scan resumes?", a: "ATS systems parse resume text and look for relevant keywords, job titles, skills, and qualifications. They struggle with tables, columns, images, and unusual fonts. MagicDocx simulates this process and tells you exactly what to fix." },
+            { q: "How can I improve my resume for ATS?", a: "Use a single-column format, include keywords from the job description, start bullet points with strong action verbs, quantify achievements, and ensure all standard sections (Contact, Summary, Experience, Skills, Education) are clearly labeled." },
+            { q: "Is this tool free?", a: "Yes — MagicDocx ATS Resume Checker is completely free to use. No account or credit card required. Upload your resume and get results in seconds." },
+          ]}
+        />
       </div>
     </ToolLayout>
   );

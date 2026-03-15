@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import ToolLayout from "@/components/ToolLayout";
 import { Globe, Loader2, Code, Link as LinkIcon, ShieldCheck, RotateCcw, FileBox, CheckCircle2, ArrowRight } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
@@ -139,8 +140,8 @@ const HtmlToPdf = () => {
       description="Convert any webpage or HTML code into a PDF document"
       category="convert"
       icon={<Globe className="h-7 w-7" />}
-      metaTitle="HTML to PDF — Convert Webpages to PDF Online Free"
-      metaDescription="Convert any webpage URL or HTML code to PDF. Preserves images, fonts, links, and layout. Free online converter."
+      metaTitle="HTML to PDF Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert any webpage URL or raw HTML code to PDF online for free. Preserves images, fonts, and layout. No sign-up required."
       toolId="html-to-pdf"
       hideHeader={loading || !!url.trim() || !!htmlCode.trim()}
     >
@@ -377,6 +378,26 @@ const HtmlToPdf = () => {
           </Tabs>
         )}
       </div>
+      <ToolSeoSection
+        toolName="HTML to PDF Converter"
+        category="convert"
+        intro="MagicDocx HTML to PDF converter lets you turn any webpage or raw HTML code into a professionally formatted PDF document. Paste a public URL to render the page as-is, or paste your custom HTML code to convert it directly. Ideal for developers, writers, and professionals who need print-ready PDF output from web content without any software installation."
+        steps={[
+          "Choose your input mode: URL (to convert a webpage) or HTML Code (to convert custom HTML).",
+          "For URL mode: enter the full page address and click \"Open Rendering Lab\".",
+          "For HTML Code mode: paste your HTML into the code editor and click \"Synthesize PDF\".",
+          "Your PDF file will render and download automatically."
+        ]}
+        formats={["HTML", "URL", "PDF"]}
+        relatedTools={[
+          { name: "Word to PDF", path: "/word-to-pdf", icon: Globe },
+          { name: "JPG to PDF", path: "/jpg-to-pdf", icon: Globe },
+          { name: "Merge PDF", path: "/merge-pdf", icon: Globe },
+          { name: "Compress PDF", path: "/compress-pdf", icon: Globe },
+        ]}
+        schemaName="HTML to PDF Converter Online"
+        schemaDescription="Free online HTML to PDF converter. Convert any webpage URL or custom HTML code to a PDF document."
+      />
     </ToolLayout>
   );
 };

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Minimize2, Settings, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, AlertCircle, Loader2, Layout, Zap, X, RotateCw, RefreshCw, Plus, ShieldCheck } from "lucide-react";
+import { Minimize2, Settings, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, AlertCircle, Loader2, Layout, Zap, X, RotateCw, RefreshCw, Plus, ShieldCheck, Merge, Scissors, FileText, LayoutGrid } from "lucide-react";
 import JSZip from "jszip";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
@@ -340,7 +341,7 @@ const CompressPdf = () => {
   };
 
   return (
-    <ToolLayout title="Compress PDF Online" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />} metaTitle="Compress PDF — Reduce PDF Size Online Free" metaDescription="Compress PDF files to reduce size. Free online PDF compressor." toolId="compress" hideHeader={files.length > 0}>
+    <ToolLayout title="Compress PDF Online" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />} metaTitle="Compress PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Compress PDF files to reduce size online for free. Choose strong, recommended, or professional compression. Fast, secure, and no installation needed." toolId="compress" hideHeader={files.length > 0}>
       <div className="mt-2 text-left">
         {files.length === 0 && !processing && results.length === 0 && (
           <div className="mt-10 text-center">
@@ -599,6 +600,26 @@ const CompressPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="Compress PDF"
+        category="compress"
+        intro="MagicDocx Compress PDF reduces your PDF file size without sacrificing readability. It's ideal for emailing large reports, uploading to portals with size limits, or optimizing documents for the web. Choose from three professional compression modes — Strong, Recommended, or Professional — or enter a custom target size. All processing happens in your browser, keeping your files private and secure."
+        steps={[
+          "Upload one or more PDF files to the compress tool.",
+          "Select a compression mode: Strong, Recommended, or Professional quality.",
+          "Optionally, specify a custom target file size in KB.",
+          "Click \"Start Compression\" and your optimized PDF will download automatically."
+        ]}
+        formats={["PDF"]}
+        relatedTools={[
+          { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+          { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          { name: "Organize Pages", path: "/organize-pdf", icon: LayoutGrid },
+        ]}
+        schemaName="Compress PDF Online"
+        schemaDescription="Free online PDF compressor. Reduce PDF file size with multiple compression modes without losing quality."
+      />
     </ToolLayout>
   );
 };

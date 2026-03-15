@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import { FileImage, GripVertical, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, ChevronUp, ChevronDown, Upload } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
@@ -123,8 +124,8 @@ const JpgToPdf = () => {
       description="Convert JPG and PNG images into a PDF document"
       category="convert"
       icon={<FileImage className="h-7 w-7" />}
-      metaTitle="JPG to PDF — Convert Images to PDF Online Free"
-      metaDescription="Convert JPG, JPEG, and PNG images to a single PDF document. Drag to reorder, choose page size and orientation. Free online converter."
+      metaTitle="JPG to PDF Converter Online Free – Fast & Secure | MagicDocx"
+      metaDescription="Convert JPG, JPEG, and PNG images to PDF online for free. Combine multiple images into one PDF, reorder pages, set page size. No sign-up needed."
       toolId="jpg-to-pdf"
       hideHeader={files.length > 0 || results.length > 0}
     >
@@ -328,6 +329,26 @@ const JpgToPdf = () => {
           </div>
         )}
       </div>
+      <ToolSeoSection
+        toolName="JPG to PDF Converter"
+        category="convert"
+        intro="MagicDocx JPG to PDF converter combines your JPEG and PNG images into a single, professionally structured PDF document. Upload multiple images, reorder them with drag-and-drop, select your page size (A4, Letter, or Auto-Fit), and download your PDF instantly. Perfect for creating photo books, scanned document archives, or multi-image reports."
+        steps={[
+          "Upload one or more JPG, JPEG, or PNG images using the file upload area.",
+          "Reorder images using the up/down buttons to set your desired page sequence.",
+          "Select your page size (Auto-Fit, A4, or US Letter) and orientation.",
+          "Click \"Synthesize PDF Buffer\" to combine images into a PDF and download."
+        ]}
+        formats={["JPG", "JPEG", "PNG", "PDF"]}
+        relatedTools={[
+          { name: "PDF to JPG", path: "/pdf-to-jpg", icon: FileImage },
+          { name: "Compress PDF", path: "/compress-pdf", icon: FileImage },
+          { name: "Merge PDF", path: "/merge-pdf", icon: FileBox },
+          { name: "Word to PDF", path: "/word-to-pdf", icon: FileImage },
+        ]}
+        schemaName="JPG to PDF Converter Online"
+        schemaDescription="Free online JPG to PDF converter. Combine multiple JPEG/PNG images into a single PDF document with custom page sizes."
+      />
     </ToolLayout>
   );
 };
