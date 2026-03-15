@@ -64,6 +64,8 @@ const Navbar = () => {
   const megaRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  const activeTool = allTools.find(t => t.path === location.pathname);
+
   useEffect(() => {
     setMegaOpen(false);
     setMobileOpen(false);
@@ -87,24 +89,47 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center group">
-          <span
-            className="relative z-10 flex items-baseline gap-0"
-            style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
-          >
-            <span className="text-2xl font-bold tracking-tight text-foreground">Mag</span>
-            <span className="relative text-2xl font-bold tracking-tight text-foreground">
-              <span className="invisible">i</span>
-              <span className="absolute inset-0 flex flex-col items-center">
-                <span className="text-primary animate-bounce text-[10px] leading-none" style={{ marginTop: "-2px" }}>✦</span>
-                <span className="text-foreground text-2xl font-bold leading-none" style={{ marginTop: "-4px" }}>ı</span>
+        <div className="flex items-center gap-4">
+          <Link to="/" className="flex items-center group">
+            <span
+              className="relative z-10 flex items-baseline gap-0"
+              style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
+            >
+              <span className="text-2xl font-bold tracking-tight text-foreground">Mag</span>
+              <span className="relative text-2xl font-bold tracking-tight text-foreground">
+                <span className="invisible">i</span>
+                <span className="absolute inset-0 flex flex-col items-center">
+                  <span className="text-primary animate-bounce text-[10px] leading-none" style={{ marginTop: "-2px" }}>✦</span>
+                  <span className="text-foreground text-2xl font-bold leading-none" style={{ marginTop: "-4px" }}>ı</span>
+                </span>
               </span>
+              <span className="text-2xl font-bold tracking-tight text-foreground">c</span>
+              <span className="text-2xl font-black tracking-tight text-primary">DOCX</span>
             </span>
-            <span className="text-2xl font-bold tracking-tight text-foreground">c</span>
-            <span className="text-2xl font-black tracking-tight text-primary">DOCX</span>
-          </span>
-        </Link>
+          </Link>
+
+          <AnimatePresence mode="wait">
+            {activeTool && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="hidden sm:flex items-center gap-3"
+              >
+                <div className="h-6 w-[1px] bg-border mx-1" />
+                <div className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all duration-300",
+                  "bg-secondary/50 border-border/50 shadow-sm"
+                )}>
+                  <activeTool.icon className={cn("h-4 w-4", categoryTextColors[activeTool.category])} />
+                  <span className="text-xs font-black uppercase tracking-widest text-foreground truncate max-w-[120px]">
+                    {activeTool.name}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-2">
