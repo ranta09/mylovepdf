@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Presentation, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload } from "lucide-react";
+import { useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
@@ -22,6 +24,12 @@ const PptToPdf = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
 
   const convert = async () => {
     if (files.length === 0) return;

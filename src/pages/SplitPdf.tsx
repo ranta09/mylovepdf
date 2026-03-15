@@ -55,6 +55,11 @@ const SplitPdf = () => {
   const [zipUrl, setZipUrl] = useState<string | null>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
+
   const handleFilesChange = async (newFiles: File[]) => {
     if (newFiles.length === 0) {
       setFiles([]);

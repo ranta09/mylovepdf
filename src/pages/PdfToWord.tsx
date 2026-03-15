@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, Sparkles, Upload } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
@@ -6,13 +6,25 @@ import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { saveAs } from "file-saver";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType
+} from "docx";
+import Tesseract from "tesseract.js";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -28,9 +40,38 @@ const PdfToWord = () => {
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [progress, setProgress] = useState(0);
   const [conversionMode, setConversionMode] = useState("standard");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
+
+  const renderPageToImage = async (page: any): Promise<string> => {
+    const viewport = page.getViewport({ scale: 2.0 });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d")!;
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    await page.render({ canvasContext: context, viewport }).promise;
+    return canvas.toDataURL("image/png");
+  };
 
   const convert = async () => {
     if (files.length === 0) return;
+
+    // STEP 1 - Validation
+    for (const file of files) {
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        toast.error(`File ${file.name} is not a PDF.`);
+        return;
+      }
+      if (file.size > 300 * 1024 * 1024) {
+        toast.error(`File ${file.name} exceeds 300MB limit.`);
+        return;
+      }
+    }
+
     setProcessing(true);
     setProgress(0);
 
@@ -40,69 +81,128 @@ const PdfToWord = () => {
     try {
       for (let f = 0; f < totalFiles; f++) {
         const file = files[f];
-        const bytes = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-        // Extract structured text with positioning
-        const pages: { text: string; items: any[] }[] = [];
+        const docSections: any[] = [];
+
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
+          const textContent = await page.getTextContent();
 
-          // Group items by Y position for paragraph detection
-          const lineMap = new Map<number, any[]>();
-          content.items.forEach((item: any) => {
-            const y = Math.round(item.transform[5] / 2) * 2; // Round to 2px groups
-            if (!lineMap.has(y)) lineMap.set(y, []);
-            lineMap.get(y)!.push(item);
+          let pageChildren: any[] = [];
+
+          if (textContent.items.length === 0) {
+            // STEP 7 - OCR for Scanned PDF
+            const imageData = await renderPageToImage(page);
+            const { data: { text } } = await Tesseract.recognize(imageData, 'eng');
+
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            lines.forEach(p => {
+              pageChildren.push(new Paragraph({
+                children: [new TextRun(p)],
+                spacing: { after: 200 }
+              }));
+            });
+          } else {
+            // STEP 2 & 3 & 4 & 5 - Analysis, Extraction, Layout, Tables
+            const items = textContent.items as any[];
+
+            const lines: any[][] = [];
+            let currentLine: any[] = [];
+            let lastY = -1;
+
+            items.sort((a, b) => {
+              const yDiff = b.transform[5] - a.transform[5];
+              if (Math.abs(yDiff) < 5) return a.transform[4] - b.transform[4];
+              return yDiff;
+            });
+
+            items.forEach(item => {
+              if (lastY === -1 || Math.abs(item.transform[5] - lastY) < 5) {
+                currentLine.push(item);
+              } else {
+                lines.push(currentLine);
+                currentLine = [item];
+              }
+              lastY = item.transform[5];
+            });
+            if (currentLine.length > 0) lines.push(currentLine);
+
+            let currentParagraph: any[] = [];
+
+            lines.forEach((lineItems, lIdx) => {
+              const textStr = lineItems.map(it => it.str).join(' ');
+              if (!textStr.trim()) return;
+
+              // Basic Table Detection: multiple items with significant gaps
+              const isPossibleTable = lineItems.length > 1 && lineItems.every((it, itIdx) => {
+                if (itIdx === 0) return true;
+                const prev = lineItems[itIdx - 1];
+                const gap = it.transform[4] - (prev.transform[4] + (prev.width || 0));
+                return gap > 40;
+              });
+
+              if (isPossibleTable) {
+                if (currentParagraph.length > 0) {
+                  pageChildren.push(new Paragraph({ children: currentParagraph, spacing: { after: 120 } }));
+                  currentParagraph = [];
+                }
+
+                const cells = lineItems.map(it => new TableCell({
+                  children: [new Paragraph({ children: [new TextRun(it.str)] })],
+                }));
+
+                pageChildren.push(new Table({
+                  rows: [new TableRow({ children: cells })],
+                  width: { size: 100, type: WidthType.PERCENTAGE },
+                }));
+              } else {
+                currentParagraph.push(new TextRun({
+                  text: textStr + " ",
+                  font: "Calibri",
+                  size: 22,
+                }));
+
+                const nextLine = lines[lIdx + 1];
+                const isEndOfPara = !nextLine || Math.abs(nextLine[0].transform[5] - lineItems[0].transform[5]) > 25;
+
+                if (isEndOfPara) {
+                  pageChildren.push(new Paragraph({
+                    children: currentParagraph,
+                    spacing: { after: 120 }
+                  }));
+                  currentParagraph = [];
+                }
+              }
+            });
+          }
+
+          docSections.push({
+            children: pageChildren,
           });
 
-          const sortedLines = [...lineMap.entries()].sort((a, b) => b[0] - a[0]);
-          let pageText = "";
-          sortedLines.forEach(([, items]) => {
-            items.sort((a: any, b: any) => a.transform[4] - b.transform[4]);
-            const lineText = items.map((it: any) => it.str).join(" ").trim();
-            if (lineText) pageText += lineText + "\n";
-          });
-
-          pages.push({ text: pageText, items: content.items as any[] });
-          const overallProgress = ((f + (i / pdf.numPages)) / totalFiles) * 90;
+          const overallProgress = ((f + (i / pdf.numPages)) / totalFiles) * 100;
           setProgress(Math.round(overallProgress));
         }
 
-        // Build DOCX-compatible HTML
-        let cssStyles = "";
-        if (conversionMode === "exact") {
-          cssStyles = `body { font-family: 'Times New Roman', serif; line-height: 1.0; margin: 1in; } p { margin: 0; padding: 2px 0; } h1,h2,h3 { margin: 12px 0 6px; }`;
-        } else if (conversionMode === "continuous") {
-          cssStyles = `body { font-family: Arial, sans-serif; line-height: 1.6; margin: 1in; } p { min-height: 1em; margin-bottom: 8px; }`;
-        } else {
-          cssStyles = `body { font-family: Calibri, sans-serif; line-height: 1.15; margin: 1in; } p { margin: 0 0 6px; } h1 { font-size: 20pt; margin: 18px 0 8px; } h2 { font-size: 16pt; margin: 14px 0 6px; }`;
-        }
+        const doc = new Document({
+          sections: docSections
+        });
 
-        const htmlContent = pages.map((page, idx) => {
-          const lines = page.text.split("\n").filter(l => l.trim());
-          const htmlLines = lines.map(line => {
-            // Detect headings: short lines with larger implied font or all-caps
-            const isHeading = (line.length < 80 && line === line.toUpperCase() && line.length > 3);
-            if (isHeading) return `<h2>${escapeHtml(line)}</h2>`;
-            return `<p>${escapeHtml(line)}</p>`;
-          });
-          return htmlLines.join("\n") + (idx < pages.length - 1 ? '<br clear="all" style="page-break-after:always" />' : "");
-        }).join("\n");
-
-        const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Converted Document</title><style>${cssStyles}</style></head><body>${htmlContent}</body></html>`;
-
-        const blob = new Blob([html], { type: "application/msword" });
+        const blob = await Packer.toBlob(doc);
+        const filename = file.name.replace(/\.pdf$/i, ".docx");
         const url = URL.createObjectURL(blob);
-        newResults.push({ file: blob, url, filename: file.name.replace(/\.pdf$/i, ".doc") });
+
+        newResults.push({ file: blob, url, filename });
+        saveAs(blob, filename);
       }
 
       setResults(newResults);
-      setProgress(100);
-      toast.success(`${totalFiles} file${totalFiles > 1 ? "s" : ""} converted to Word!`);
-    } catch {
-      toast.error("Failed to convert PDF(s) to Word");
+      toast.success("Conversion successful!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Conversion failed. Please check the file.");
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -120,11 +220,8 @@ const PdfToWord = () => {
       toolId="pdf-to-word"
       hideHeader={files.length > 0 || results.length > 0}
     >
-      {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
       {(files.length > 0 || processing || results.length > 0) && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-
-          {/* Header Diagnostic / Execution Control */}
           <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
@@ -154,7 +251,7 @@ const PdfToWord = () => {
 
           {processing ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center text-center">
+              <div className="w-full max-w-md space-y-8 text-center">
                 <div className="relative flex justify-center items-center h-32">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-24 h-24 rounded-full border-4 border-blue-500/10" />
@@ -177,7 +274,6 @@ const PdfToWord = () => {
             </div>
           ) : (
             <div className="flex-1 flex flex-row overflow-hidden">
-              {/* LEFT PANEL: File Manifest */}
               <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
                 <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
                   <FileBox className="h-4 w-4 text-blue-500" />
@@ -203,10 +299,8 @@ const PdfToWord = () => {
                 </ScrollArea>
               </div>
 
-              {/* CENTER: Workbench */}
               <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
                 <div className="w-full max-w-2xl space-y-8">
-                  {/* Configuration Map */}
                   <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
                     <div className="p-6 border-b border-border bg-secondary/5">
                       <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
@@ -245,7 +339,6 @@ const PdfToWord = () => {
                     </div>
                   </div>
 
-                  {/* Execution Readiness */}
                   <div className="flex flex-col items-center gap-6 pt-4">
                     <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm text-center">
                       <CheckCircle2 className="h-4 w-4 text-blue-500" />
@@ -261,7 +354,6 @@ const PdfToWord = () => {
             </div>
           )}
 
-          {/* Footer Meta */}
           <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
             <div className="flex items-center gap-4">
               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Secure Stream</span>
@@ -285,9 +377,5 @@ const PdfToWord = () => {
     </ToolLayout >
   );
 };
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
 
 export default PdfToWord;

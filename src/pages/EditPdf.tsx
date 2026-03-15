@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useId } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,12 @@ const EditPdf = () => {
   const [history, setHistory] = useState<EditorState[]>([]);
   const [future, setFuture] = useState<EditorState[]>([]);
   const [versions, setVersions] = useState<{ name: string; data: Uint8Array }[]>([]);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(!!file);
+    return () => setDisableGlobalFeatures(false);
+  }, [file, setDisableGlobalFeatures]);
 
   const [activeTab, setActiveTab] = useState<Tab>("text");
   const [activePage, setActivePage] = useState(0);

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import ToolHeader from "@/components/ToolHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
 import { motion } from "framer-motion";

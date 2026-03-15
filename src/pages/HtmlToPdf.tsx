@@ -10,6 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -19,6 +21,12 @@ const HtmlToPdf = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [mode, setMode] = useState("url");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(url.trim() !== "" || htmlCode.trim() !== "");
+    return () => setDisableGlobalFeatures(false);
+  }, [url, htmlCode, setDisableGlobalFeatures]);
 
   const convertHtmlToPdf = async (htmlContent: string, filename: string) => {
     setProgress(30);

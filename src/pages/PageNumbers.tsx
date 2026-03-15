@@ -105,7 +105,12 @@ const PageNumbers = () => {
     vOffset: 11
   });
 
-  const { disableGlobalFeatures } = useGlobalUpload();
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
 
   // ─── Thumbnail Generation ──────────────────────────────────────────────────
   const generatePreviews = async (files: File[]) => {

@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,12 @@ const RedactPdf = () => {
   const [redactions, setRedactions] = useState<Redaction[]>([]);
   const [history, setHistory] = useState<Redaction[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
 
   // Page-specific text items for interaction
   const [pageTextItems, setPageTextItems] = useState<TextItem[]>([]);

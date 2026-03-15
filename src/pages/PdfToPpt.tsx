@@ -12,6 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -26,6 +28,12 @@ const PdfToPpt = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
 
   const convert = async () => {
     if (files.length === 0) return;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -40,6 +41,13 @@ const WatermarkPdf = () => {
   const [previews, setPreviews] = useState<PagePreview[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
+
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<{ url: string; size: number; pages: number } | null>(null);

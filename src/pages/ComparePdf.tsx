@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { cn } from "@/lib/utils";
 
 // Set worker path for pdfjs
@@ -54,6 +55,12 @@ const ComparePdf = () => {
   const [activeDiffId, setActiveDiffId] = useState<string | null>(null);
   const [mode, setMode] = useState<"text" | "visual">("text");
   const [searchQuery, setSearchQuery] = useState("");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(fileA.length > 0 || fileB.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [fileA, fileB, setDisableGlobalFeatures]);
 
   const leftScrollRef = useRef<HTMLDivElement>(null);
   const rightScrollRef = useRef<HTMLDivElement>(null);

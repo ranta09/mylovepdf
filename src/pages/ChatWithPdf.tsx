@@ -6,6 +6,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
 import { motion, AnimatePresence } from "framer-motion";

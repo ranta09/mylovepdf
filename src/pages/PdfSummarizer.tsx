@@ -3,6 +3,7 @@ import ToolLayout from "@/components/ToolLayout";
 import ToolHeader from "@/components/ToolHeader";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -211,7 +212,7 @@ const DocSummarizer = () => {
       // Combine texts for multi-file
       const combinedText = sources.length === 1
         ? sources[0].text
-        : sources.map((s, i) => `--- Document ${i + 1}: ${s.name} ---\n${s.text}`).join("\n\n");
+        : sources.map((s, i) => `-- - Document ${i + 1}: ${s.name} ---\n${s.text} `).join("\n\n");
 
       setStatus("summarizing");
       setProgress(40);
@@ -220,7 +221,7 @@ const DocSummarizer = () => {
       const newResults: SummaryResults = { ...EMPTY_RESULTS };
       for (let i = 0; i < SUMMARY_MODES.length; i++) {
         const { key, aiMode } = SUMMARY_MODES[i];
-        setStatusText(`Generating ${key} summary (${i + 1}/${SUMMARY_MODES.length})…`);
+        setStatusText(`Generating ${key} summary(${i + 1}/${SUMMARY_MODES.length})…`);
         setProgress(40 + Math.round((i / SUMMARY_MODES.length) * 55));
         setLoadingTabs(prev => new Set([...prev, key as TabId]));
         try {
@@ -269,19 +270,19 @@ const DocSummarizer = () => {
 
   const copyContent = () => {
     const text = activeTab === "chat"
-      ? chatHistory.map(m => `${m.role === "user" ? "Q" : "A"}: ${m.text}`).join("\n\n")
+      ? chatHistory.map(m => `${m.role === "user" ? "Q" : "A"}: ${m.text} `).join("\n\n")
       : getActiveContent();
     navigator.clipboard.writeText(text);
     toast({ title: "Copied!", description: "Content copied to clipboard." });
   };
 
   const downloadMarkdown = () => {
-    const content = TABS.map(t => `# ${t.label}\n\n${results[t.id as keyof SummaryResults] ?? ""}`).join("\n\n---\n\n");
+    const content = TABS.map(t => `# ${t.label} \n\n${results[t.id as keyof SummaryResults] ?? ""} `).join("\n\n---\n\n");
     saveAs(new Blob([content], { type: "text/markdown" }), "summary.md");
   };
 
   const downloadTxt = () => {
-    const content = TABS.map(t => `${t.label.toUpperCase()}\n${"=".repeat(40)}\n${results[t.id as keyof SummaryResults] ?? ""}`).join("\n\n");
+    const content = TABS.map(t => `${t.label.toUpperCase()} \n${"=".repeat(40)} \n${results[t.id as keyof SummaryResults] ?? ""} `).join("\n\n");
     saveAs(new Blob([content], { type: "text/plain" }), "summary.txt");
   };
 
@@ -305,7 +306,7 @@ const DocSummarizer = () => {
         const words = text.split(" ");
         let line = "";
         for (const word of words) {
-          const test = line ? `${line} ${word}` : word;
+          const test = line ? `${line} ${word} ` : word;
           if (f.widthOfTextAtSize(test, size) > w) {
             page.drawText(line, { x: margin, y, size, font: f, color: rgb(0.1, 0.1, 0.1) });
             y -= lineH;
@@ -354,10 +355,10 @@ const DocSummarizer = () => {
 
             {/* Mode toggle */}
             <div className="flex gap-2">
-              <button onClick={() => setUrlMode(false)} className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${!urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
+              <button onClick={() => setUrlMode(false)} className={`flex items - center gap - 1.5 rounded - full px - 4 py - 1.5 text - sm font - medium transition - all ${!urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"} `}>
                 <FileText className="h-3.5 w-3.5" /> Upload Files
               </button>
-              <button onClick={() => setUrlMode(true)} className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
+              <button onClick={() => setUrlMode(true)} className={`flex items - center gap - 1.5 rounded - full px - 4 py - 1.5 text - sm font - medium transition - all ${urlMode ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground"} `}>
                 <Link2 className="h-3.5 w-3.5" /> Paste URL
               </button>
             </div>
@@ -497,7 +498,7 @@ const DocSummarizer = () => {
               <div className="bg-secondary/5 border-b border-border px-6 py-2 flex gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
                 {TABS.map(t => (
                   <button key={t.id} onClick={() => setActiveTab(t.id)}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-black uppercase whitespace-nowrap transition-all border ${activeTab === t.id ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border text-muted-foreground hover:text-foreground bg-background"}`}>
+                    className={`flex items - center gap - 2 rounded - xl px - 4 py - 2 text - [10px] font - black uppercase whitespace - nowrap transition - all border ${activeTab === t.id ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border text-muted-foreground hover:text-foreground bg-background"} `}>
                     {t.icon}
                     <span>{t.label}</span>
                     {loadingTabs.has(t.id) && <Loader2 className="h-3 w-3 animate-spin text-primary ml-1" />}
@@ -530,13 +531,13 @@ const DocSummarizer = () => {
                           </div>
                         )}
                         {chatHistory.map((m, i) => (
-                          <div key={i} className={`flex gap-4 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <div key={i} className={`flex gap - 4 ${m.role === "user" ? "justify-end" : "justify-start"} `}>
                             {m.role === "ai" && (
                               <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm shadow-primary/20">
                                 <Wand2 className="h-4 w-4 text-primary-foreground" />
                               </div>
                             )}
-                            <div className={`max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-sm ${m.role === "user" ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-card border border-border text-foreground rounded-tl-none"}`}>
+                            <div className={`max - w - [85 %] rounded - 2xl px - 5 py - 4 text - sm leading - relaxed shadow - sm ${m.role === "user" ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-card border border-border text-foreground rounded-tl-none"} `}>
                               {m.role === "ai"
                                 ? <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed text-foreground"><ReactMarkdown>{m.text}</ReactMarkdown></div>
                                 : m.text}

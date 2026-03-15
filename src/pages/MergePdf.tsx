@@ -62,13 +62,20 @@ interface PageData {
   rotation: number;
 }
 
+interface ProcessingResult {
+  url: string;
+  name: string;
+  size: string;
+  pages: number;
+}
+
 const MergePdf = () => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [pages, setPages] = useState<PageData[]>([]);
   const [mergeMode, setMergeMode] = useState<"full" | "pages">("full");
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<{ url: string; name: string; size: string; pages: number } | null>(null);
+  const [results, setResults] = useState<ProcessingResult | null>(null);
 
   // UI States
   const [previewZoom, setPreviewZoom] = useState(0.8);
@@ -77,6 +84,11 @@ const MergePdf = () => {
   const [activeTab, setActiveTab] = useState("configure");
   const { setDisableGlobalFeatures } = useGlobalUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
 
   // Generate unique IDs
   const generateId = () => Math.random().toString(36).substr(2, 9);

@@ -16,6 +16,8 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -31,6 +33,12 @@ const PdfToJpg = () => {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
 
   // Options
   const [quality, setQuality] = useState("high"); // low, medium, high

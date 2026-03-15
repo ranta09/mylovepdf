@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -29,6 +31,12 @@ const ExcelToPdf = () => {
   const [orientation, setOrientation] = useState("landscape");
   const [selectedSheet, setSelectedSheet] = useState("all");
   const [sheetNames, setSheetNames] = useState<string[]>([]);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
 
   const handleFilesChange = async (newFiles: File[]) => {
     setFiles(newFiles);

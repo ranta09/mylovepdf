@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument } from "pdf-lib";
 import { PenTool, Loader2, Info, ShieldCheck, X, Layout } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,6 +15,12 @@ import { toast } from "sonner";
 const SignPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
   const [progress, setProgress] = useState(0);
   const [signatureData, setSignatureData] = useState<string | null>(null);
   const [typedName, setTypedName] = useState("");

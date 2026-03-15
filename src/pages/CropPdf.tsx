@@ -82,6 +82,13 @@ const CropPdf = () => {
   const [zoom, setZoom] = useState(0.8);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<Results | null>(null);
 
@@ -97,7 +104,6 @@ const CropPdf = () => {
     right: 10
   });
 
-  const { disableGlobalFeatures } = useGlobalUpload();
   const mainPreviewRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef<string | null>(null);
   const startPos = useRef<{ x: number; y: number } | null>(null);

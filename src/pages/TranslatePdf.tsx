@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Languages, Download, Loader2, ShieldCheck, FileText, X,
   Copy, ClipboardCheck, RotateCcw, Globe, ChevronDown, CheckCircle2
@@ -8,6 +8,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extractDocument, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
@@ -123,6 +124,12 @@ const TranslatePdf = () => {
   const [langSearch, setLangSearch] = useState("");
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
   const langPickerRef = useRef<HTMLDivElement>(null);
 
   const filteredLangs = LANGUAGES.filter(l =>

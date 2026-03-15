@@ -92,6 +92,12 @@ const OrganizePdf = () => {
   } | null>(null);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);

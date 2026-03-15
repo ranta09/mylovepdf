@@ -8,6 +8,7 @@ import {
   Download, RefreshCw, Layers, Activity, Database,
   Settings2, ArrowRight, MousePointer2, RotateCw, Plus
 } from "lucide-react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";

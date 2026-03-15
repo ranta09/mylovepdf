@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScanLine, Copy, Download, Loader2, Info, ShieldCheck } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
@@ -17,6 +18,12 @@ const OcrPdf = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [extractedText, setExtractedText] = useState("");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
 
   const handleProcess = async () => {
     if (files.length === 0) return;

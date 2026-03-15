@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import ToolHeader from "@/components/ToolHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { toast as sonnerToast } from "sonner";
 import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
 import { motion, AnimatePresence } from "framer-motion";

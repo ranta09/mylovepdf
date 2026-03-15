@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import pptxgen from "pptxgenjs";
 import { Presentation, Loader2, Info, FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileSpreadsheet, Upload } from "lucide-react";
@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
@@ -25,6 +26,12 @@ const ExcelToPpt = () => {
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [results, setResults] = useState<ProcessingResult[]>([]);
+    const { setDisableGlobalFeatures } = useGlobalUpload();
+
+    useEffect(() => {
+        setDisableGlobalFeatures(files.length > 0);
+        return () => setDisableGlobalFeatures(false);
+    }, [files, setDisableGlobalFeatures]);
 
     const [options, setOptions] = useState({
         generateCharts: true,

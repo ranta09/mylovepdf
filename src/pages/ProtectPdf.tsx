@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { PDFDocument } from "pdf-lib";
 import { Lock, Loader2, Info, ShieldCheck } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
@@ -13,6 +14,13 @@ import { toast } from "sonner";
 const ProtectPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [password, setPassword] = useState("");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, setDisableGlobalFeatures]);
+
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 

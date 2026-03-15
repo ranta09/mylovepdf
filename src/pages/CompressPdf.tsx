@@ -56,6 +56,11 @@ const CompressPdf = () => {
   const [zipUrl, setZipUrl] = useState<string | null>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
+
   // Cleanup object URLs
   useEffect(() => {
     return () => {

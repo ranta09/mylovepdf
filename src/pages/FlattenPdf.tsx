@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Layers, Loader2, Info } from "lucide-react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,12 @@ const FlattenPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files, setDisableGlobalFeatures]);
 
   const flatten = async () => {
     if (files.length === 0) return;
