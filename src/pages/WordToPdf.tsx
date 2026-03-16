@@ -1,8 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import mammoth from "mammoth";
-import { FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload } from "lucide-react";
+import { FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload, Trash2, Plus, RefreshCw, Settings, Layout, Layers, Info, Zap, X, RectangleVertical, RectangleHorizontal } from "lucide-react";
 import { useEffect } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
@@ -14,6 +12,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+import { convertWordToPdf, mergePdfBlobs, WordConversionOptions, getDocxMetadata, ConversionMetadata } from "@/lib/wordToPdfEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -21,323 +23,304 @@ const formatSize = (bytes: number): string => {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 };
 
+interface FileWithMetadata {
+  file: File;
+  metadata?: ConversionMetadata;
+}
+
 const WordToPdf = () => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileWithMetadata[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const { setDisableGlobalFeatures } = useGlobalUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Conversion Options
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [pageSize, setPageSize] = useState<"A4" | "letter" | "original">("A4");
+  const [mergeFiles, setMergeFiles] = useState(false);
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
 
-  const convert = async () => {
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFilesChange = async (newFiles: File[]) => {
+    const validFiles: FileWithMetadata[] = [];
+    
+    for (const file of newFiles) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext === 'doc' || ext === 'docx') {
+        const metadata = await getDocxMetadata(file);
+        validFiles.push({ file, metadata });
+      } else {
+        toast.error(`Unsupported file: ${file.name}. This tool supports DOC and DOCX files only.`);
+      }
+    }
+    
+    setFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const convert = useCallback(async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(10);
-    const newResults: ProcessingResult[] = [];
+    setProgress(0);
+    setResults([]);
 
     try {
-      for (let f = 0; f < files.length; f++) {
-        const file = files[f];
-        const arrayBuffer = await file.arrayBuffer();
-        setProgress(10 + (f / files.length) * 20);
+      const options: WordConversionOptions = {
+        pageOrientation: orientation,
+        pageSize,
+        mergeFiles
+      };
 
-        let text = "";
-        if (file.name.toLowerCase().endsWith(".docx")) {
-          // Use mammoth to get HTML for better formatting
-          const htmlResult = await mammoth.convertToHtml({ arrayBuffer });
-          // Also get raw text for fallback
-          const textResult = await mammoth.extractRawText({ arrayBuffer });
-          text = textResult.value;
+      const convertedBlobs: Blob[] = [];
+      const individualResults: ProcessingResult[] = [];
 
-          // If HTML conversion produced content, use it for layout
-          if (htmlResult.value && htmlResult.value.trim().length > 10) {
-            // Parse HTML to extract structured text with formatting
-            const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString(htmlResult.value, "text/html");
-            const elements = htmlDoc.body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, tr, td, th, table");
+      for (let i = 0; i < files.length; i++) {
+        const item = files[i];
+        
+        // Progress update
+        setProgress(Math.round((i / files.length) * 90) + 5);
 
-            if (elements.length > 0) {
-              text = "";
-              elements.forEach(el => {
-                const tag = el.tagName.toLowerCase();
-                if (tag.startsWith("h")) {
-                  text += "\n" + el.textContent?.toUpperCase() + "\n";
-                } else if (tag === "li") {
-                  text += "• " + el.textContent + "\n";
-                } else if (tag === "td" || tag === "th") {
-                  text += el.textContent + "\t";
-                } else if (tag === "tr") {
-                  text += "\n";
-                } else if (el.textContent?.trim()) {
-                  text += el.textContent + "\n";
-                }
-              });
-            }
-          }
-        } else {
-          text = await file.text();
-        }
-
-        setProgress(30 + (f / files.length) * 20);
-        const doc = await PDFDocument.create();
-        const font = await doc.embedFont(StandardFonts.Helvetica);
-        const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
-        const fontSize = 11;
-        const margin = 50;
-        const pageWidth = 595.28;
-        const pageHeight = 841.89;
-        const maxWidth = pageWidth - margin * 2;
-        const lineHeight = fontSize * 1.5;
-
-        const lines: { text: string; bold: boolean; size: number }[] = [];
-        const paragraphs = text.split("\n");
-
-        for (const para of paragraphs) {
-          if (!para.trim()) {
-            lines.push({ text: "", bold: false, size: fontSize });
-            continue;
-          }
-
-          const isHeading = para.length < 80 && para === para.toUpperCase() && para.length > 3;
-          const currentFont = isHeading ? boldFont : font;
-          const currentSize = isHeading ? 14 : fontSize;
-
-          const words = para.split(" ");
-          let currentLine = "";
-
-          for (const word of words) {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const width = currentFont.widthOfTextAtSize(testLine, currentSize);
-            if (width > maxWidth && currentLine) {
-              lines.push({ text: currentLine, bold: isHeading, size: currentSize });
-              currentLine = word;
-            } else {
-              currentLine = testLine;
-            }
-          }
-          if (currentLine) lines.push({ text: currentLine, bold: isHeading, size: currentSize });
-        }
-
-        const linesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
-        for (let i = 0; i < lines.length; i += linesPerPage) {
-          const page = doc.addPage([pageWidth, pageHeight]);
-          const pageLines = lines.slice(i, i + linesPerPage);
-          pageLines.forEach((line, idx) => {
-            if (line.text.trim()) {
-              page.drawText(line.text, {
-                x: margin,
-                y: pageHeight - margin - idx * lineHeight,
-                size: line.size,
-                font: line.bold ? boldFont : font,
-                color: rgb(0.1, 0.1, 0.1),
-              });
-            }
+        try {
+          const pdfBlob = await convertWordToPdf(item.file, options);
+          convertedBlobs.push(pdfBlob);
+          
+          individualResults.push({
+            file: pdfBlob,
+            url: URL.createObjectURL(pdfBlob),
+            filename: item.file.name.replace(/\.[^/.]+$/, "") + ".pdf"
           });
+        } catch (err) {
+          console.error(`Failed to convert ${item.file.name}:`, err);
+          toast.error(`Conversion failed for ${item.file.name}. Please try another Word document.`);
         }
-
-        const pdfBytes = await doc.save();
-        const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const filename = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
-        newResults.push({ file: blob, url, filename });
-
-        // Auto download
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-
-        setProgress(50 + ((f + 1) / files.length) * 50);
       }
 
-      setResults(newResults);
-      setProgress(100);
-      toast.success(`${newResults.length} document${newResults.length > 1 ? "s" : ""} converted to PDF!`);
+      if (mergeFiles && convertedBlobs.length > 1) {
+        setProgress(95);
+        const mergedBlob = await mergePdfBlobs(convertedBlobs);
+        const mergedResult: ProcessingResult = {
+          file: mergedBlob,
+          url: URL.createObjectURL(mergedBlob),
+          filename: "merged_documents.pdf"
+        };
+        setResults([mergedResult, ...individualResults]);
+      } else {
+        setResults(individualResults);
+        if (individualResults.length === 1) {
+          const a = document.createElement("a");
+          a.href = individualResults[0].url;
+          a.download = individualResults[0].filename;
+          a.click();
+        }
+      }
+
+      toast.success(mergeFiles ? "Documents merged and converted!" : "Conversion complete!");
     } catch (error) {
       console.error("Conversion error:", error);
-      toast.error("Failed to convert to PDF");
+      toast.error("Conversion failed. Please try another Word document.");
     } finally {
       setProcessing(false);
       setProgress(0);
     }
-  };
+  }, [files, orientation, pageSize, mergeFiles]);
 
   return (
     <ToolLayout
       title="Word to PDF"
-      description="Convert Word and text documents to PDF format"
+      description="Convert Word documents to professional PDF format with layout preservation"
       category="convert"
       icon={<FileText className="h-7 w-7" />}
       metaTitle="Word to PDF Converter Online Free – Fast & Secure | MagicDocx"
-      metaDescription="Convert Word documents (DOC, DOCX) to PDF online for free. Preserve formatting, fonts, and structure. Fast, secure Word to PDF conversion — no sign-up."
+      metaDescription="Convert Word documents (DOC, DOCX) to high-quality PDF online. Preserve formatting, tables, and images. Fast, secure, and professional."
       toolId="word-to-pdf"
-      hideHeader={files.length > 0 || results.length > 0}
+      hideHeader={files.length > 0 || results.length > 0 || processing}
+      className="word-to-pdf-page"
     >
+      <style>{`
+        .word-to-pdf-page h1, 
+        .word-to-pdf-page h2, 
+        .word-to-pdf-page h3,
+        .word-to-pdf-page span,
+        .word-to-pdf-page button,
+        .word-to-pdf-page p,
+        .word-to-pdf-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
+
       {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
       {(files.length > 0 || processing || results.length > 0) && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-
-          {/* Header Diagnostic / Execution Control */}
-          <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tighter">Word Processor Engine</h2>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                  {processing ? "Synthesizing Typography..." : results.length > 0 ? "Conversion Terminal" : "Awaiting Execution"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {(results.length > 0 || !processing) && (
-                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                  <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                </Button>
-              )}
-              {results.length === 0 && !processing && (
-                <Button size="sm" onClick={convert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                  <ArrowRight className="h-4 w-4" /> Convert to PDF
-                </Button>
-              )}
-            </div>
-          </div>
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
 
           {processing ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
               <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative flex justify-center items-center h-32">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-blue-500/10" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
-                  </div>
-                  <FileText className="h-8 w-8 text-blue-500 animate-pulse" />
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  <Settings className="h-10 w-10 text-primary animate-pulse" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-black uppercase tracking-tighter">Rasterizing Document Flow</h3>
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">Rasterizing Document Flow</h3>
                   <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
                 </div>
               </div>
             </div>
           ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden flex flex-col">
               <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
             </div>
           ) : (
-            <div className="flex-1 flex flex-row overflow-hidden">
-              {/* LEFT PANEL: File Manifest */}
-              <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                  <FileBox className="h-4 w-4 text-blue-500" />
-                  <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
-                </div>
+            <>
+              {/* LEFT SIDE: Thumbnails Grid (Small Window Preview) - Aligned with Compress PDF */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+
                 <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-3">
-                    {files.map((file, idx) => (
-                      <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-blue-500/30 transition-all">
-                        <div className="h-12 w-10 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0">
-                          <FileText className="h-5 w-5 text-blue-500" />
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {files.map((item, idx) => (
+                        <div key={idx} className="group flex flex-col gap-2 p-2 bg-background border border-border hover:border-primary/50 rounded-xl transition-all duration-200 text-left relative">
+                          <div className="aspect-[3/4] w-full bg-secondary/30 rounded-lg overflow-hidden flex items-center justify-center relative shadow-sm border border-border/10">
+                            <div className="h-16 w-12 bg-blue-500/10 rounded-md border border-blue-500/20 flex items-center justify-center relative">
+                              <FileText className="h-8 w-8 text-blue-500" />
+                              <div className="absolute top-1 left-1 bg-blue-500 text-white text-[6px] font-bold px-1 rounded-sm uppercase">DOCX</div>
+                            </div>
+                            
+                            <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                              <button onClick={() => removeFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-destructive transition-colors shadow-sm border border-border/50"><X className="h-3 w-3" /></button>
+                            </div>
+                            <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
+                              {idx + 1}
+                            </div>
+                          </div>
+                          
+                          <div className="px-1 min-w-0 space-y-0.5">
+                            <p className="text-[9px] font-bold text-foreground uppercase tracking-tight truncate">{item.file.name}</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[8px] font-bold text-primary uppercase">{formatSize(item.file.size)}</p>
+                              {item.metadata?.pageCount && (
+                                <p className="text-[8px] font-bold text-muted-foreground uppercase">{item.metadata.pageCount}P</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <button onClick={() => setFiles([])} className="w-full p-4 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
-                      + Resync Payload
-                    </button>
+                      ))}
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="aspect-[3/4] border-2 border-dashed border-border hover:border-primary/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+                      >
+                        <Plus className="h-5 w-5" />
+                        Add More
+                      </button>
+                    </div>
                   </div>
                 </ScrollArea>
               </div>
 
-              {/* CENTER: Workbench */}
-              <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center justify-center">
-                <div className="w-full max-w-2xl text-center space-y-8">
-                  <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-background border border-border shadow-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors" />
-                    <FileText className="h-8 w-8 text-blue-500 relative z-10" />
-                  </div>
+              {/* RIGHT PANEL: Workbench Settings - Aligned with Compress PDF */}
+              <div className="flex-1 bg-secondary/10 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 lg:pt-8 lg:pb-12 lg:px-12">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-2xl">
+                          <FileText className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex flex-col">
+                          <h4 className="text-base font-bold uppercase tracking-tighter leading-none">Word to PDF</h4>
+                        </div>
+                      </div>
 
-                  <div className="space-y-2">
-                    <h3 className="text-3xl font-black uppercase tracking-tighter">Ready for Synthesis</h3>
-                    <p className="text-muted-foreground font-medium">Your Word documents are optimized and prepared for PDF conversion. All formatting, fonts, and structures will be preserved.</p>
-                  </div>
+                      <div className="space-y-6">
+                        {/* Orientation */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Page Orientation</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button 
+                              onClick={() => setOrientation("portrait")}
+                              className={cn(
+                                "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                orientation === "portrait" ? "border-primary bg-primary/5 text-primary shadow-inner" : "border-border bg-background text-muted-foreground hover:border-primary/20"
+                              )}
+                            >
+                              <RectangleVertical className="h-4 w-4" /> Portrait
+                            </button>
+                            <button 
+                              onClick={() => setOrientation("landscape")}
+                              className={cn(
+                                "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                orientation === "landscape" ? "border-primary bg-primary/5 text-primary shadow-inner" : "border-border bg-background text-muted-foreground hover:border-primary/20"
+                              )}
+                            >
+                              <RectangleHorizontal className="h-4 w-4" /> Landscape
+                            </button>
+                          </div>
+                        </div>
 
-                  <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                    <div className="p-4 bg-background border border-border rounded-2xl text-center">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Files</p>
-                      <p className="text-lg font-black">{files.length}</p>
-                    </div>
-                    <div className="p-4 bg-background border border-border rounded-2xl text-center">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Target</p>
-                      <p className="text-lg font-black text-blue-600">PDF</p>
-                    </div>
-                  </div>
 
-                  <div className="flex justify-center">
-                    <Button size="lg" onClick={convert} className="h-14 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-[0.1em] px-12 shadow-2xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-3 hover:scale-105 active:scale-95">
-                      Initiate Conversion <ArrowRight className="h-5 w-5" />
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-6 pt-4">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> High-Fidelity
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Font Preservation
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Secure Tunnel
+                        {/* Merge Toggle */}
+                        {files.length > 1 && (
+                          <div className="flex items-center justify-between p-4 bg-secondary/5 rounded-2xl border border-border/50 group hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-3">
+                              <Layers className="h-4 w-4 text-primary" />
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Merge Power-Mode</span>
+                                <span className="text-[9px] font-medium text-muted-foreground uppercase mt-0.5">Combine all files into one high-res PDF</span>
+                              </div>
+                            </div>
+                            <Switch checked={mergeFiles} onCheckedChange={setMergeFiles} />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Footer Meta */}
-          <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Encrypted Channel</span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">MagicDocx Word v4.2.0</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest uppercase">Target Buffer: PDF</span>
-            </div>
-          </div>
+                {/* Sticky Action Footer */}
+                <div className="mt-auto p-6 lg:px-12 bg-background border-t border-border shrink-0">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full">
+                    <Button 
+                      size="lg" 
+                      onClick={convert} 
+                      className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
+                    >
+                      Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       <div className="mt-5">
-        {files.length === 0 && (
-          <div className="mt-5">
-            <FileUpload accept=".doc,.docx" files={files} onFilesChange={setFiles} label="Select Word files to convert" />
+        {files.length === 0 && !processing && results.length === 0 && (
+          <div className="mt-10 text-center">
+            <FileUpload accept=".doc,.docx" files={[]} onFilesChange={handleFilesChange} label="Select Word files to convert" />
           </div>
         )}
       </div>
       <ToolSeoSection
         toolName="Word to PDF Converter"
         category="convert"
-        intro="MagicDocx Word to PDF converter turns your Microsoft Word documents (DOC and DOCX) into professional PDF files in seconds. All formatting, fonts, paragraph styles, and structure are faithfully preserved. Whether you need a shareable contract, a polished report, or a print-ready document, our free online tool delivers a consistent PDF output — no installation, no account required."
+        intro="MagicDocx Word to PDF converter turns your Microsoft Word documents (DOC and DOCX) into professional, high-fidelity PDF files. Our premium engine ensures that your original formatting, images, tables, and typography are preserved with pixel-perfect accuracy. Support for multi-file processing and document merging makes it the ultimate professional utility for high-resolution, print-ready PDF generation."
         steps={[
-          "Upload one or more Word files (DOC or DOCX) by dragging and dropping or clicking the upload area.",
-          "The tool automatically analyzes headings, paragraphs, lists, and tables.",
-          "Click \"Initiate Conversion\" to start the conversion process.",
-          "Your PDF files will download automatically."
+          "Upload one or more Word files (DOC or DOCX) to the secure workspace.",
+          "Configure your preferences including page size and orientation in the workbench.",
+          "Toggle the 'Merge' option if you wish to combine multiple documents into a single PDF.",
+          "Click 'Initiate Conversion' and download your professional-grade PDF instantly."
         ]}
-        formats={["DOC", "DOCX", "TXT", "PDF"]}
+        formats={["DOC", "DOCX", "PDF"]}
         relatedTools={[
           { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
           { name: "Excel to PDF", path: "/excel-to-pdf", icon: FileText },
@@ -345,7 +328,7 @@ const WordToPdf = () => {
           { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
         ]}
         schemaName="Word to PDF Converter Online"
-        schemaDescription="Free online Word to PDF converter. Convert DOC and DOCX files to PDF with formatting, fonts, and structure preserved."
+        schemaDescription="Free online Word to PDF converter. Convert DOC and DOCX files to high-fidelity PDF with formatting, fonts, and structure preserved."
       />
     </ToolLayout>
   );

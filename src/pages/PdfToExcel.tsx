@@ -29,6 +29,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Sparkles } from "lucide-react";
 import Tesseract from "tesseract.js";
+import { saveAs } from "file-saver";
+
+import { convertPdfToExcel } from "@/lib/pdfToExcelEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -50,21 +53,20 @@ const PdfToExcel = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [outputFormat, setOutputFormat] = useState("xlsx"); // xlsx or csv
+  const [outputFormat, setOutputFormat] = useState<"xlsx" | "csv">("xlsx");
   const [statusText, setStatusText] = useState("Analyzing structure...");
   const [showOcrModal, setShowOcrModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
 
   useEffect(() => {
     if (files.length > 0 && results.length === 0 && !processing) {
       loadFilePreviews(files);
-      // Removed automatic conversion as per user request
     } else if (files.length === 0) {
       setFileDataList([]);
     }
@@ -137,37 +139,10 @@ const PdfToExcel = () => {
     }
   };
 
-  const cleanCellValue = (val: string) => {
-    let clean = val.trim();
-    if (!clean) return "";
-
-    // Remove random line breaks within cell
-    clean = clean.replace(/\n+/g, " ");
-
-    // Remove duplicated spaces
-    clean = clean.replace(/\s+/g, " ");
-
-    // Numeric detection
-    // Remove common currency symbols and commas for testing numeric state
-    const numericTest = clean.replace(/[$,€,£]/g, "").replace(/,/g, "");
-    if (numericTest && !isNaN(Number(numericTest))) {
-      return Number(numericTest);
-    }
-
-    // Date detection (basic)
-    if (/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}$/.test(clean)) {
-      const date = new Date(clean);
-      if (!isNaN(date.getTime())) return date;
-    }
-
-    return clean;
-  };
-
-  const convert = async (applyOcr = false, skipOcr = false) => {
+  const convert = async (applyOcr = false) => {
     if (files.length === 0) return;
 
-    // Detection phase
-    if (!applyOcr && !skipOcr) {
+    if (!applyOcr) {
       const isScanned = await detectScanned(files[0]);
       if (isScanned) {
         setShowOcrModal(true);
@@ -177,147 +152,24 @@ const PdfToExcel = () => {
 
     setProcessing(true);
     setProgress(0);
-    setStatusText(applyOcr ? "Running OCR..." : "Extracting tables...");
 
     try {
-      const bytes = await files[0].arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-      const wb = XLSX.utils.book_new();
-      let totalRows = 0;
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        setStatusText(applyOcr ? `Processing page ${i} (OCR)...` : `Processing page ${i}...`);
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2 });
-        let pageData: any[][] = [];
-
-        if (applyOcr) {
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext("2d")!;
-          await page.render({ canvasContext: ctx, viewport }).promise;
-
-          const result = (await Tesseract.recognize(canvas.toDataURL("image/png"))) as any;
-          const lines = result.data.lines || [];
-          pageData = lines.map((line: any) => {
-            // Split line into words and group by horizontal proximity
-            const words = line.words || [];
-            const cells: string[] = [];
-            if (words.length > 0) {
-              let currentCell = words[0].text;
-              for (let k = 1; k < words.length; k++) {
-                const gap = words[k].bbox.x0 - words[k - 1].bbox.x1;
-                if (gap > 20) {
-                  cells.push(currentCell);
-                  currentCell = words[k].text;
-                } else {
-                  currentCell += " " + words[k].text;
-                }
-              }
-              cells.push(currentCell);
-            }
-            return cells.map(c => cleanCellValue(c));
-          });
-        } else {
-          const content = await page.getTextContent();
-          const items = content.items as any[];
-
-          // Improved Spatial Grouping for Tables
-          // 1. Group by Y (Rows)
-          const rowsMap: Map<number, any[]> = new Map();
-          items.forEach(item => {
-            const y = Math.round(item.transform[5]);
-            // Use a small tolerance for Y coordinates (line height heuristic)
-            let foundY = Array.from(rowsMap.keys()).find(ry => Math.abs(ry - y) < 5);
-            if (foundY === undefined) {
-              rowsMap.set(y, [item]);
-            } else {
-              rowsMap.get(foundY)!.push(item);
-            }
-          });
-
-          // 2. Sort Rows by Y descending
-          const sortedY = Array.from(rowsMap.keys()).sort((a, b) => b - a);
-
-          // 3. Extract columns from all rows to build a grid
-          const allX: number[] = [];
-          items.forEach(it => allX.push(it.transform[4]));
-          allX.sort((a, b) => a - b);
-
-          // Cluster X coordinates to find column boundaries
-          const columnBoundaries: number[] = [];
-          if (allX.length > 0) {
-            columnBoundaries.push(allX[0]);
-            for (let k = 1; k < allX.length; k++) {
-              if (allX[k] - allX[k - 1] > 20) { // Column gap threshold
-                columnBoundaries.push(allX[k]);
-              }
-            }
-          }
-
-          pageData = sortedY.map(y => {
-            const rowItems = rowsMap.get(y)!.sort((a, b) => a.transform[4] - b.transform[4]);
-            const row: any[] = new Array(columnBoundaries.length).fill("");
-
-            rowItems.forEach(item => {
-              const x = item.transform[4];
-              // Find the closest column index
-              let colIdx = columnBoundaries.findIndex((cb, idx) => {
-                const nextCb = columnBoundaries[idx + 1] || Infinity;
-                return x >= cb - 5 && x < nextCb - 5;
-              });
-              if (colIdx === -1) colIdx = 0;
-
-              row[colIdx] = (String(row[colIdx]) + " " + item.str).trim();
-            });
-            return row.map(cell => cleanCellValue(String(cell)));
-          }).filter(r => r.some(cell => cell.toString().length > 0));
-        }
-
-        if (pageData.length > 0) {
-          const ws = XLSX.utils.aoa_to_sheet(pageData);
-          // Set column widths based on max content
-          const maxWidths = pageData[0].map((_, colIdx) => ({
-            wch: Math.max(...pageData.map(row => (row[colIdx] || "").length)) + 5
-          }));
-          ws['!cols'] = maxWidths;
-
-          XLSX.utils.book_append_sheet(wb, ws, `Page ${i}`);
-          totalRows += pageData.length;
-        }
-
-        setProgress(Math.round((i / pdf.numPages) * 100));
-      }
-
-      let blob: Blob;
-      let extension = outputFormat === "csv" ? ".csv" : ".xlsx";
-
-      if (outputFormat === "csv") {
-        // Combine all sheets into one CSV content
-        let csvContent = "";
-        wb.SheetNames.forEach((sheetName) => {
-          const ws = wb.Sheets[sheetName];
-          csvContent += XLSX.utils.sheet_to_csv(ws) + "\n\n";
-        });
-        blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      } else {
-        const xlsxBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-        blob = new Blob([xlsxBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      }
+      const blob = await convertPdfToExcel(files[0], {
+        outputFormat,
+        useOcr: applyOcr,
+        ocrLang: "eng"
+      }, (p, s) => {
+        setProgress(p);
+        setStatusText(s);
+      });
 
       const url = URL.createObjectURL(blob);
-      const filename = files[0].name.replace(/\.pdf$/i, "") + "_converted" + extension;
+      const filename = files[0].name.replace(/\.pdf$/i, "") + "_converted" + (outputFormat === "xlsx" ? ".xlsx" : ".csv");
 
       setResults([{ file: blob, url, filename }]);
+      saveAs(blob, filename);
 
-      // Auto-download
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-
-      toast.success(`Successfully converted ${pdf.numPages} pages!`);
+      toast.success(`Successfully converted!`);
     } catch (error) {
       console.error(error);
       toast.error("Conversion failed");
@@ -337,7 +189,19 @@ const PdfToExcel = () => {
       metaDescription="Extract tables and data from PDF to Excel or CSV online for free. Accurate PDF to spreadsheet conversion with OCR support. No sign-up required."
       toolId="pdf-to-excel"
       hideHeader={files.length > 0 || processing || results.length > 0}
+      className="pdf-to-excel-page"
     >
+      <style>{`
+        .pdf-to-excel-page h1, 
+        .pdf-to-excel-page h2, 
+        .pdf-to-excel-page h3,
+        .pdf-to-excel-page span,
+        .pdf-to-excel-page button,
+        .pdf-to-excel-page p,
+        .pdf-to-excel-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
       {results.length > 0 ? (
         <ResultView
           results={results}
@@ -426,12 +290,12 @@ const PdfToExcel = () => {
             <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
               <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground font-heading">PDF to Excel</h2>
+                  <h2 className="text-2xl font-bold uppercase tracking-tighter text-foreground font-heading">PDF to Excel</h2>
                 </div>
 
                 <div className="space-y-8 px-1">
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Output Format</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Output Format</Label>
                     <div className="grid grid-cols-1 gap-3">
                       {[
                         { id: 'xlsx', label: 'Standard Excel', desc: 'Preserves layout and formatting.', ext: '.xlsx', icon: <FileSpreadsheet className="h-4 w-4" /> },
@@ -439,7 +303,7 @@ const PdfToExcel = () => {
                       ].map((format) => (
                         <button
                           key={format.id}
-                          onClick={() => setOutputFormat(format.id)}
+                          onClick={() => setOutputFormat(format.id as "xlsx" | "csv")}
                           className={cn(
                             "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
                             outputFormat === format.id ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
@@ -449,8 +313,8 @@ const PdfToExcel = () => {
                             {format.icon}
                           </div>
                           <div className="flex-1">
-                            <p className={cn("text-xs font-black uppercase tracking-widest", outputFormat === format.id ? "text-red-600" : "text-foreground")}>{format.label}</p>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 leading-tight">{format.desc}</p>
+                            <p className={cn("text-xs font-bold uppercase tracking-widest", outputFormat === format.id ? "text-red-600" : "text-foreground")}>{format.label}</p>
+                            <p className="text-[9px] font-semibold text-muted-foreground uppercase mt-1 leading-tight">{format.desc}</p>
                           </div>
                           {outputFormat === format.id && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                         </button>
@@ -466,7 +330,7 @@ const PdfToExcel = () => {
                   <Button
                     onClick={() => convert()}
                     disabled={processing}
-                    className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {processing ? statusText : "Convert to EXCEL"}
                     <ArrowRight className="h-6 w-6" />
@@ -488,7 +352,7 @@ const PdfToExcel = () => {
             <div className="h-12 w-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 mb-4 mx-auto">
               <Sparkles className="h-6 w-6" />
             </div>
-            <AlertDialogTitle className="text-xl font-black uppercase tracking-tighter text-center">
+            <AlertDialogTitle className="text-xl font-bold uppercase tracking-tighter text-center">
               You are trying to convert a scanned PDF
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-4 space-y-4">
@@ -499,7 +363,7 @@ const PdfToExcel = () => {
               <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider italic">
                 Otherwise, the content extraction may be inaccurate or empty.
               </p>
-              <p className="text-sm font-black uppercase tracking-widest pt-4">
+              <p className="text-sm font-bold uppercase tracking-widest pt-4">
                 Do you want to apply OCR?
               </p>
             </AlertDialogDescription>
@@ -507,20 +371,20 @@ const PdfToExcel = () => {
           <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-8">
             <Button
               variant="outline"
-              className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
+              className="w-full h-12 rounded-xl text-[10px] font-bold uppercase tracking-widest border-2"
               onClick={() => {
                 setShowOcrModal(false);
-                convert(false, true); // Continue without OCR
+                convert(); // Continue without OCR
               }}
             >
               Continue without OCR
             </Button>
             <AlertDialogAction asChild>
               <Button
-                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20"
+                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-500/20"
                 onClick={() => {
                   setShowOcrModal(false);
-                  convert(true, false); // Apply OCR
+                  convert(true); // Apply OCR
                 }}
               >
                 Apply OCR

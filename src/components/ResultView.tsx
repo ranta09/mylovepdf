@@ -174,7 +174,7 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
                             onClick={handleDownloadAll}
                             disabled={zipping}
                         >
-                            {zipping ? "Zipping..." : results.length > 1 ? "Download All (ZIP)" : "Download File"}
+                            {zipping ? "Zipping..." : results.length > 1 ? "Download All" : "Download File"}
                         </Button>
 
                         {!hideShare && (

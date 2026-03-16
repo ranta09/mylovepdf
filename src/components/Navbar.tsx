@@ -73,6 +73,17 @@ const Navbar = () => {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  const handleToolNavigation = (path: string) => {
+    if (location.pathname === path) {
+      // Force a full page reload to ensure a clean state as requested
+      window.location.href = path;
+    } else {
+      navigate(path);
+    }
+    setMegaOpen(false);
+    setMobileOpen(false);
+  };
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -97,16 +108,16 @@ const Navbar = () => {
               className="relative z-10 flex items-baseline gap-0"
               style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.03em" }}
             >
-              <span className="text-2xl font-bold tracking-tight text-foreground">Mag</span>
-              <span className="relative text-2xl font-bold tracking-tight text-foreground">
+              <span className="text-2xl font-semibold tracking-tight text-foreground">Mag</span>
+              <span className="relative text-2xl font-semibold tracking-tight text-foreground">
                 <span className="invisible">i</span>
                 <span className="absolute inset-0 flex flex-col items-center">
                   <span className="text-primary animate-bounce text-[10px] leading-none" style={{ marginTop: "-2px" }}>✦</span>
-                  <span className="text-foreground text-2xl font-bold leading-none" style={{ marginTop: "-4px" }}>ı</span>
+                  <span className="text-foreground text-2xl font-semibold leading-none" style={{ marginTop: "-4px" }}>ı</span>
                 </span>
               </span>
-              <span className="text-2xl font-bold tracking-tight text-foreground">c</span>
-              <span className="text-2xl font-black tracking-tight text-primary">DOCX</span>
+              <span className="text-2xl font-semibold tracking-tight text-foreground">c</span>
+              <span className="text-2xl font-bold tracking-tight text-primary">DOCX</span>
             </span>
           </Link>
         </div>
@@ -174,11 +185,11 @@ const Navbar = () => {
                             const colorClass = categoryTextColors[tool.category];
 
                             return (
-                              <Link
+                              <button
                                 key={tool.id}
-                                to={tool.path}
+                                onClick={() => handleToolNavigation(tool.path)}
                                 className={cn(
-                                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 group relative",
+                                  "w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 group relative",
                                   isActive
                                     ? `${colorClass} bg-secondary/80 font-bold`
                                     : "text-foreground/80 hover:bg-secondary hover:text-foreground"
@@ -195,7 +206,7 @@ const Navbar = () => {
                                     className={cn("absolute left-0 w-0.5 h-4 rounded-full", colorClass.replace('text-', 'bg-'))}
                                   />
                                 )}
-                              </Link>
+                              </button>
                             );
                           })}
                         </div>
@@ -235,20 +246,19 @@ const Navbar = () => {
                           const colorClass = categoryTextColors[tool.category];
 
                           return (
-                            <Link
+                            <button
                               key={tool.id}
-                              to={tool.path}
+                              onClick={() => handleToolNavigation(tool.path)}
                               className={cn(
-                                "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                                "w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors text-left",
                                 isActive
                                   ? `${colorClass} bg-secondary font-bold`
                                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                               )}
-                              onClick={() => setMobileOpen(false)}
                             >
                               <Icon className={cn("h-4 w-4 shrink-0", isActive ? colorClass : "")} />
                               {tool.name}
-                            </Link>
+                            </button>
                           );
                         })}
                       </div>

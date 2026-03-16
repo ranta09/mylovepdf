@@ -1,22 +1,22 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import * as XLSX from "xlsx";
-import { FileSpreadsheet, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, Settings, Layout, Layers, RotateCcw, ShieldCheck } from "lucide-react";
+import { FileSpreadsheet, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Upload, Trash2, Plus, RefreshCw, Settings, Layout, Layers, Info, Zap, X, RectangleVertical, RectangleHorizontal, Scan, Maximize } from "lucide-react";
+import { useEffect } from "react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useEffect } from "react";
-import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { convertExcelToPdf, mergeExcelPdfs, getExcelMetadata, ExcelConversionOptions, ExcelMetadata } from "@/lib/excelToPdfEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -24,346 +24,375 @@ const formatSize = (bytes: number): string => {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 };
 
+interface FileWithMetadata {
+  file: File;
+  metadata?: ExcelMetadata;
+  selectedSheets: string[];
+}
+
 const ExcelToPdf = () => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileWithMetadata[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [orientation, setOrientation] = useState("landscape");
-  const [selectedSheet, setSelectedSheet] = useState("all");
-  const [sheetNames, setSheetNames] = useState<string[]>([]);
   const { setDisableGlobalFeatures } = useGlobalUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Conversion Options
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("landscape");
+  const [pageSize, setPageSize] = useState<"A4" | "letter" | "original">("original");
+  const [scaling, setScaling] = useState<"fit" | "actual">("fit");
+  const [mergeFiles, setMergeFiles] = useState(false);
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
 
-  const handleFilesChange = async (newFiles: File[]) => {
-    setFiles(newFiles);
-    if (newFiles.length > 0) {
-      try {
-        const ab = await newFiles[0].arrayBuffer();
-        const wb = XLSX.read(ab);
-        setSheetNames(wb.SheetNames);
-        setSelectedSheet("all");
-      } catch (err) {
-        console.error("Error reading excel sheets:", err);
-        setSheetNames([]);
-      }
-    } else {
-      setSheetNames([]);
-    }
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const convert = async () => {
+  const handleFilesChange = async (newFiles: File[]) => {
+    const validFiles: FileWithMetadata[] = [];
+    
+    for (const file of newFiles) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext === 'xls' || ext === 'xlsx') {
+        const metadata = await getExcelMetadata(file);
+        validFiles.push({ 
+          file, 
+          metadata, 
+          selectedSheets: [...metadata.sheetNames] // Default to all sheets
+        });
+      } else {
+        toast.error(`Unsupported file: ${file.name}. This tool supports XLS and XLSX files only.`);
+      }
+    }
+    
+    setFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const toggleSheet = (fileIdx: number, sheetName: string) => {
+    setFiles(prev => {
+      const newFiles = [...prev];
+      const selected = [...newFiles[fileIdx].selectedSheets];
+      if (selected.includes(sheetName)) {
+        if (selected.length > 1) {
+          newFiles[fileIdx].selectedSheets = selected.filter(s => s !== sheetName);
+        } else {
+          toast.error("At least one sheet must be selected.");
+        }
+      } else {
+        newFiles[fileIdx].selectedSheets = [...selected, sheetName];
+      }
+      return newFiles;
+    });
+  };
+
+  const convert = useCallback(async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(10);
+    setProgress(0);
+    setResults([]);
+
     try {
-      const newResults: ProcessingResult[] = [];
+      const convertedBlobs: Blob[] = [];
+      const individualResults: ProcessingResult[] = [];
 
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer);
+      for (let i = 0; i < files.length; i++) {
+        const item = files[i];
+        
+        // Progress update
+        setProgress(Math.round((i / files.length) * 90) + 5);
 
-        const sheetsToConvert = selectedSheet === "all"
-          ? workbook.SheetNames
-          : [selectedSheet];
+        try {
+          const options: ExcelConversionOptions = {
+            pageOrientation: orientation,
+            pageSize,
+            scaling,
+            selectedSheets: item.selectedSheets
+          };
 
-        const doc = await PDFDocument.create();
-        const font = await doc.embedFont(StandardFonts.Helvetica);
-        const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
-        const fontSize = 9;
-        const margin = 40;
-        const isLandscape = orientation === "landscape";
-        const pageWidth = isLandscape ? 841.89 : 595.28;
-        const pageHeight = isLandscape ? 595.28 : 841.89;
-        const rowHeight = 20;
-        const maxRows = Math.floor((pageHeight - margin * 2) / rowHeight) - 1;
-
-        for (const sheetName of sheetsToConvert) {
-          const worksheet = workbook.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
-          if (rows.length === 0) continue;
-
-          const colCount = Math.max(...rows.map(r => r.length));
-          const colWidth = (pageWidth - margin * 2) / Math.max(colCount, 1);
-
-          for (let chunk = 0; chunk < rows.length; chunk += maxRows) {
-            const page = doc.addPage([pageWidth, pageHeight]);
-            const pageRows = rows.slice(chunk, chunk + maxRows);
-
-            if (chunk === 0 && sheetsToConvert.length > 1) {
-              page.drawText(`Sheet: ${sheetName}`, {
-                x: margin, y: pageHeight - margin + 10,
-                size: 12, font: boldFont, color: rgb(0.2, 0.2, 0.2),
-              });
-            }
-
-            pageRows.forEach((row, rowIdx) => {
-              const y = pageHeight - margin - (rowIdx + 1) * rowHeight;
-              const isHeader = chunk === 0 && rowIdx === 0;
-              const usedFont = isHeader ? boldFont : font;
-
-              row.forEach((cell: any, colIdx: number) => {
-                const x = margin + colIdx * colWidth + 4;
-                const cellValue = cell !== null && cell !== undefined ? String(cell) : "";
-                const maxChars = Math.floor(colWidth / (fontSize * 0.5));
-                const truncated = cellValue.length > maxChars ? cellValue.substring(0, maxChars - 1) + "…" : cellValue;
-                page.drawText(truncated, { x, y: y + 5, size: fontSize, font: usedFont, color: rgb(0.1, 0.1, 0.1) });
-              });
-
-              page.drawLine({
-                start: { x: margin, y },
-                end: { x: pageWidth - margin, y },
-                thickness: 0.5, opacity: 0.15, color: rgb(0, 0, 0),
-              });
-
-              if (isHeader) {
-                page.drawRectangle({
-                  x: margin, y: y, width: pageWidth - margin * 2, height: rowHeight,
-                  color: rgb(0.94, 0.95, 0.97), opacity: 0.5,
-                });
-              }
-            });
-          }
+          const pdfBlob = await convertExcelToPdf(item.file, options);
+          convertedBlobs.push(pdfBlob);
+          
+          individualResults.push({
+            file: pdfBlob,
+            url: URL.createObjectURL(pdfBlob),
+            filename: item.file.name.replace(/\.[^/.]+$/, "") + ".pdf"
+          });
+        } catch (err) {
+          console.error(`Failed to convert ${item.file.name}:`, err);
+          toast.error(`Conversion failed for ${item.file.name}. Please try another Excel file.`);
         }
-
-        const pdfBytes = await doc.save();
-        const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const filename = file.name.replace(/\.[^/.]+$/, "") + ".pdf";
-        newResults.push({ file: blob, url, filename });
-
-        // Auto download
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-
-        setProgress(Math.round(((newResults.length) / files.length) * 100));
       }
 
-      setResults(newResults);
-      toast.success("Excel converted to PDF successfully!");
+      if (mergeFiles && convertedBlobs.length > 1) {
+        setProgress(95);
+        const mergedBlob = await mergeExcelPdfs(convertedBlobs);
+        const mergedResult: ProcessingResult = {
+          file: mergedBlob,
+          url: URL.createObjectURL(mergedBlob),
+          filename: "merged_workbook.pdf"
+        };
+        setResults([mergedResult, ...individualResults]);
+      } else {
+        setResults(individualResults);
+        if (individualResults.length === 1) {
+          const a = document.createElement("a");
+          a.href = individualResults[0].url;
+          a.download = individualResults[0].filename;
+          a.click();
+        }
+      }
+
+      toast.success(mergeFiles ? "Sheets merged and converted!" : "Conversion complete!");
     } catch (error) {
-      console.error("Excel conversion error:", error);
-      toast.error("Failed to convert Excel to PDF");
+      console.error("Conversion error:", error);
+      toast.error("Conversion failed. Please try another Excel document.");
     } finally {
       setProcessing(false);
       setProgress(0);
     }
-  };
+  }, [files, orientation, pageSize, scaling, mergeFiles]);
 
   return (
     <ToolLayout
       title="Excel to PDF"
-      description="Convert spreadsheets into professional PDF tables"
+      description="Convert Excel spreadsheets to professional PDF format with layout preservation"
       category="convert"
       icon={<FileSpreadsheet className="h-7 w-7" />}
       metaTitle="Excel to PDF Converter Online Free – Fast & Secure | MagicDocx"
-      metaDescription="Convert Excel spreadsheets (XLSX, XLS) to PDF online for free. Preserve tables, formatting, and data. Landscape or portrait layout. No sign-up needed."
+      metaDescription="Convert Excel spreadsheets (XLSX, XLS) to high-quality PDF online. Preserve table formatting, colors, and data. Fast, secure, and professional."
       toolId="excel-to-pdf"
-      hideHeader={files.length > 0 || processing || results.length > 0}
+      hideHeader={files.length > 0 || results.length > 0 || processing}
+      className="excel-to-pdf-page"
     >
+      <style>{`
+        .excel-to-pdf-page h1, 
+        .excel-to-pdf-page h2, 
+        .excel-to-pdf-page h3,
+        .excel-to-pdf-page span,
+        .excel-to-pdf-page button,
+        .excel-to-pdf-page p,
+        .excel-to-pdf-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
 
-      <div className="mt-5">
-        {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
-        {(files.length > 0 || processing || results.length > 0) && (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+      {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
+      {(files.length > 0 || processing || results.length > 0) && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
 
-            {/* Header Diagnostic / Execution Control */}
-            <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-                  <FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          {processing ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
+              <div className="w-full max-w-md space-y-8 text-center">
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  <Settings className="h-10 w-10 text-primary animate-pulse" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-black uppercase tracking-tighter">Spreadsheet Engine</h2>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                    {processing ? "Extrapolating Cells..." : results.length > 0 ? "Conversion Terminal" : "Awaiting Execution"}
-                  </p>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">Synthesizing Sheet Matrices</h3>
+                  <Progress value={progress} className="h-2 rounded-full" />
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {(results.length > 0 || !processing) && (
-                  <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); setSheetNames([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                    <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                  </Button>
-                )}
-                {results.length === 0 && !processing && (
-                  <Button size="sm" onClick={convert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                    <ArrowRight className="h-4 w-4" /> Convert to PDF
-                  </Button>
-                )}
               </div>
             </div>
-
-            {processing ? (
-              <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-                <div className="w-full max-w-md space-y-8 text-center">
-                  <div className="relative flex justify-center items-center h-32">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-24 h-24 rounded-full border-4 border-emerald-500/10" />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-24 h-24 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-                    </div>
-                    <FileSpreadsheet className="h-8 w-8 text-emerald-500 animate-pulse" />
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-black uppercase tracking-tighter">Extrapolating Data Vectors</h3>
-                    <Progress value={progress} className="h-2 rounded-full" />
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
-                  </div>
-                </div>
-              </div>
-            ) : results.length > 0 ? (
-              <div className="flex-1 overflow-hidden">
-                <ResultView results={results} onReset={() => { setFiles([]); setResults([]); setSheetNames([]); }} />
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-row overflow-hidden">
-                {/* LEFT PANEL: File Manifest */}
-                <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                  <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                    <FileBox className="h-4 w-4 text-emerald-500" />
-                    <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
-                  </div>
-                  <ScrollArea className="flex-1">
-                    <div className="p-6 space-y-3">
-                      {files.map((file, idx) => (
-                        <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-emerald-500/30 transition-all">
-                          <div className="h-12 w-10 bg-emerald-50 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
-                            <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+          ) : results.length > 0 ? (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
+            </div>
+          ) : (
+            <>
+              {/* LEFT SIDE: Thumbnails Grid (Small Window Preview) */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+                <ScrollArea className="flex-1">
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {files.map((item, idx) => (
+                        <div key={idx} className="group flex flex-col gap-3 p-4 bg-background border border-border hover:border-primary/50 rounded-2xl transition-all duration-200 text-left relative shadow-sm">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="h-14 w-12 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center justify-center relative shrink-0">
+                              <FileSpreadsheet className="h-7 w-7 text-red-500" />
+                              <div className="absolute top-1 left-1 bg-red-500 text-white text-[7px] font-bold px-1 rounded-sm uppercase tracking-tighter">XLSX</div>
+                            </div>
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-[11px] font-bold text-foreground uppercase tracking-tight truncate">{item.file.name}</p>
+                              <div className="flex items-center gap-3">
+                                <p className="text-[9px] font-bold text-primary uppercase">{formatSize(item.file.size)}</p>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">{item.metadata?.sheetNames.length} Sheets</p>
+                              </div>
+                            </div>
+                            <button onClick={() => removeFile(idx)} className="p-2 bg-secondary/50 rounded-xl hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
+                          
+                          <div className="space-y-2 mt-2">
+                             <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Select Sheets</Label>
+                             <div className="flex flex-wrap gap-2">
+                               {item.metadata?.sheetNames.map(sheet => (
+                                 <button
+                                   key={sheet}
+                                   onClick={() => toggleSheet(idx, sheet)}
+                                   className={cn(
+                                     "px-3 py-1.5 rounded-lg border text-[9px] font-bold transition-all uppercase tracking-tighter",
+                                     item.selectedSheets.includes(sheet) 
+                                       ? "border-red-500/50 bg-red-500/5 text-red-600 shadow-sm" 
+                                       : "border-border bg-secondary/20 text-muted-foreground hover:border-red-500/30"
+                                   )}
+                                 >
+                                   {sheet}
+                                 </button>
+                               ))}
+                             </div>
                           </div>
                         </div>
                       ))}
-                      <button onClick={() => setFiles([])} className="w-full p-4 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
-                        + Resync Payload
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-full min-h-[160px] border-2 border-dashed border-border hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+                      >
+                        <Plus className="h-8 w-8" />
+                        Add More Workbook
                       </button>
+                      <input type="file" ref={fileInputRef} className="hidden" multiple accept=".xls,.xlsx" onChange={(e) => e.target.files && handleFilesChange(Array.from(e.target.files))} />
                     </div>
-                  </ScrollArea>
-                </div>
+                  </div>
+                </ScrollArea>
+              </div>
 
-                {/* CENTER: Workbench */}
-                <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
-                  <div className="w-full max-w-4xl space-y-8">
-                    {/* Configuration Map */}
-                    <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
-                      <div className="p-6 border-b border-border bg-secondary/5">
-                        <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                          <Settings className="h-4 w-4 text-emerald-500" />
-                          Engine Parameters
-                        </h3>
+              {/* RIGHT PANEL: Workbench Settings */}
+              <div className="flex-1 bg-secondary/10 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 lg:pt-8 lg:pb-12 lg:px-12">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-red-500/10 rounded-2xl">
+                          <FileSpreadsheet className="h-6 w-6 text-red-500" />
+                        </div>
+                        <div className="flex flex-col">
+                          <h4 className="text-base font-bold uppercase tracking-tighter leading-none text-red-600">Excel to PDF</h4>
+                        </div>
                       </div>
-                      <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Orientation Profile */}
-                        <div className="space-y-6">
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Layout Matrix</label>
-                            <h4 className="text-lg font-black uppercase tracking-tighter">Page Orientation</h4>
-                          </div>
+
+                      <div className="space-y-6">
+                        {/* Orientation */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Page Orientation</Label>
                           <div className="grid grid-cols-2 gap-3">
-                            {['landscape', 'portrait'].map((o) => (
-                              <button key={o} onClick={() => setOrientation(o)}
+                            {[
+                              { id: 'portrait', label: 'Portrait', icon: RectangleVertical },
+                              { id: 'landscape', label: 'Landscape', icon: RectangleHorizontal }
+                            ].map((o) => (
+                              <button 
+                                key={o.id}
+                                onClick={() => setOrientation(o.id as any)}
                                 className={cn(
-                                  "flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all group",
-                                  orientation === o ? "border-emerald-500 bg-emerald-500/5" : "border-border bg-card/50 hover:border-emerald-500/30"
-                                )}>
-                                <Layout className={cn("h-8 w-8 transition-transform group-hover:scale-110", orientation === o ? "text-emerald-500" : "text-muted-foreground")} style={{ transform: o === 'landscape' ? 'rotate(90deg)' : 'none' }} />
-                                <span className={cn("text-[10px] font-black uppercase tracking-widest", orientation === o ? "text-emerald-500" : "text-muted-foreground")}>{o}</span>
+                                  "h-14 rounded-xl border-2 flex flex-col items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-all",
+                                  orientation === o.id ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                <o.icon className="h-4 w-4" /> {o.label}
                               </button>
                             ))}
                           </div>
                         </div>
 
-                        {/* Sheet Selection */}
-                        <div className="space-y-6">
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Source Select</label>
-                            <h4 className="text-lg font-black uppercase tracking-tighter">Workbook Sheets</h4>
+                        {/* Paper Format */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Paper Format</Label>
+                          <div className="grid grid-cols-3 gap-3">
+                            {["Original", "A4", "Letter"].map((size) => (
+                              <button
+                                key={size}
+                                onClick={() => setPageSize(size.toLowerCase() as any)}
+                                className={cn(
+                                  "h-12 rounded-xl border-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                  pageSize === size.toLowerCase() ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                {size}
+                              </button>
+                            ))}
                           </div>
-                          {sheetNames.length > 1 ? (
-                            <div className="space-y-4">
-                              <Select value={selectedSheet} onValueChange={setSelectedSheet}>
-                                <SelectTrigger className="h-14 rounded-2xl border-2 border-border bg-card font-black uppercase tracking-widest text-xs">
-                                  <SelectValue placeholder="Unified Stream" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl">
-                                  <SelectItem value="all" className="text-xs font-bold uppercase">All Sheets Unified</SelectItem>
-                                  {sheetNames.map(name => (
-                                    <SelectItem key={name} value={name} className="text-xs font-bold uppercase">{name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase leading-relaxed text-center">
-                                Multi-sheet detected. Selecting 'Unified' will merge all sheets into a single document flow.
+                        </div>
+
+                        {/* Scaling */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Sheet Scaling</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { id: 'fit', label: 'Fit to Page', icon: Maximize },
+                              { id: 'actual', label: 'Actual Size', icon: Scan }
+                            ].map((s) => (
+                              <button
+                                key={s.id}
+                                onClick={() => setScaling(s.id as any)}
+                                className={cn(
+                                  "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                  scaling === s.id ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                <s.icon className="h-4 w-4" /> {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Merge Toggle */}
+                        {files.length > 1 && (
+                          <div className="flex items-center justify-between p-4 bg-secondary/5 rounded-2xl border border-border/50 group hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-3">
+                              <Layers className="h-4 w-4 text-red-500" />
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Merge Power-Mode</span>
+                                <span className="text-[9px] font-medium text-muted-foreground uppercase mt-0.5">Combine all workbooks into one high-res PDF</span>
                               </div>
                             </div>
-                          ) : (
-                            <div className="h-14 flex items-center justify-center rounded-2xl border-2 border-dashed border-border bg-secondary/20 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                              Single Stream Detected
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Ready State */}
-                    <div className="flex justify-center">
-                      <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for {files.length} documents · {orientation} layout</span>
+                            <Switch checked={mergeFiles} onCheckedChange={setMergeFiles} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* Footer Meta */}
-            <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
-              <div className="flex items-center gap-4">
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Encrypted Channel</span>
-                <span className="w-1 h-1 rounded-full bg-border" />
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">MagicDocx Convert v4.0.0</span>
+                {/* Sticky Action Footer */}
+                <div className="mt-auto p-6 lg:px-12 bg-background border-t border-border shrink-0">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full">
+                    <Button 
+                      size="lg" 
+                      onClick={convert} 
+                      className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-red-500/20 hover:shadow-red-500/40 bg-red-600 hover:bg-red-700 transition-all gap-4 group"
+                    >
+                      Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest uppercase">Target Buffer: PDF</span>
-              </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
+      )}
 
-        {files.length === 0 && (
-          <div className="mt-5">
-            <FileUpload
-              accept=".xls,.xlsx"
-              files={files}
-              onFilesChange={handleFilesChange}
-              multiple
-              label="Select Excel files to convert"
-
-            />
+      <div className="mt-5">
+        {files.length === 0 && !processing && results.length === 0 && (
+          <div className="mt-10 text-center">
+            <FileUpload accept=".xls,.xlsx" files={[]} onFilesChange={handleFilesChange} label="Select Excel files to convert" multiple />
           </div>
         )}
       </div>
       <ToolSeoSection
         toolName="Excel to PDF Converter"
         category="convert"
-        intro="MagicDocx Excel to PDF converter transforms your Excel spreadsheets into clean, professionally formatted PDF documents. Choose between landscape and portrait orientation, select individual sheets or convert all at once. Your table data, headers, and cell formatting are preserved — making this perfect for reports, financial statements, and data exports."
+        intro="MagicDocx Excel to PDF converter transforms your complex spreadsheets (XLS, XLSX) into professional, high-fidelity PDF documents. Our precision engine preserves table formatting, colors, and row alignment with pixel-perfect accuracy. Support for multi-sheet selection, scaling options, and document merging makes it the ultimate professional utility for high-resolution financial reports and data synthesis."
         steps={[
-          "Upload one or more Excel files (XLSX or XLS) using the file upload area.",
-          "Select your preferred page orientation: Landscape or Portrait.",
-          "If your file has multiple sheets, choose which sheets to include.",
-          "Click \"Convert to PDF\" and your file will download automatically."
+          "Upload one or more Excel files (XLS or XLSX) to the secure workspace.",
+          "Select specific sheets to convert or export the entire workbook.",
+          "Configure page layout including orientation, scaling, and paper format in the workbench.",
+          "Toggle the 'Merge' option if you wish to combine multiple workbooks into a single PDF.",
+          "Click 'Initiate Synthesis' and download your professional-grade PDF instantly."
         ]}
         formats={["XLS", "XLSX", "PDF"]}
         relatedTools={[
@@ -373,7 +402,7 @@ const ExcelToPdf = () => {
           { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
         ]}
         schemaName="Excel to PDF Converter Online"
-        schemaDescription="Free online Excel to PDF converter. Convert XLS and XLSX spreadsheets to PDF with table formatting preserved."
+        schemaDescription="Free online Excel to PDF converter. Convert XLS and XLSX spreadsheets to high-fidelity PDF with formatting, tables, and structure preserved."
       />
     </ToolLayout>
   );

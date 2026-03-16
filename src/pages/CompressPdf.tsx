@@ -371,7 +371,7 @@ const CompressPdf = () => {
                   <div className="h-4 w-[1px] bg-border mx-1" />
                   <div className="flex items-center gap-2 text-left">
                     <FileBox className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{files.length} Files</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">{files.length} Files</span>
                   </div>
                 </div>
 
@@ -380,7 +380,7 @@ const CompressPdf = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => { setFiles([]); setFileDataList([]); }}
-                    className="h-8 text-[10px] font-black uppercase tracking-widest text-destructive hover:bg-destructive/5 px-3"
+                    className="h-8 text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/5 px-3"
                   >
                     <RefreshCw className="h-3.5 w-3.5 mr-1" /> Reset
                   </Button>
@@ -403,13 +403,13 @@ const CompressPdf = () => {
                             <button onClick={() => rotateFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-primary transition-colors shadow-sm border border-border/50"><RotateCw className="h-3 w-3" /></button>
                             <button onClick={() => removeFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-destructive transition-colors shadow-sm border border-border/50"><X className="h-3 w-3" /></button>
                           </div>
-                          <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
+                          <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
                             {idx + 1}
                           </div>
                         </div>
                         <div className="px-1 min-w-0">
-                          <p className="text-[9px] font-black text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
-                          <p className="text-[8px] font-black text-primary uppercase">{formatSize(fd.file.size)}</p>
+                          <p className="text-[9px] font-bold text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
+                          <p className="text-[8px] font-bold text-primary uppercase">{formatSize(fd.file.size)}</p>
                         </div>
                       </div>
                     ))}
@@ -432,18 +432,18 @@ const CompressPdf = () => {
                   <div className="bg-background border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -z-0" />
                     <div className="relative z-10 space-y-1">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Weight</p>
-                      <p className="text-3xl font-black text-foreground tracking-tighter">{formatSize(totalOriginalSize)}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Weight</p>
+                      <p className="text-3xl font-bold text-foreground tracking-tighter">{formatSize(totalOriginalSize)}</p>
                     </div>
                   </div>
                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-0" />
                     <div className="relative z-10 space-y-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">Post Estimation</p>
-                        <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-glow">-{reductionPercentage}%</span>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Post Estimation</p>
+                        <span className="bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse shadow-glow">-{reductionPercentage}%</span>
                       </div>
-                      <p className="text-3xl font-black text-primary tracking-tighter">{formatSize(estimatedSize)}</p>
+                      <p className="text-3xl font-bold text-primary tracking-tighter">{formatSize(estimatedSize)}</p>
                     </div>
                   </div>
                 </div>
@@ -454,8 +454,8 @@ const CompressPdf = () => {
                       <Zap className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex flex-col">
-                      <h3 className="text-base font-black uppercase tracking-tighter">Compression Engine</h3>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider italic">Advanced neural optimization active</p>
+                      <h3 className="text-base font-bold uppercase tracking-tighter">Compression Engine</h3>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Advanced neural optimization active</p>
                     </div>
                   </div>
 
@@ -475,8 +475,8 @@ const CompressPdf = () => {
                       >
                         <m.icon className={cn("h-6 w-6 shrink-0", mode === m.id ? m.color : "text-muted-foreground/40")} />
                         <div className="flex flex-col">
-                          <p className={cn("text-[11px] font-black uppercase tracking-widest", mode === m.id ? "text-foreground" : "text-muted-foreground")}>{m.label}</p>
-                          <p className="text-[9px] font-black text-muted-foreground/40 uppercase leading-none tracking-tight">{m.desc}</p>
+                          <p className={cn("text-[11px] font-bold uppercase tracking-widest", mode === m.id ? "text-foreground" : "text-muted-foreground")}>{m.label}</p>
+                          <p className="text-[9px] font-medium text-muted-foreground/40 uppercase leading-none tracking-tight">{m.desc}</p>
                         </div>
                         {mode === m.id && <div className="ml-auto"><CheckCircle2 className="h-4 w-4 text-primary" /></div>}
                       </button>
@@ -486,7 +486,7 @@ const CompressPdf = () => {
                   <Button
                     onClick={startCompression}
                     size="lg"
-                    className="w-full h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
+                    className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
                   >
                     Start Neural Compression
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -508,18 +508,18 @@ const CompressPdf = () => {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-2xl font-black uppercase tracking-tighter">Compressing Document Architecture</h3>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{files.length > 1 ? `Optimizing File ${currentFileIndex + 1} of ${files.length}` : "Generating Neural Preview..."}</p>
+                <h3 className="text-2xl font-bold uppercase tracking-tighter">Compressing Document Architecture</h3>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{files.length > 1 ? `Optimizing File ${currentFileIndex + 1} of ${files.length}` : "Generating Neural Preview..."}</p>
               </div>
 
               <div className="space-y-2">
                 <Progress value={progress} className="h-2 rounded-full" />
-                <p className="text-[11px] font-black text-primary uppercase tracking-widest">{progress}% Complete</p>
+                <p className="text-[11px] font-bold text-primary uppercase tracking-widest">{progress}% Complete</p>
               </div>
 
               <div className="pt-4 border-t border-border mt-8 space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
                 {files.map((f, i) => (
-                  <div key={i} className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                  <div key={i} className="flex justify-between items-center text-[10px] font-medium uppercase tracking-widest">
                     <span className="flex items-center gap-2 max-w-[70%] truncate">
                       {i < currentFileIndex ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : i === currentFileIndex ? <Loader2 className="h-3 w-3 text-primary animate-spin" /> : <div className="h-3 w-3 rounded-full border border-border" />}
                       <span className={cn(i === currentFileIndex ? "text-foreground" : "text-muted-foreground")}>{f.name}</span>
@@ -541,24 +541,24 @@ const CompressPdf = () => {
                   <CheckCircle2 className="h-10 w-10 text-green-500" />
                 </div>
                 <div className="space-y-1">
-                  <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Architectural Optimization Complete</h2>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Documents have been successfully compressed</p>
+                  <h2 className="text-3xl font-bold uppercase tracking-tighter leading-none">Architectural Optimization Complete</h2>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Documents have been successfully compressed</p>
                 </div>
 
                 <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border grid grid-cols-3 gap-6 divide-x divide-border shadow-sm">
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Input size</p>
-                    <p className="text-md font-bold text-muted-foreground/60 line-through tracking-tighter">{formatSize(totalOriginalSize)}</p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Input size</p>
+                    <p className="text-md font-medium text-muted-foreground/60 line-through tracking-tighter">{formatSize(totalOriginalSize)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black text-primary uppercase tracking-widest">Optimized Weight</p>
-                    <p className="text-2xl font-black text-primary tracking-tighter">{formatSize(results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
+                    <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Optimized Weight</p>
+                    <p className="text-2xl font-bold text-primary tracking-tighter">{formatSize(results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black text-green-500 uppercase tracking-widest">Neutral Savings</p>
+                    <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Neutral Savings</p>
                     <div className="flex flex-col items-center">
-                      <p className="text-md font-bold text-foreground tracking-tighter">{formatSize(totalOriginalSize - results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
-                      <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full mt-1">
+                      <p className="text-md font-medium text-foreground tracking-tighter">{formatSize(totalOriginalSize - results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
+                      <span className="bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-1">
                         {Math.round((1 - (results.reduce((acc, r) => acc + r.compressedSize, 0) / (totalOriginalSize || 1))) * 100)}%
                       </span>
                     </div>
@@ -569,7 +569,7 @@ const CompressPdf = () => {
               <div className="p-8 space-y-3">
                 <Button
                   size="lg"
-                  className="w-full h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30 transition-all hover:scale-[1.01]"
+                  className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/30 transition-all hover:scale-[1.01]"
                   onClick={() => {
                     if (zipUrl) {
                       const a = document.createElement('a');
@@ -592,7 +592,7 @@ const CompressPdf = () => {
                 >
                   <Download className="h-5 w-5 mr-3" /> Download {results.length > 1 ? 'ZIP Archive' : 'Optimized PDF'}
                 </Button>
-                <Button variant="ghost" className="w-full h-12 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground" onClick={() => { setResults([]); setFiles([]); }}>
+                <Button variant="ghost" className="w-full h-12 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground" onClick={() => { setResults([]); setFiles([]); }}>
                   <RefreshCw className="h-4 w-4 mr-2" /> Start New Compression
                 </Button>
               </div>

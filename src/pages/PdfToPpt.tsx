@@ -54,18 +54,13 @@ const PdfToPpt = () => {
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(fileDataList.length > 0 || processing || !!results);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [fileDataList.length, processing, results, setDisableGlobalFeatures]);
 
   useEffect(() => {
     if (files.length > 0 && !processing) {
       loadFilePreviews(files);
-      
-      // Auto-start conversion ONLY on the very first upload
-      if (results.length === 0 && fileDataList.length === 0) {
-        handleInitialUpload(files[0]);
-      }
     } else if (files.length === 0) {
       setFileDataList([]);
     }
@@ -119,14 +114,6 @@ const PdfToPpt = () => {
     setFileDataList(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleInitialUpload = async (file: File) => {
-    const isScanned = await detectScanned(file);
-    if (isScanned) {
-      setShowOcrModal(true);
-    } else {
-      convert(false);
-    }
-  };
 
   const detectScanned = async (file: File): Promise<boolean> => {
     try {
@@ -169,10 +156,11 @@ const PdfToPpt = () => {
       // For simplicity and better control over multi-file, we wrap it
       
       const combinedBlob = await convertPdfToPptEditable(
-        // The engine currently handles multi-file by taking the File array or first file
-        // Let's ensure it handles our multi-file array if needed, but for now we follow the existing pattern
-        // of creating one presentation from all files.
-        files, 
+        files,
+        { 
+          useOcr: applyOcr,
+          ocrLang: "eng" // Or from state if added
+        },
         (p, s) => {
           setProgress(p);
           setStatusText(s);
@@ -197,8 +185,8 @@ const PdfToPpt = () => {
 
       toast.success(`Converted ${files.length} document(s) to editable PowerPoint!`);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to convert PDF to PowerPoint");
+      console.error("Conversion Error Details:", err);
+      toast.error(`Conversion Failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -216,8 +204,45 @@ const PdfToPpt = () => {
       metaDescription="Convert PDF pages to editable PowerPoint slides online for free. Each PDF page becomes a PPTX slide. Fast, secure, and no software needed."
       toolId="pdf-to-ppt"
       hideHeader={files.length > 0 || processing || results.length > 0}
+      className="pdf-to-ppt-page"
     >
-      {files.length > 0 ? (
+      <style>{`
+        .pdf-to-ppt-page h1, 
+        .pdf-to-ppt-page h2, 
+        .pdf-to-ppt-page h3,
+        .pdf-to-ppt-page span,
+        .pdf-to-ppt-page button,
+        .pdf-to-ppt-page p,
+        .pdf-to-ppt-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
+      {results.length > 0 ? (
+        <ResultView
+          results={results}
+          hideShare={true}
+          onReset={resetAll}
+        />
+      ) : processing ? (
+        <div className="fixed inset-x-0 bottom-0 top-16 z-40 bg-background flex flex-col items-center justify-center p-12">
+          <div className="w-full max-w-lg space-y-8 text-center">
+            <div className="relative flex justify-center">
+              <div className="w-24 h-24 rounded-full border-4 border-red-500/20 border-t-red-600 animate-spin" />
+              <Presentation className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-red-600" />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-black uppercase tracking-tighter text-foreground">{statusText}</h3>
+              <Progress value={progress} className="h-3 rounded-full bg-secondary" />
+              <p className="text-xs font-bold text-muted-foreground uppercase tabular-nums">{progress}% Complete</p>
+            </div>
+            
+            <div className="p-6 rounded-2xl bg-muted/50 border border-border text-center space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pro Tip</p>
+              <p className="text-[9px] font-bold text-muted-foreground/70 uppercase">High-fidelity conversion preserves layout and text editability.</p>
+            </div>
+          </div>
+        </div>
+      ) : files.length > 0 ? (
         <div className="fixed inset-x-0 bottom-0 top-16 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-display">
           {/* Left Panel: Preview Area (Thumbnail Grid) - 70% Width */}
           <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
@@ -262,14 +287,14 @@ const PdfToPpt = () => {
                         </div>
                       </div>
                       <div className="px-1 min-w-0">
-                        <p className="text-[9px] font-black text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
-                        <p className="text-[8px] font-black text-red-600 uppercase">{formatSize(fd.file.size)}</p>
+                        <p className="text-[9px] font-bold text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
+                        <p className="text-[8px] font-bold text-red-600 uppercase">{formatSize(fd.file.size)}</p>
                       </div>
                     </div>
                   ))}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-[3/4] border-2 border-dashed border-border hover:border-red-500/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-red-600 hover:bg-red-500/5 transition-all outline-none focus:ring-2 focus:ring-red-500/20"
+                    className="aspect-[3/4] border-2 border-dashed border-border hover:border-red-500/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-red-600 hover:bg-red-500/5 transition-all outline-none focus:ring-2 focus:ring-red-500/20"
                   >
                     <Plus className="h-5 w-5" />
                     Add More
@@ -284,104 +309,45 @@ const PdfToPpt = () => {
             <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
               <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground font-heading italic">PDF to PowerPoint</h2>
+                  <h2 className="text-2xl font-bold uppercase tracking-tighter text-foreground font-heading">PDF to PowerPoint</h2>
                 </div>
 
-                {results.length > 0 ? (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="p-6 rounded-3xl bg-green-500/5 border border-green-500/10 space-y-4">
-                      <div className="h-12 w-12 rounded-2xl bg-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
-                        <CheckCircle2 className="h-6 w-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-black uppercase tracking-widest text-foreground">Processing Complete!</h4>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed">Your PowerPoint presentation is ready for download.</p>
-                      </div>
+                <div className="space-y-4 leading-relaxed">
+                  <div className="flex items-center gap-2 text-red-600">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Premium Features</span>
+                  </div>
+                  
+                  <div className="space-y-6 px-1">
+                    <div className="space-y-1.5 border-l-2 border-red-500/20 pl-4">
+                      <h4 className="text-[11px] font-bold uppercase tracking-tight text-foreground">Smart Deck Generation</h4>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase leading-relaxed max-w-[240px]">Automatically maps PDF pages to 16:9 slide layouts, preserving text editability.</p>
+                    </div>
+                    
+                    <div className="space-y-1.5 border-l-2 border-red-500/20 pl-4">
+                      <h4 className="text-[11px] font-bold uppercase tracking-tight text-foreground">Vector Preservation</h4>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase leading-relaxed max-w-[240px]">Maintains full text copy-paste functionality across all slides.</p>
                     </div>
 
-                    <div className="space-y-3">
-                      <Button
-                        onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = results[0].url;
-                          a.download = results[0].filename;
-                          a.click();
-                        }}
-                        className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
-                      >
-                        Download PPT
-                        <Upload className="h-6 w-6 rotate-180" />
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        onClick={resetAll}
-                        className="w-full h-14 rounded-2xl border-2 font-black uppercase tracking-widest text-xs gap-3 hover:bg-secondary/5"
-                      >
-                        Start Over
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
+                    <div className="space-y-1.5 border-l-2 border-red-500/20 pl-4">
+                      <h4 className="text-[11px] font-bold uppercase tracking-tight text-foreground">Master Layouts</h4>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase leading-relaxed max-w-[240px]">Automatically optimizes and scales aspect ratios for PowerPoint.</p>
                     </div>
                   </div>
-                ) : processing ? (
-                  <div className="space-y-8 animate-in fade-in duration-500">
-                    <div className="p-8 rounded-3xl bg-background border border-border shadow-xl space-y-6 text-center">
-                      <div className="relative flex justify-center mx-auto">
-                        <div className="w-20 h-20 rounded-full border-4 border-red-500/10 border-t-red-600 animate-spin" />
-                        <Presentation className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-red-600" />
-                      </div>
-                      <div className="space-y-3">
-                        <h3 className="text-lg font-black uppercase tracking-tighter text-foreground leading-none">{statusText}</h3>
-                        <Progress value={progress} className="h-2 rounded-full bg-secondary" />
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tabular-nums">{progress}% Complete</p>
-                      </div>
-                    </div>
-
-                    <div className="p-6 rounded-2xl bg-muted/50 border border-border text-center space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pro Tip</p>
-                      <p className="text-[9px] font-bold text-muted-foreground/70 uppercase">High-fidelity conversion preserves layout and text editability.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-8 px-1">
-                    <div className="p-6 rounded-3xl bg-red-500/5 border border-red-500/10 space-y-4">
-                      <div className="h-12 w-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
-                        <Sparkles className="h-6 w-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Smart Deck Generation</h4>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase leading-relaxed">Our engine automatically maps PDF pages to 16:9 slide layouts, preserving text editability and image fidelity.</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-2xl border border-border bg-card/50 flex items-start gap-4">
-                        <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 shrink-0" />
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Vector Preservation</p>
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">Maintains text copy-paste functionality across all slides.</p>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-2xl border border-border bg-card/50 flex items-start gap-4">
-                        <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 shrink-0" />
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Master Layouts</p>
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">Automatically optimizes aspect ratios for PowerPoint.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={() => convert(conversionMode === "ocr")} // Use conversionMode to decide OCR
-                      disabled={processing}
-                      className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                      Convert to PPT
-                      <ArrowRight className="h-6 w-6" />
-                    </Button>
-                  </div>
-                )}
+                </div>
               </div>
+            </div>
+
+            {/* Sticky Action Footer */}
+            <div className="p-8 border-t border-border bg-card/80 backdrop-blur-md shrink-0">
+              <Button
+                onClick={() => convert(conversionMode === "ocr")}
+                disabled={processing}
+                className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Convert to PowerPoint
+                <ArrowRight className="h-6 w-6" />
+              </Button>
             </div>
           </div>
         </div>
@@ -397,7 +363,7 @@ const PdfToPpt = () => {
             <div className="h-12 w-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 mb-4 mx-auto">
               <Sparkles className="h-6 w-6" />
             </div>
-            <AlertDialogTitle className="text-xl font-black uppercase tracking-tighter text-center">
+            <AlertDialogTitle className="text-xl font-bold uppercase tracking-tighter text-center">
               You are trying to convert a scanned PDF
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-4 space-y-4">
@@ -408,7 +374,7 @@ const PdfToPpt = () => {
               <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider italic">
                 Otherwise, the pages will be converted as images inside PowerPoint slides.
               </p>
-              <p className="text-sm font-black uppercase tracking-widest pt-4">
+              <p className="text-sm font-bold uppercase tracking-widest pt-4">
                 Do you want to apply OCR?
               </p>
             </AlertDialogDescription>
@@ -416,7 +382,7 @@ const PdfToPpt = () => {
           <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-8">
             <Button
               variant="outline"
-              className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
+              className="w-full h-12 rounded-xl text-[10px] font-bold uppercase tracking-widest border-2"
               onClick={() => {
                 setShowOcrModal(false);
                 convert(false, true); // Continue without OCR
@@ -426,7 +392,7 @@ const PdfToPpt = () => {
             </Button>
             <AlertDialogAction asChild>
               <Button
-                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20"
+                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-500/20"
                 onClick={() => {
                   setConversionMode("ocr");
                   setShowOcrModal(false);

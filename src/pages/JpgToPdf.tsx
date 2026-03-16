@@ -1,21 +1,41 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
-import { PDFDocument } from "pdf-lib";
-import { FileImage, GripVertical, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, ChevronUp, ChevronDown, Upload } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
+import { 
+  FileImage, 
+  FileBox, 
+  CheckCircle2, 
+  ArrowRight, 
+  RotateCcw, 
+  ShieldCheck, 
+  Upload,
+  X,
+  Plus,
+  Settings,
+  RectangleVertical,
+  RectangleHorizontal,
+  Maximize,
+  Scan,
+  Layers,
+  Layout,
+  GripVertical,
+  MoveHorizontal,
+  AlignCenter,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { useEffect } from "react";
-import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { convertImagesToPdf, ImageToPdfOptions } from "@/lib/jpgToPdfEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -25,329 +45,388 @@ const formatSize = (bytes: number): string => {
 
 const JpgToPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
   const { setDisableGlobalFeatures } = useGlobalUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Conversion Options
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [pageSize, setPageSize] = useState<"fit" | "a4" | "letter">("fit");
+  const [margin, setMargin] = useState<"none" | "small" | "large">("none");
+  const [alignment, setAlignment] = useState<"center" | "full" | "fit">("center");
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
 
-  // Settings
-  const [pageSize, setPageSize] = useState("fit");
-  const [orientation, setOrientation] = useState("portrait");
-
-  // Generate previews when files change
-  const handleFilesChange = useCallback((newFiles: File[]) => {
+  const removeFile = (index: number) => {
+    const newFiles = [...files];
+    newFiles.splice(index, 1);
+    const newPreviews = [...previews];
+    URL.revokeObjectURL(newPreviews[index]);
+    newPreviews.splice(index, 1);
     setFiles(newFiles);
-    // Generate previews
-    const urls = newFiles.map(f => URL.createObjectURL(f));
-    setPreviews(urls);
-  }, []);
+    setPreviews(newPreviews);
+  };
+
+  const handleFilesChange = (newFiles: File[]) => {
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+    
+    for (const file of newFiles) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (['jpg', 'jpeg'].includes(ext || '')) {
+        validFiles.push(file);
+        newPreviews.push(URL.createObjectURL(file));
+      } else {
+        toast.error(`Unsupported file: ${file.name}. This tool supports JPG and JPEG images only.`);
+      }
+    }
+    
+    setFiles(prev => [...prev, ...validFiles]);
+    setPreviews(prev => [...prev, ...newPreviews]);
+  };
 
   const moveFile = (from: number, to: number) => {
     if (to < 0 || to >= files.length) return;
     const newFiles = [...files];
-    const [moved] = newFiles.splice(from, 1);
-    newFiles.splice(to, 0, moved);
-    handleFilesChange(newFiles);
+    const newPreviews = [...previews];
+    
+    const [movedFile] = newFiles.splice(from, 1);
+    newFiles.splice(to, 0, movedFile);
+    
+    const [movedPreview] = newPreviews.splice(from, 1);
+    newPreviews.splice(to, 0, movedPreview);
+    
+    setFiles(newFiles);
+    setPreviews(newPreviews);
   };
 
-  const convert = async () => {
+  const convert = useCallback(async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(10);
+    setProgress(0);
+    setResults([]);
+
     try {
-      const doc = await PDFDocument.create();
-      for (let i = 0; i < files.length; i++) {
-        const bytes = await files[i].arrayBuffer();
-        const uint8 = new Uint8Array(bytes);
-        const isPng = files[i].type === "image/png";
-        let img;
-        try {
-          img = isPng ? await doc.embedPng(uint8) : await doc.embedJpg(uint8);
-        } catch {
-          toast.error(`Could not process ${files[i].name}`);
-          continue;
-        }
+      const options: ImageToPdfOptions = {
+        pageSize,
+        orientation,
+        margin,
+        alignment
+      };
 
-        let pw = img.width;
-        let ph = img.height;
+      // Progress simulation
+      const interval = setInterval(() => {
+        setProgress(prev => Math.min(prev + 10, 90));
+      }, 500);
 
-        if (pageSize === "a4") {
-          pw = orientation === "portrait" ? 595.28 : 841.89;
-          ph = orientation === "portrait" ? 841.89 : 595.28;
-        } else if (pageSize === "letter") {
-          pw = orientation === "portrait" ? 612 : 792;
-          ph = orientation === "portrait" ? 792 : 612;
-        }
-
-        const page = doc.addPage([pw, ph]);
-        const scale = Math.min(pw / img.width, ph / img.height);
-        const imgWidth = img.width * scale;
-        const imgHeight = img.height * scale;
-        const x = (pw - imgWidth) / 2;
-        const y = (ph - imgHeight) / 2;
-        page.drawImage(img, { x, y, width: imgWidth, height: imgHeight });
-        setProgress(10 + ((i + 1) / files.length) * 80);
-      }
-
-      const pdfBytes = await doc.save();
+      const pdfBlob = await convertImagesToPdf(files, options);
+      
+      clearInterval(interval);
       setProgress(100);
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const filename = "images_converted.pdf";
 
-      setResults([{ file: blob, url, filename }]);
+      const filename = files.length === 1 
+        ? files[0].name.replace(/\.[^/.]+$/, "") + ".pdf" 
+        : "converted-images.pdf";
+
+      const result: ProcessingResult = {
+        file: pdfBlob,
+        url: URL.createObjectURL(pdfBlob),
+        filename
+      };
+
+      setResults([result]);
 
       // Auto download
       const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
+      a.href = result.url;
+      a.download = result.filename;
       a.click();
 
       toast.success("Images converted to PDF!");
-    } catch {
-      toast.error("Failed to convert images");
+    } catch (error) {
+      console.error("Conversion error:", error);
+      toast.error("Conversion failed. Please try different images.");
     } finally {
       setProcessing(false);
       setProgress(0);
     }
-  };
+  }, [files, pageSize, orientation, margin, alignment]);
 
   return (
     <ToolLayout
       title="JPG to PDF"
-      description="Convert JPG and PNG images into a PDF document"
+      description="Convert JPG and JPEG images into a high-quality PDF document"
       category="convert"
       icon={<FileImage className="h-7 w-7" />}
       metaTitle="JPG to PDF Converter Online Free – Fast & Secure | MagicDocx"
-      metaDescription="Convert JPG, JPEG, and PNG images to PDF online for free. Combine multiple images into one PDF, reorder pages, set page size. No sign-up needed."
+      metaDescription="Convert JPG and JPEG images to high-quality PDF online. Preserve resolution, colors, and quality. Fast, secure, and professional."
       toolId="jpg-to-pdf"
-      hideHeader={files.length > 0 || results.length > 0}
+      hideHeader={files.length > 0 || results.length > 0 || processing}
+      className="jpg-to-pdf-page"
     >
+      <style>{`
+        .jpg-to-pdf-page h1, 
+        .jpg-to-pdf-page h2, 
+        .jpg-to-pdf-page h3,
+        .jpg-to-pdf-page span,
+        .jpg-to-pdf-page button,
+        .jpg-to-pdf-page p,
+        .jpg-to-pdf-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
+
       {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
       {(files.length > 0 || processing || results.length > 0) && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-
-          {/* Header Diagnostic / Execution Control */}
-          <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
-                <FileImage className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tighter">Image Mapping Engine</h2>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                  {processing ? "Compressing Pixels..." : results.length > 0 ? "Conversion Terminal" : "Awaiting Execution"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {(results.length > 0 || !processing) && (
-                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); setPreviews([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                  <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                </Button>
-              )}
-              {results.length === 0 && !processing && (
-                <Button size="sm" onClick={convert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                  <ArrowRight className="h-4 w-4" /> Convert to PDF
-                </Button>
-              )}
-            </div>
-          </div>
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
 
           {processing ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center text-center">
-                <div className="relative flex justify-center items-center h-32">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-indigo-500/10" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
-                  </div>
-                  <FileImage className="h-8 w-8 text-indigo-500 animate-pulse" />
+              <div className="w-full max-w-md space-y-8 text-center">
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  <Settings className="h-10 w-10 text-primary animate-pulse" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-black uppercase tracking-tighter">Encoding Visual Buffers</h3>
+                  <h3 className="text-xl font-bold uppercase tracking-tighter text-red-600">Encoding Visual Buffers</h3>
                   <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
                 </div>
               </div>
             </div>
           ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden">
-              <ResultView results={results} onReset={() => { setFiles([]); setResults([]); setPreviews([]); }} />
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ResultView results={results} onReset={() => { 
+                previews.forEach(p => URL.revokeObjectURL(p));
+                setFiles([]); 
+                setResults([]); 
+                setPreviews([]); 
+              }} />
             </div>
           ) : (
-            <div className="flex-1 flex flex-row overflow-hidden">
-              {/* LEFT PANEL: File Manifest / Sequence */}
-              <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                  <FileBox className="h-4 w-4 text-indigo-500" />
-                  <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
-                </div>
+            <>
+              {/* LEFT SIDE: Thumbnails Grid (70%) */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
                 <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-3">
-                    {files.map((file, i) => (
-                      <div key={`${file.name}-${i}`} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-indigo-500/30 transition-all">
-                        <div className="flex flex-col gap-1 shrink-0">
-                          <button onClick={() => moveFile(i, i - 1)} disabled={i === 0} className="p-1 rounded bg-secondary/50 text-muted-foreground hover:text-indigo-500 disabled:opacity-30 transition-colors">
-                            <ChevronUp className="h-3 w-3" />
-                          </button>
-                          <button onClick={() => moveFile(i, i + 1)} disabled={i === files.length - 1} className="p-1 rounded bg-secondary/50 text-muted-foreground hover:text-indigo-500 disabled:opacity-30 transition-colors">
-                            <ChevronDown className="h-3 w-3" />
-                          </button>
-                        </div>
-                        <div className="h-12 w-12 bg-secondary/30 rounded border border-border flex items-center justify-center shrink-0 overflow-hidden relative">
-                          {previews[i] ? (
-                            <img src={previews[i]} className="w-full h-full object-cover" />
-                          ) : (
-                            <FileImage className="h-5 w-5 text-indigo-500/30" />
-                          )}
-                          <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[8px] font-black px-1 rounded-bl leading-none h-3.5 flex items-center">
-                            {i + 1}
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                      {files.map((file, idx) => (
+                        <div key={`${file.name}-${idx}`} className="group flex flex-col gap-3 p-3 bg-background border border-border hover:border-primary/50 rounded-2xl transition-all duration-200 text-left relative shadow-sm">
+                          <div className="aspect-square bg-secondary/20 rounded-xl overflow-hidden relative border border-border/50">
+                            <img src={previews[idx]} alt={file.name} className="w-full h-full object-cover" />
+                            <div className="absolute top-2 left-2 h-6 w-6 bg-background/90 backdrop-blur-sm border border-border rounded flex items-center justify-center text-[10px] font-bold shadow-sm">
+                              {idx + 1}
+                            </div>
+                            <button 
+                              onClick={() => removeFile(idx)} 
+                              className="absolute top-2 right-2 p-1.5 bg-background/90 backdrop-blur-sm border border-border rounded hover:text-destructive transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                            <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                              <button 
+                                onClick={() => moveFile(idx, idx - 1)} 
+                                disabled={idx === 0}
+                                className="p-1.5 bg-background/90 backdrop-blur-sm border border-border rounded hover:text-primary disabled:opacity-30"
+                              >
+                                <ChevronLeft className="h-3 w-3 rotate-90" />
+                              </button>
+                              <button 
+                                onClick={() => moveFile(idx, idx + 1)} 
+                                disabled={idx === files.length - 1}
+                                className="p-1.5 bg-background/90 backdrop-blur-sm border border-border rounded hover:text-primary disabled:opacity-30"
+                              >
+                                <ChevronRight className="h-3 w-3 rotate-90" />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="min-w-0 px-1">
+                            <p className="text-[10px] font-bold text-foreground uppercase tracking-tight truncate">{file.name}</p>
+                            <p className="text-[9px] font-bold text-primary uppercase">{formatSize(file.size)}</p>
                           </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <button onClick={() => handleFilesChange([])} className="w-full p-6 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
-                      + Resync Payload
-                    </button>
+                      ))}
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="aspect-square border-2 border-dashed border-border hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+                      >
+                        <Plus className="h-8 w-8" />
+                        Add Images
+                      </button>
+                      <input type="file" ref={fileInputRef} className="hidden" multiple accept=".jpg,.jpeg" onChange={(e) => e.target.files && handleFilesChange(Array.from(e.target.files))} />
+                    </div>
                   </div>
                 </ScrollArea>
               </div>
 
-              {/* CENTER: Workbench */}
-              <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
-                <div className="w-full max-w-4xl space-y-8">
-                  {/* Configuration Map */}
-                  <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
-                    <div className="p-6 border-b border-border bg-secondary/5">
-                      <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                        <Settings className="h-4 w-4 text-indigo-500" />
-                        Engine Parameters
-                      </h3>
-                    </div>
-                    <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-12">
-                      {/* Page Size Selection */}
-                      <div className="space-y-6">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Output Format</label>
-                          <h4 className="text-lg font-black uppercase tracking-tighter">Page Dimensions</h4>
+              {/* RIGHT PANEL: Workbench Settings (30%) */}
+              <div className="flex-1 bg-secondary/10 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 lg:pt-8 lg:pb-12 lg:px-12">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-red-500/10 rounded-2xl">
+                          <FileImage className="h-6 w-6 text-red-500" />
                         </div>
-                        <Select value={pageSize} onValueChange={setPageSize}>
-                          <SelectTrigger className="h-14 rounded-2xl border-2 border-border bg-card font-black uppercase tracking-widest text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem value="fit" className="text-xs font-bold uppercase">Auto-Fit to Image</SelectItem>
-                            <SelectItem value="a4" className="text-xs font-bold uppercase">A4 (Standard)</SelectItem>
-                            <SelectItem value="letter" className="text-xs font-bold uppercase">US Letter</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase leading-relaxed">
-                          Selecting 'Auto-Fit' will preserve the exact aspect ratio of each source image in the final document stream.
-                        </p>
+                        <div className="flex flex-col">
+                          <h4 className="text-base font-bold uppercase tracking-tighter leading-none text-red-600">JPG to PDF</h4>
+                        </div>
                       </div>
 
-                      {/* Orientation Selection */}
                       <div className="space-y-6">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Layout Matrix</label>
-                          <h4 className="text-lg font-black uppercase tracking-tighter">Orientation</h4>
+                        {/* Orientation */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Page Orientation</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { id: 'portrait', label: 'Portrait', icon: RectangleVertical },
+                              { id: 'landscape', label: 'Landscape', icon: RectangleHorizontal }
+                            ].map((o) => (
+                              <button 
+                                key={o.id}
+                                onClick={() => setOrientation(o.id as any)}
+                                className={cn(
+                                  "h-14 rounded-xl border-2 flex flex-col items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-all",
+                                  orientation === o.id ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                <o.icon className="h-4 w-4" /> {o.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {['portrait', 'landscape'].map((o) => (
-                            <button
-                              key={o}
-                              onClick={() => setOrientation(o)}
-                              disabled={pageSize === 'fit'}
-                              className={cn(
-                                "flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all group",
-                                orientation === o ? "border-indigo-500 bg-indigo-500/5" : "border-border bg-card/50 hover:border-indigo-500/30",
-                                pageSize === 'fit' && "opacity-30 cursor-not-allowed"
-                              )}>
-                              <Layout className={cn("h-8 w-8 transition-transform group-hover:scale-110", orientation === o ? "text-indigo-500" : "text-muted-foreground")} style={{ transform: o === 'landscape' ? 'rotate(90deg)' : 'none' }} />
-                              <span className={cn("text-[10px] font-black uppercase tracking-widest", orientation === o ? "text-indigo-500" : "text-muted-foreground")}>{o}</span>
-                            </button>
-                          ))}
+
+                        {/* Paper Format */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Page Size</Label>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { id: 'fit', label: 'Fit Image' },
+                                { id: 'a4', label: 'A4' },
+                                { id: 'letter', label: 'Letter' }
+                            ].map((size) => (
+                              <button
+                                key={size.id}
+                                onClick={() => setPageSize(size.id as any)}
+                                className={cn(
+                                  "h-12 rounded-xl border-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                  pageSize === size.id ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                {size.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Margins */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Margins</Label>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { id: 'none', label: 'No Margin' },
+                                { id: 'small', label: 'Small' },
+                                { id: 'large', label: 'Large' }
+                            ].map((m) => (
+                              <button
+                                key={m.id}
+                                onClick={() => setMargin(m.id as any)}
+                                className={cn(
+                                  "h-12 rounded-xl border-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                  margin === m.id ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                {m.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Alignment */}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Image Alignment</Label>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { id: 'center', label: 'Center', icon: AlignCenter },
+                                { id: 'full', label: 'Full Width', icon: MoveHorizontal },
+                                { id: 'fit', label: 'Fit Page', icon: Maximize }
+                            ].map((a) => (
+                              <button
+                                key={a.id}
+                                onClick={() => setAlignment(a.id as any)}
+                                className={cn(
+                                  "h-14 rounded-xl border-2 flex flex-col items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-all",
+                                  alignment === a.id ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                )}
+                              >
+                                <a.icon className="h-4 w-4" /> {a.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Execution Readiness */}
-                  <div className="flex flex-col items-center gap-6 pt-4">
-                    <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm">
-                      <CheckCircle2 className="h-4 w-4 text-indigo-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for {files.length} images · {pageSize} template</span>
-                    </div>
-
-                    <Button size="lg" onClick={convert} className="h-16 rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95 gap-3">
-                      Synthesize PDF Buffer <ArrowRight className="h-6 w-6" />
+                {/* Sticky Action Footer */}
+                <div className="mt-auto p-6 lg:px-12 bg-background border-t border-border shrink-0">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full">
+                    <Button 
+                      size="lg" 
+                      onClick={convert} 
+                      className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-red-500/20 hover:shadow-red-500/40 bg-red-600 hover:bg-red-700 transition-all gap-4 group"
+                    >
+                      Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
-
-          {/* Footer Meta */}
-          <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> AES-256 Kernel</span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">MagicDocx Image v6.1.0</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest uppercase">Target Buffer: PDF Stream</span>
-            </div>
-          </div>
         </div>
       )}
 
-      <div className="mt-5">
-        {files.length === 0 && (
-          <div className="mt-5">
-            <FileUpload
-              accept=".jpg,.jpeg,.png"
-              multiple
-              files={files}
-              onFilesChange={handleFilesChange}
-              label="Select images to convert (JPG, JPEG, PNG)"
-            />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && !processing && results.length === 0 && (
+        <div className="mt-8 text-center uppercase">
+          <FileUpload 
+            accept=".jpg,.jpeg" 
+            files={[]} 
+            onFilesChange={handleFilesChange} 
+            label="Select JPG or JPEG images to convert" 
+            multiple
+          />
+        </div>
+      )}
+
       <ToolSeoSection
         toolName="JPG to PDF Converter"
         category="convert"
-        intro="MagicDocx JPG to PDF converter combines your JPEG and PNG images into a single, professionally structured PDF document. Upload multiple images, reorder them with drag-and-drop, select your page size (A4, Letter, or Auto-Fit), and download your PDF instantly. Perfect for creating photo books, scanned document archives, or multi-image reports."
+        intro="MagicDocx JPG to PDF converter transforms your images (JPG, JPEG) into professional PDF documents. Our precision engine preserves resolution and color accuracy with pixel-perfect results. Support for multiple images, custom margins, page sizes, and drag-and-drop reordering makes it a professional utility for high-quality document synthesis."
         steps={[
-          "Upload one or more JPG, JPEG, or PNG images using the file upload area.",
-          "Reorder images using the up/down buttons to set your desired page sequence.",
-          "Select your page size (Auto-Fit, A4, or US Letter) and orientation.",
-          "Click \"Synthesize PDF Buffer\" to combine images into a PDF and download."
+          "Upload your JPG or JPEG images to the secure workspace.",
+          "Reorder images by dragging them into your preferred sequence.",
+          "Configure page layout including orientation, margins, and paper format in the workbench.",
+          "All uploaded images will be automatically combined into a single multi-page PDF.",
+          "Click 'Initiate Synthesis' and download your professional-grade PDF instantly."
         ]}
-        formats={["JPG", "JPEG", "PNG", "PDF"]}
+        formats={["JPG", "JPEG", "PDF"]}
         relatedTools={[
+          { name: "PNG to PDF", path: "/png-to-pdf", icon: ImageIcon },
           { name: "PDF to JPG", path: "/pdf-to-jpg", icon: FileImage },
-          { name: "Compress PDF", path: "/compress-pdf", icon: FileImage },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileBox },
-          { name: "Word to PDF", path: "/word-to-pdf", icon: FileImage },
+          { name: "Merge PDF", path: "/merge-pdf", icon: Layers },
+          { name: "Compress PDF", path: "/compress-pdf", icon: Scan },
         ]}
         schemaName="JPG to PDF Converter Online"
-        schemaDescription="Free online JPG to PDF converter. Combine multiple JPEG/PNG images into a single PDF document with custom page sizes."
+        schemaDescription="Free professional online JPG to PDF converter. Combine multiple images into a high-fidelity PDF with custom layout preservation."
       />
     </ToolLayout>
   );

@@ -22,6 +22,7 @@ interface ToolLayoutProps {
   metaDescription?: string;
   hideHeader?: boolean;
   toolId?: string;
+  className?: string;
 }
 
 const ToolLayout = ({
@@ -34,6 +35,7 @@ const ToolLayout = ({
   metaDescription,
   hideHeader,
   toolId,
+  className,
 }: ToolLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -61,7 +63,7 @@ const ToolLayout = ({
       </Helmet>
 
       <div
-        className="flex min-h-screen flex-col bg-background"
+        className={cn("flex min-h-screen flex-col bg-background", className)}
         style={{
           '--primary': `var(--tool-${currentTool?.category || category})`,
           '--ring': `var(--tool-${currentTool?.category || category})`

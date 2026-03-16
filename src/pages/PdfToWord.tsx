@@ -46,11 +46,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { saveAs } from "file-saver";
-import {
-  convertPdfToWordExact,
-  convertPdfToWordOCR,
-  convertPdfToWordImage,
-} from "@/lib/pdfToWordEngine";
+import { convertPdfToWord } from "@/lib/pdfToWordEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -69,9 +65,9 @@ const PdfToWord = () => {
 
   // Settings State
   const [outputFormat, setOutputFormat] = useState("docx");
-  const [conversionMode, setConversionMode] = useState("standard");
+  const [conversionMode, setConversionMode] = useState<"exact" | "text">("exact");
   const [ocrEnabled, setOcrEnabled] = useState(false);
-  const [ocrLanguage, setOcrLanguage] = useState("auto");
+  const [ocrLanguage, setOcrLanguage] = useState("eng");
   const [imageHandling, setImageHandling] = useState("keep");
   const [pageRange, setPageRange] = useState("all");
   const [customRange, setCustomRange] = useState("");
@@ -81,7 +77,7 @@ const PdfToWord = () => {
   const [pendingConversion, setPendingConversion] = useState<{ file: File, isScanned: boolean } | null>(null);
 
   // Viewer State
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
@@ -91,9 +87,9 @@ const PdfToWord = () => {
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
 
   useEffect(() => {
     if (files.length > 0) {
@@ -132,16 +128,6 @@ const PdfToWord = () => {
     }
   };
 
-  const renderPageToImage = async (_page: any): Promise<string> => {
-    const viewport = _page.getViewport({ scale: 2.0 });
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d")!;
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    await _page.render({ canvasContext: context, viewport }).promise;
-    return canvas.toDataURL("image/png");
-  };
-
   const detectScanned = async (file: File): Promise<boolean> => {
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -166,7 +152,7 @@ const PdfToWord = () => {
     }
   };
 
-  const convert = async (forceOcr?: boolean, forceNoOcr?: boolean) => {
+  const convert = async (forceOcr?: boolean) => {
     if (files.length === 0) return;
 
     for (const file of files) {
@@ -176,8 +162,8 @@ const PdfToWord = () => {
       }
     }
 
-    // Check if any file is scanned if we are in Exact Layout mode
-    if (conversionMode === 'standard' && !forceNoOcr && !forceOcr) {
+    // Check if any file is scanned
+    if (!forceOcr && conversionMode === 'exact') {
       const isScanned = await detectScanned(files[0]);
       if (isScanned) {
         setPendingConversion({ file: files[0], isScanned: true });
@@ -193,7 +179,6 @@ const PdfToWord = () => {
 
     try {
       for (const file of files) {
-        // Determine page range
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
@@ -222,25 +207,17 @@ const PdfToWord = () => {
           return;
         }
 
-        const progressCb = (p: number, s: string) => {
+        const blob = await convertPdfToWord(file, {
+          mode: conversionMode,
+          pages: pagesToConvert,
+          useOcr: !!forceOcr || conversionMode === 'text',
+          ocrLang: ocrLanguage
+        }, (p, s) => {
           setProgress(p);
           setStatusText(s);
-        };
+        });
 
-        const effectiveOcr = forceOcr || conversionMode === 'ocr';
-        const effectiveImageOnly = forceNoOcr;
-
-        let blob: Blob;
-
-        if (effectiveImageOnly) {
-          blob = await convertPdfToWordImage(file, pagesToConvert, progressCb);
-        } else if (effectiveOcr) {
-          blob = await convertPdfToWordOCR(file, pagesToConvert, ocrLanguage, progressCb);
-        } else {
-          blob = await convertPdfToWordExact(file, pagesToConvert, imageHandling, progressCb);
-        }
-
-        const outName = file.name.replace(/\.[^/.]+$/, "") + "_converted" + (outputFormat === 'docx' ? ".docx" : ".doc");
+        const outName = file.name.replace(/\.[^/.]+$/, "") + "_converted.docx";
         saveAs(blob, outName);
         newResults.push({ file: blob, url: URL.createObjectURL(blob), filename: outName });
       }
@@ -331,7 +308,19 @@ const PdfToWord = () => {
       metaDescription="Convert PDF to Word (DOCX) online for free. Extract text and preserve layout. Fast, accurate, and secure PDF to Word conversion — no sign-up needed."
       toolId="pdf-to-word"
       hideHeader={results.length > 0}
+      className="pdf-to-word-page"
     >
+      <style>{`
+        .pdf-to-word-page h1, 
+        .pdf-to-word-page h2, 
+        .pdf-to-word-page h3,
+        .pdf-to-word-page span,
+        .pdf-to-word-page button,
+        .pdf-to-word-page p,
+        .pdf-to-word-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
       {results.length > 0 ? (
         <ResultView
           results={results}
@@ -410,47 +399,47 @@ const PdfToWord = () => {
             <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
               <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground font-heading">PDF to Word</h2>
+                  <h2 className="text-2xl font-bold uppercase tracking-tighter text-foreground font-heading">PDF to Word</h2>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground italic">Conversion Modes</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Conversion Modes</Label>
                   </div>
 
                   <div className="space-y-3">
                     <button
-                      onClick={() => setConversionMode('standard')}
+                      onClick={() => setConversionMode('exact')}
                       className={cn(
                         "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
-                        conversionMode === 'standard' ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
+                        conversionMode === 'exact' ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
                       )}
                     >
-                      <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === 'standard' ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
+                      <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === 'exact' ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
                         <Type className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === 'standard' ? "text-red-600" : "text-foreground")}>Exact Layout Conversion</p>
+                        <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === 'exact' ? "text-red-600" : "text-foreground")}>Exact Layout Conversion</p>
                         <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 leading-tight">Convert the PDF to Word while preserving the original layout, formatting, images, and structure as closely as possible.</p>
                       </div>
-                      {conversionMode === 'standard' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                      {conversionMode === 'exact' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                     </button>
 
                     <button
-                      onClick={() => setConversionMode('ocr')}
+                      onClick={() => setConversionMode('text')}
                       className={cn(
                         "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
-                        conversionMode === 'ocr' ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
+                        conversionMode === 'text' ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
                       )}
                     >
-                      <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === 'ocr' ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
+                      <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === 'text' ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
                         <Languages className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === 'ocr' ? "text-red-600" : "text-foreground")}>Text Only (OCR)</p>
+                        <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === 'text' ? "text-red-600" : "text-foreground")}>Text Only (OCR)</p>
                         <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 leading-tight">Extract only the text from the document and convert it into editable Word text using OCR.</p>
                       </div>
-                      {conversionMode === 'ocr' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                      {conversionMode === 'text' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                     </button>
                   </div>
                 </div>
@@ -461,9 +450,9 @@ const PdfToWord = () => {
               <Button
                 onClick={() => convert()}
                 disabled={processing}
-                className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Convert to WORD
+                Convert to Word
                 <ArrowRight className="h-6 w-6" />
               </Button>
             </div>
@@ -485,7 +474,7 @@ const PdfToWord = () => {
             <div className="h-12 w-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 mb-4 mx-auto">
               <Sparkles className="h-6 w-6" />
             </div>
-            <AlertDialogTitle className="text-xl font-black uppercase tracking-tighter text-center">
+            <AlertDialogTitle className="text-xl font-bold uppercase tracking-tighter text-center">
               You are trying to convert a scanned PDF
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-4 space-y-4">
@@ -496,7 +485,7 @@ const PdfToWord = () => {
               <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider italic">
                 Otherwise, the content of your document will be converted as an image inside a non-editable Word file.
               </p>
-              <p className="text-sm font-black uppercase tracking-widest pt-4">
+              <p className="text-sm font-bold uppercase tracking-widest pt-4">
                 Do you want to apply OCR?
               </p>
             </AlertDialogDescription>
@@ -507,7 +496,7 @@ const PdfToWord = () => {
               className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
               onClick={() => {
                 setShowOcrModal(false);
-                convert(false, true); // Continue without OCR
+                convert(); // Continue without OCR
               }}
             >
               Continue without OCR
@@ -516,8 +505,8 @@ const PdfToWord = () => {
               <Button
                 className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20"
                 onClick={() => {
-                  setConversionMode("ocr");
-                  convert(true, false); // Apply OCR
+                  setConversionMode("text");
+                  convert(true); // Apply OCR
                 }}
               >
                 Apply OCR
