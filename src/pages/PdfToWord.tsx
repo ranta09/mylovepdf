@@ -47,17 +47,10 @@ import { toast } from "sonner";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { saveAs } from "file-saver";
 import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType,
-  ImageRun
-} from "docx";
-import Tesseract from "tesseract.js";
+  convertPdfToWordExact,
+  convertPdfToWordOCR,
+  convertPdfToWordImage,
+} from "@/lib/pdfToWordEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
