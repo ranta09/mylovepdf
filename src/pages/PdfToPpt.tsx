@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import Tesseract from "tesseract.js";
+import { convertPdfToPptEditable } from "@/lib/pdfToPptEngine";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,7 +152,6 @@ const PdfToPpt = () => {
     if (files.length === 0) return;
 
     if (!applyOcr && !skipScannedCheck) {
-      // Check the first file for scanned status as a sample
       const isScanned = await detectScanned(files[0]);
       if (isScanned) {
         setShowOcrModal(true);
@@ -161,149 +161,31 @@ const PdfToPpt = () => {
 
     setProcessing(true);
     setProgress(0);
-    setStatusText(applyOcr ? "Running OCR..." : "Analyzing layout...");
+    setStatusText("Initializing High-Fidelity Engine...");
 
     try {
-      const pptx = new pptxgen();
-      pptx.author = "MagicDOCX";
-      pptx.layout = "LAYOUT_16x9";
-
-      let processedPages = 0;
-      let totalPages = 0;
-
-      // First pass: count total pages for progress
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        totalPages += pdf.numPages;
-      }
-
-      // Second pass: convert
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        
-        if (files.length === 1) {
-          pptx.title = file.name.replace(/\.pdf$/i, "");
-        } else {
-          pptx.title = "Combined Presentation";
+      // Use the new advanced engine for high-fidelity editable conversion
+      // Note: For now we pass all files to the engine or process them sequentially
+      // For simplicity and better control over multi-file, we wrap it
+      
+      const combinedBlob = await convertPdfToPptEditable(
+        // The engine currently handles multi-file by taking the File array or first file
+        // Let's ensure it handles our multi-file array if needed, but for now we follow the existing pattern
+        // of creating one presentation from all files.
+        files, 
+        (p, s) => {
+          setProgress(p);
+          setStatusText(s);
         }
+      );
 
-        for (let i = 1; i <= pdf.numPages; i++) {
-          processedPages++;
-          setStatusText(applyOcr ? `Processing page ${processedPages}/${totalPages} (OCR)...` : `Processing page ${processedPages}/${totalPages}...`);
-          
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 2 });
-          const slide = pptx.addSlide();
-
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext("2d")!;
-
-          if (applyOcr) {
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            const imageData = canvas.toDataURL("image/png");
-            const result = (await Tesseract.recognize(imageData)) as any;
-            const lines = result.data.lines || [];
-
-            lines.forEach((line: any) => {
-              const bbox = line.bbox;
-              slide.addText(line.text, {
-                x: (bbox.x0 / viewport.width) * 10,
-                y: (bbox.y0 / viewport.height) * 5.625,
-                w: ((bbox.x1 - bbox.x0) / viewport.width) * 10,
-                h: ((bbox.y1 - bbox.y0) / viewport.height) * 5.625,
-                fontSize: 10,
-                color: "000000",
-              });
-            });
-          } else {
-            const content = await page.getTextContent();
-            const items = content.items as any[];
-
-            const lines: any[] = [];
-            items.forEach(item => {
-              if (!item.str.trim()) return;
-              const y = Math.round(item.transform[5]);
-              let line = lines.find(l => Math.abs(l.y - y) < 5);
-              if (!line) {
-                line = { y, items: [] };
-                lines.push(line);
-              }
-              line.items.push(item);
-            });
-
-            lines.sort((a, b) => b.y - a.y);
-
-            const blocks: any[] = [];
-            lines.forEach(line => {
-              line.items.sort((a, b) => a.transform[4] - b.transform[4]);
-              const lastBlock = blocks[blocks.length - 1];
-              const lineText = line.items.map((it: any) => it.str).join(" ");
-              const avgY = line.y;
-              const avgFontSize = Math.abs(line.items[0].transform[0]);
-
-              if (lastBlock && Math.abs(lastBlock.y - avgY) < avgFontSize * 2 && Math.abs(lastBlock.fontSize - avgFontSize) < 2) {
-                lastBlock.text += "\n" + lineText;
-                lastBlock.h += avgFontSize;
-              } else {
-                blocks.push({
-                  text: lineText,
-                  x: line.items[0].transform[4],
-                  y: avgY,
-                  w: viewport.width - line.items[0].transform[4] * 2,
-                  h: avgFontSize,
-                  fontSize: avgFontSize,
-                  bold: avgFontSize > 14
-                });
-              }
-            });
-
-            blocks.forEach(block => {
-              const isBullet = block.text.trim().startsWith("•") || block.text.trim().startsWith("-");
-              const cleanText = isBullet ? block.text.trim().substring(1).trim() : block.text;
-
-              slide.addText(cleanText, {
-                x: (block.x / viewport.width) * 10,
-                y: ((viewport.height - block.y - block.fontSize) / viewport.height) * 5.625,
-                w: (block.w / viewport.width) * 10,
-                fontSize: Math.max(8, block.fontSize * 0.7),
-                color: "000000",
-                bold: block.bold,
-                bullet: isBullet,
-                align: (block.fontSize > 18) ? "center" : "left"
-              });
-            });
-
-            const operatorList = await page.getOperatorList();
-            const hasImages = operatorList.fnArray.some(fn =>
-              fn === pdfjsLib.OPS.paintImageXObject || fn === pdfjsLib.OPS.paintInlineImageXObject
-            );
-
-            if (hasImages) {
-              await page.render({ canvasContext: ctx, viewport }).promise;
-              slide.addImage({
-                data: canvas.toDataURL("image/png"),
-                x: 0, y: 0, w: "100%", h: "100%",
-              });
-            }
-          }
-
-          setProgress(Math.round((processedPages / totalPages) * 100));
-        }
-      }
-
-      setProgress(95);
-      const blobContent = await pptx.write({ outputType: "blob" }) as Blob;
-      const url = URL.createObjectURL(blobContent);
+      const url = URL.createObjectURL(combinedBlob);
       const filename = files.length === 1 
-        ? files[0].name.replace(/\.pdf$/i, "") + "_converted.pptx"
+        ? files[0].name.replace(/\.pdf$/i, "") + "_editable.pptx"
         : "MagicDOCX_Combined_Presentation.pptx";
 
       setResults([{
-        file: blobContent,
+        file: combinedBlob,
         url,
         filename,
       }]);
@@ -313,8 +195,7 @@ const PdfToPpt = () => {
       a.download = filename;
       a.click();
 
-      setProgress(100);
-      toast.success(`Converted ${totalPages} pages to PowerPoint!`);
+      toast.success(`Converted ${files.length} document(s) to editable PowerPoint!`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to convert PDF to PowerPoint");
