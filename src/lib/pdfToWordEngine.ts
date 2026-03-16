@@ -902,8 +902,9 @@ export async function convertPdfToWordOCR(
     const children: any[] = [];
 
     // Use Tesseract's paragraph/line structure for better reconstruction
-    if (data.paragraphs && data.paragraphs.length > 0) {
-      data.paragraphs.forEach((para: any) => {
+    const paragraphs = (data as any).paragraphs;
+    if (paragraphs && paragraphs.length > 0) {
+      paragraphs.forEach((para: any) => {
         const text = para.text?.trim();
         if (!text) return;
 
