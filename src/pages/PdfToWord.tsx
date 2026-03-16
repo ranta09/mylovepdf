@@ -47,17 +47,10 @@ import { toast } from "sonner";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { saveAs } from "file-saver";
 import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType,
-  ImageRun
-} from "docx";
-import Tesseract from "tesseract.js";
+  convertPdfToWordExact,
+  convertPdfToWordOCR,
+  convertPdfToWordImage,
+} from "@/lib/pdfToWordEngine";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -139,13 +132,13 @@ const PdfToWord = () => {
     }
   };
 
-  const renderPageToImage = async (page: any): Promise<string> => {
-    const viewport = page.getViewport({ scale: 2.0 });
+  const renderPageToImage = async (_page: any): Promise<string> => {
+    const viewport = _page.getViewport({ scale: 2.0 });
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d")!;
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    await page.render({ canvasContext: context, viewport }).promise;
+    await _page.render({ canvasContext: context, viewport }).promise;
     return canvas.toDataURL("image/png");
   };
 
@@ -185,7 +178,7 @@ const PdfToWord = () => {
 
     // Check if any file is scanned if we are in Exact Layout mode
     if (conversionMode === 'standard' && !forceNoOcr && !forceOcr) {
-      const isScanned = await detectScanned(files[0]); // Check the first file as a representative
+      const isScanned = await detectScanned(files[0]);
       if (isScanned) {
         setPendingConversion({ file: files[0], isScanned: true });
         setShowOcrModal(true);
@@ -197,22 +190,13 @@ const PdfToWord = () => {
     setProgress(0);
 
     const newResults: ProcessingResult[] = [];
-    const totalFiles = files.length;
 
     try {
-      for (let f = 0; f < totalFiles; f++) {
-        const file = files[f];
+      for (const file of files) {
+        // Determine page range
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-        const docSections: any[] = [];
-        const isActuallyScanned = await detectScanned(file);
-
-        // Final effective mode for this file
-        const effectiveOcr = forceOcr || conversionMode === 'ocr';
-        const effectivePageAsImage = forceNoOcr;
-
-        // Parse page range
         let pagesToConvert: number[] = [];
         if (pageRange === "all") {
           pagesToConvert = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
@@ -238,192 +222,25 @@ const PdfToWord = () => {
           return;
         }
 
-        for (let idx = 0; idx < pagesToConvert.length; idx++) {
-          const i = pagesToConvert[idx];
-          setStatusText(`Analyzing Page ${i}...`);
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 1.0 });
-          const textContent = await page.getTextContent();
+        const progressCb = (p: number, s: string) => {
+          setProgress(p);
+          setStatusText(s);
+        };
 
-          let pageChildren: any[] = [];
+        const effectiveOcr = forceOcr || conversionMode === 'ocr';
+        const effectiveImageOnly = forceNoOcr;
 
-          if (effectivePageAsImage) {
-            setStatusText(`Processing Page ${i} as Image...`);
-            const imageData = await renderPageToImage(page);
-            const base64Data = imageData.split(',')[1];
-            const binaryData = atob(base64Data);
-            const uint8Array = new Uint8Array(binaryData.length);
-            for (let j = 0; j < binaryData.length; j++) uint8Array[j] = binaryData.charCodeAt(j);
+        let blob: Blob;
 
-            pageChildren.push(new Paragraph({
-              children: [
-                new ImageRun({
-                  data: uint8Array,
-                  transformation: {
-                    width: viewport.width,
-                    height: viewport.height,
-                  },
-                  type: "png",
-                } as any),
-              ],
-            }));
-          } else if (effectiveOcr || isActuallyScanned) {
-            setStatusText(`Running OCR on Page ${i}...`);
-            const imageData = await renderPageToImage(page);
-            const { data: { text } } = await Tesseract.recognize(imageData, ocrLanguage === 'auto' ? 'eng' : ocrLanguage);
-
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            lines.forEach(p => {
-              pageChildren.push(new Paragraph({
-                children: [new TextRun({ text: p, size: 22 })],
-                spacing: { after: 200 }
-              }));
-            });
-          } else {
-            setStatusText(`Reconstructing Page Layout ${i}...`);
-            const items = textContent.items as any[];
-            const styles = textContent.styles;
-
-            // Group items into lines based on Y-coordinate
-            const lineThreshold = 5;
-            const lines: any[][] = [];
-
-            const sortedItems = [...items].sort((a, b) => {
-              const yDiff = b.transform[5] - a.transform[5];
-              if (Math.abs(yDiff) < lineThreshold) return a.transform[4] - b.transform[4];
-              return yDiff;
-            });
-
-            let currentLine: any[] = [];
-            let lastY = -1;
-
-            sortedItems.forEach(item => {
-              if (lastY === -1 || Math.abs(item.transform[5] - lastY) < lineThreshold) {
-                currentLine.push(item);
-              } else {
-                lines.push(currentLine);
-                currentLine = [item];
-              }
-              lastY = item.transform[5];
-            });
-            if (currentLine.length > 0) lines.push(currentLine);
-
-            // Process lines into paragraphs or tables
-            let currentParagraphRuns: any[] = [];
-            let currentTableRows: any[] = [];
-            let lastLineWasTable = false;
-
-            lines.forEach((lineItems, lIdx) => {
-              const tableGapThreshold = 40;
-              let isTableRow = false;
-              if (lineItems.length > 1) {
-                const gaps = [];
-                for (let k = 1; k < lineItems.length; k++) {
-                  const prev = lineItems[k - 1];
-                  const curr = lineItems[k];
-                  const gap = curr.transform[4] - (prev.transform[4] + (prev.width || 0));
-                  gaps.push(gap);
-                }
-                isTableRow = gaps.some(g => g > tableGapThreshold);
-              }
-
-              if (isTableRow) {
-                // If we were in a paragraph, flush it
-                if (currentParagraphRuns.length > 0) {
-                  pageChildren.push(new Paragraph({ children: currentParagraphRuns, spacing: { after: 120 } }));
-                  currentParagraphRuns = [];
-                }
-
-                const cells = lineItems.map(it => {
-                  const fontSize = Math.abs(it.transform[0] || it.transform[3] || 11);
-                  const isBold = (it.fontName || "").toLowerCase().includes("bold");
-                  return new TableCell({
-                    children: [new Paragraph({
-                      children: [new TextRun({
-                        text: it.str,
-                        size: Math.round(fontSize * 2),
-                        bold: isBold
-                      })]
-                    })],
-                    width: { size: 100 / lineItems.length, type: WidthType.PERCENTAGE }
-                  });
-                });
-
-                currentTableRows.push(new TableRow({ children: cells }));
-                lastLineWasTable = true;
-              } else {
-                // Not a table row. If we had a table pending, flush it
-                if (lastLineWasTable && currentTableRows.length > 0) {
-                  pageChildren.push(new Table({
-                    rows: currentTableRows,
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                  }));
-                  currentTableRows = [];
-                  lastLineWasTable = false;
-                }
-
-                // Append to current paragraph
-                lineItems.forEach((it, itIdx) => {
-                  const fontSize = Math.abs(it.transform[0] || it.transform[3] || 11);
-                  const isBold = (it.fontName || "").toLowerCase().includes("bold");
-                  const hasTrailingSpace = it.hasEOL || itIdx === lineItems.length - 1;
-
-                  currentParagraphRuns.push(new TextRun({
-                    text: it.str + (hasTrailingSpace ? " " : ""),
-                    size: Math.round(fontSize * 2),
-                    bold: isBold,
-                    font: "Calibri"
-                  }));
-                });
-
-                // Heuristic for paragraph end (large gap between lines)
-                if (lIdx < lines.length - 1) {
-                  const nextLineY = lines[lIdx + 1][0].transform[5];
-                  const currentY = lineItems[0].transform[5];
-                  if (Math.abs(currentY - nextLineY) > 18) {
-                    pageChildren.push(new Paragraph({ children: currentParagraphRuns, spacing: { after: 120 } }));
-                    currentParagraphRuns = [];
-                  }
-                }
-              }
-            });
-
-            // Final flushes
-            if (currentTableRows.length > 0) {
-              pageChildren.push(new Table({
-                rows: currentTableRows,
-                width: { size: 100, type: WidthType.PERCENTAGE },
-              }));
-            }
-            if (currentParagraphRuns.length > 0) {
-              pageChildren.push(new Paragraph({ children: currentParagraphRuns, spacing: { after: 120 } }));
-            }
-          }
-
-          docSections.push({
-            properties: {
-              page: {
-                size: {
-                  width: viewport.width * 20, // points to twentieths of a point
-                  height: viewport.height * 20,
-                },
-                margin: {
-                  top: 720, // 0.5 inch
-                  bottom: 720,
-                  left: 720,
-                  right: 720,
-                }
-              }
-            },
-            children: pageChildren
-          });
-          setProgress(Math.round(((f * pdf.numPages + idx + 1) / (totalFiles * pdf.numPages)) * 100));
+        if (effectiveImageOnly) {
+          blob = await convertPdfToWordImage(file, pagesToConvert, progressCb);
+        } else if (effectiveOcr) {
+          blob = await convertPdfToWordOCR(file, pagesToConvert, ocrLanguage, progressCb);
+        } else {
+          blob = await convertPdfToWordExact(file, pagesToConvert, imageHandling, progressCb);
         }
 
-        const doc = new Document({ sections: docSections });
-        const blob = await Packer.toBlob(doc);
         const outName = file.name.replace(/\.[^/.]+$/, "") + "_converted" + (outputFormat === 'docx' ? ".docx" : ".doc");
-
         saveAs(blob, outName);
         newResults.push({ file: blob, url: URL.createObjectURL(blob), filename: outName });
       }
