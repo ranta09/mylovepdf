@@ -132,13 +132,13 @@ const PdfToWord = () => {
     }
   };
 
-  const renderPageToImage = async (page: any): Promise<string> => {
-    const viewport = page.getViewport({ scale: 2.0 });
+  const renderPageToImage = async (_page: any): Promise<string> => {
+    const viewport = _page.getViewport({ scale: 2.0 });
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d")!;
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    await page.render({ canvasContext: context, viewport }).promise;
+    await _page.render({ canvasContext: context, viewport }).promise;
     return canvas.toDataURL("image/png");
   };
 
