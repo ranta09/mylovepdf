@@ -102,7 +102,7 @@ const NeuralBackground = () => {
           const distM = Math.sqrt(dxM * dxM + dyM * dyM);
 
           if (distM < mouseRadius && distM > 0.1) {
-            // Push away from cursor — stronger when closer
+            // Push away from cursor: stronger when closer
             const strength = ((mouseRadius - distM) / mouseRadius) * 3;
             p.vx += (dxM / distM) * strength;
             p.vy += (dyM / distM) * strength;

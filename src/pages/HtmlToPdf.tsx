@@ -1,103 +1,187 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import ToolLayout from "@/components/ToolLayout";
 import { 
   Globe, 
   Loader2, 
-  Code, 
   Link as LinkIcon, 
-  ShieldCheck, 
-  RotateCcw, 
-  FileBox, 
-  CheckCircle2, 
-  ArrowRight,
   FileCode,
   Plus,
   X,
   RectangleVertical,
   RectangleHorizontal,
-  Settings,
-  Layout,
-  Maximize,
-  Minimize,
-  Type
+  Monitor,
+  Tablet,
+  Smartphone,
+  Tv,
+  Eye,
+  Download,
+  RefreshCw,
+  FileText,
+  CheckCircle2,
+  Maximize2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   convertHtmlToPdf, 
   isValidUrl, 
-  isValidHtmlFile,
   PageSize,
   Orientation,
   MarginSize
 } from "@/lib/htmlToPdfEngine";
 
+type ScreenSize = "laptop" | "tablet" | "mobile" | "custom";
+
 const HtmlToPdf = () => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [urlInput, setUrlInput] = useState("");
   const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [mode, setMode] = useState("url");
-  const { setDisableGlobalFeatures } = useGlobalUpload();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Layout Settings
-  const [pageSize, setPageSize] = useState<PageSize>("A4");
+  // iLovePDF-style settings
+  const [screenSize, setScreenSize] = useState<ScreenSize>("laptop");
+  const [customWidth, setCustomWidth] = useState("1440");
+  const [oneLongPage, setOneLongPage] = useState(false);
   const [orientation, setOrientation] = useState<Orientation>("portrait");
-  const [margin, setMargin] = useState<MarginSize>("normal");
-  const [scale, setScale] = useState<"fit" | "actual">("fit");
+  const [pageSize, setPageSize] = useState<PageSize>("letter");
+  const [margin, setMargin] = useState<MarginSize>("none");
+  const [showPreview, setShowPreview] = useState(true);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+
+  // iLovePDF-style settings
+  const [blockAds, setBlockAds] = useState(false);
+  const [removePopups, setRemovePopups] = useState(false);
+
+  const screenSizes = {
+    laptop: { width: 1366, icon: Tv, label: "Laptop (1366px)" },
+    tablet: { width: 768, icon: Tablet, label: "Tablet (768px)" },
+    mobile: { width: 375, icon: Smartphone, label: "Mobile (375px)" },
+    custom: { width: parseInt(customWidth) || 1280, icon: Maximize2, label: "Custom Width" }
+  };
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0 || url.trim() !== "" || processing || results.length > 0);
+    setDisableGlobalFeatures(url.trim() !== "" || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, url, processing, results.length, setDisableGlobalFeatures]);
-
-  const handleFilesChange = (newFiles: File[]) => {
-    const validFiles = newFiles.filter(isValidHtmlFile);
-    if (validFiles.length < newFiles.length) {
-      toast.error("Some files were rejected. Please upload .html or .htm files only.");
-    }
-    setFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    if (files.length === 1) {
-      setMode("url"); // Back to landing if empty
-    }
-  };
+  }, [url, processing, results.length, setDisableGlobalFeatures]);
 
   const resetTool = useCallback(() => {
-    setFiles([]);
     setUrl("");
+    setUrlInput("");
     setResults([]);
     setProgress(0);
     setProcessing(false);
-    setMode("url");
+    setShowPreview(false);
+    setPreviewUrl("");
   }, []);
 
-  const handleProcess = async () => {
-    if (files.length === 0 && !isValidUrl(url)) {
-      toast.error("Please provide a valid HTML file or webpage URL.");
+  const validateUrlFormat = (value: string) => {
+    if (!value.trim()) return true; // Let handleAddUrl check for empty
+    
+    // Auto-prepend https:// if protocol is missing
+    let cleanUrl = value.trim();
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    try {
+      const parsed = new URL(cleanUrl);
+      // Ensure there's a hostname and it contains at least one dot (basic TLD check)
+      return parsed.hostname.includes(".") && parsed.hostname.length > 3;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setUrlInput(value);
+    if (urlError) {
+      if (validateUrlFormat(value)) {
+        setUrlError("");
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData("text");
+    const cleanedText = pastedText.trim();
+    // We don't auto-modify the input field value during paste to avoid confusing the user,
+    // but we clear the error if the pasted content is valid.
+    if (validateUrlFormat(cleanedText)) {
+      setUrlError("");
+    }
+  };
+
+  const handleAddUrl = () => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) {
+      setUrlError("Please enter a URL first.");
+      return;
+    }
+
+    let finalUrl = trimmed;
+    if (!finalUrl.startsWith("http://") && !finalUrl.startsWith("https://")) {
+      finalUrl = `https://${finalUrl}`;
+    }
+
+    if (validateUrlFormat(finalUrl)) {
+      setUrlError("");
+      setUrl(finalUrl);
+      setPreviewUrl(finalUrl);
+      setShowPreview(true);
+    } else {
+      setUrlError("The URL seems invalid. Please check the format (e.g., https://example.com) and try again.");
+    }
+  };
+
+  const handlePreview = async () => {
+    if (!url.trim()) {
+      toast.error("Please provide a URL first.");
+      return;
+    }
+
+    const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+    setPreviewUrl(fullUrl);
+    setShowPreview(true);
+  };
+
+  const handleConvert = async () => {
+    if (!isValidUrl(url)) {
+      toast.error("Please provide a valid webpage URL.");
       return;
     }
 
     setProcessing(true);
     setProgress(0);
     setResults([]);
+    setShowPreview(false);
 
     const allResults: ProcessingResult[] = [];
-    const options = { pageSize, orientation, margin, scale };
+    const options = { 
+      pageSize: oneLongPage ? "auto" : pageSize, 
+      orientation, 
+      margin, 
+      scale: "fit" as const 
+    };
 
     try {
       // Process URL if provided
@@ -106,66 +190,129 @@ const HtmlToPdf = () => {
         const fullUrl = url.startsWith("http") ? url : `https://${url}`;
         
         try {
-          const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`);
-          if (!response.ok) throw new Error("CORS Proxy failed");
+          const proxies = [
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`,
+            `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullUrl)}`
+          ];
           
-          const html = await response.text();
+          let html = "";
+          let proxySuccess = false;
+          
+          for (const proxyUrl of proxies) {
+            try {
+              const response = await fetch(proxyUrl, { 
+                method: 'GET',
+                headers: {
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                }
+              });
+              
+              if (response.ok) {
+                html = await response.text();
+                proxySuccess = true;
+                break;
+              }
+            } catch (proxyErr) {
+              console.warn(`Proxy ${proxyUrl} failed, trying next...`);
+              continue;
+            }
+          }
+          
+          if (!proxySuccess || !html) {
+            throw new Error("All CORS proxies failed");
+          }
+          
           const iframe = document.createElement("iframe");
+          const viewportWidth = screenSizes[screenSize].width;
           iframe.style.position = "fixed";
           iframe.style.visibility = "hidden";
-          iframe.style.width = "1200px";
-          iframe.style.height = "1600px";
+          iframe.style.width = `${viewportWidth}px`;
+          iframe.style.height = oneLongPage ? "10000px" : "2000px";
+          iframe.style.border = "none";
+          iframe.style.zIndex = "-9999";
           document.body.appendChild(iframe);
           
           const doc = iframe.contentDocument || iframe.contentWindow?.document;
-          if (doc && doc.body) {
+          if (doc) {
             doc.open();
             doc.write(html);
             doc.close();
             
-            await new Promise(r => setTimeout(r, 2000));
-            setProgress(30);
+            await new Promise(resolve => {
+              if (doc.readyState === 'complete') {
+                resolve(null);
+              } else {
+                iframe.onload = () => resolve(null);
+              }
+            });
             
-            const pdfBlob = await convertHtmlToPdf(doc.body, options);
+            await new Promise(r => setTimeout(r, 3000));
+            setProgress(30);
+
+            // Inject cleaning script if requested
+            if (blockAds || removePopups) {
+              const selectors = [];
+              if (blockAds) {
+                selectors.push('.ads', '.ads-container', '[id*="google_ads"]', 'iframe[src*="ads"]', '.ad-unit', '[class*="ad-"]');
+              }
+              if (removePopups) {
+                selectors.push('[class*="popup"]', '[class*="modal"]', '[class*="overlay"]', '[style*="z-index: 9999"]', '.cookie-banner', '#cookie-banner', '[id*="onetrust"]');
+              }
+              
+              try {
+                const selectorsStr = JSON.stringify(selectors);
+                const cleaningScript = `
+                  (function() {
+                    const selectors = ${selectorsStr};
+                    selectors.forEach(s => {
+                      document.querySelectorAll(s).forEach(el => {
+                        el.style.display = 'none';
+                        el.remove();
+                      });
+                    });
+                    document.body.style.overflow = 'auto';
+                    document.documentElement.style.overflow = 'auto';
+                  })();
+                `;
+                
+                const scriptEl = doc.createElement('script');
+                scriptEl.textContent = cleaningScript;
+                doc.body.appendChild(scriptEl);
+                
+                // Extra CSS-based removal to be sure
+                const styleEl = doc.createElement('style');
+                styleEl.textContent = selectors.map(s => `${s} { display: none !important; opacity: 0 !important; pointer-events: none !important; }`).join(' ');
+                doc.head.appendChild(styleEl);
+                
+                await new Promise(r => setTimeout(r, 1500)); // Wait for reflow
+              } catch (err) {
+                console.warn("HTML cleaning failed:", err);
+              }
+            }
+            
+            const bodyElement = doc.body || doc.documentElement;
+            const pdfBlob = await convertHtmlToPdf(bodyElement, options);
+            
             allResults.push({
               file: pdfBlob,
               url: URL.createObjectURL(pdfBlob),
-              filename: url.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 20) + ".pdf"
+              filename: url.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30) + ".pdf"
             });
           }
+          
           document.body.removeChild(iframe);
         } catch (err) {
           console.error("URL Conversion failed:", err);
-          toast.error("Direct URL conversion failed due to site security. Try downloading the HTML file and uploading it.");
+          toast.error("URL conversion failed. Try downloading the HTML file and uploading it instead.");
         }
       }
 
-      // Process Files
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setProgress(Math.round(((i + (url ? 1 : 0)) / (files.length + (url ? 1 : 0))) * 100));
-        
-        const html = await file.text();
-        const container = document.createElement("div");
-        container.style.position = "fixed";
-        container.style.visibility = "hidden";
-        container.style.width = "1200px";
-        container.innerHTML = html;
-        document.body.appendChild(container);
-        
-        const pdfBlob = await convertHtmlToPdf(container, options);
-        allResults.push({
-          file: pdfBlob,
-          url: URL.createObjectURL(pdfBlob),
-          filename: file.name.replace(/\.[^/.]+$/, "") + ".pdf"
-        });
-        
-        document.body.removeChild(container);
-      }
+
 
       setResults(allResults);
       if (allResults.length > 0) {
-        toast.success(`Successfully synthesized ${allResults.length} PDF(s)!`);
+        toast.success(`Successfully converted ${allResults.length} file(s) to PDF!`);
         if (allResults.length === 1) {
           const a = document.createElement("a");
           a.href = allResults[0].url;
@@ -174,7 +321,7 @@ const HtmlToPdf = () => {
         }
       }
     } catch (error) {
-      console.error("Synthesis Error:", error);
+      console.error("Conversion Error:", error);
       toast.error("Conversion failed. Please try another HTML file or webpage.");
     } finally {
       setProcessing(false);
@@ -185,336 +332,333 @@ const HtmlToPdf = () => {
   return (
     <ToolLayout
       title="HTML to PDF"
-      description="Convert webpages or HTML files into professional-grade PDF documents."
+      description="Convert web pages or HTML files into professional PDF documents"
       category="convert"
       icon={<Globe className="h-7 w-7" />}
-      metaTitle="HTML to PDF — High Fidelity Web Rendering Online"
-      metaDescription="Convert HTML files and URLs to PDF with pixel-perfect accuracy. Preserves CSS, images, and layouts."
+      metaTitle="HTML to PDF Converter — Convert Webpages to PDF Online"
+      metaDescription="Convert HTML files and URLs to PDF with high accuracy. Preserves CSS, images, and layouts. Free online tool."
       toolId="html-to-pdf"
-      hideHeader={files.length > 0 || url.trim() !== "" || processing || results.length > 0}
-      className="html-to-pdf-page"
+      hideHeader={url.trim() !== "" || processing || results.length > 0}
     >
-      <style>{`
-        .html-to-pdf-page h1, 
-        .html-to-pdf-page h2, 
-        .html-to-pdf-page h3,
-        .html-to-pdf-page span,
-        .html-to-pdf-page button,
-        .html-to-pdf-page p,
-        .html-to-pdf-page div {
-          font-family: 'Inter', sans-serif !important;
-        }
-      `}</style>
+      {/* Processing State */}
+      {processing && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-50 bg-background flex items-center justify-center">
+          <div className="w-full max-w-md space-y-6 text-center p-8">
+            <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+              <Globe className="h-10 w-10 text-primary" />
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-xl font-semibold">Converting to PDF...</h3>
+              <Progress value={progress} className="h-2" />
+              <p className="text-sm text-muted-foreground">{progress}% Complete</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
-      {(files.length > 0 || url.trim() !== "" || processing || results.length > 0) && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
-          
-          {processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-4 border-red-500/10" />
-                  <div className="absolute inset-0 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
-                  <Globe className="h-10 w-10 text-red-600 animate-pulse" />
+      {/* Results State */}
+      {results.length > 0 && !processing && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background overflow-auto p-6">
+          <ResultView results={results} onReset={resetTool} />
+        </div>
+      )}
+
+      {/* Main Interface */}
+      {!processing && results.length === 0 && (
+        <>
+          {/* Landing State */}
+          {url.trim() === "" && (
+            <div className="w-full mt-12 space-y-8">
+              {/* URL Input */}
+              <div className="w-full space-y-4">
+                <Label className="text-base font-semibold">Enter Website URL</Label>
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="url"
+                      placeholder="https://example.com"
+                      value={urlInput}
+                      onChange={e => handleUrlChange(e.target.value)}
+                      onPaste={handlePaste}
+                      className={cn(
+                        "h-14 pl-12 text-base rounded-xl transition-all",
+                        urlError ? "border-red-500 ring-offset-background focus-visible:ring-red-500" : ""
+                      )}
+                      onKeyDown={e => e.key === "Enter" && handleAddUrl()}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleAddUrl} 
+                    className="h-14 px-8 text-lg font-bold rounded-xl gap-2 shadow-lg hover:shadow-primary/20 transition-all"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Add
+                  </Button>
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold uppercase tracking-tighter text-red-600">DOM Rendering Pipeline</h3>
-                  <Progress value={progress} className="h-2 rounded-full bg-red-100 [&>div]:bg-red-600" />
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Rendered</p>
-                </div>
+                {urlError && (
+                  <p className="text-sm text-red-500 font-medium animate-in fade-in slide-in-from-top-1">
+                    {urlError}
+                  </p>
+                )}
               </div>
             </div>
-          ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <ResultView results={results} onReset={resetTool} />
-            </div>
-          ) : (
-            <>
-              {/* LEFT SIDE: Grid / Input (70%) */}
-              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
-                <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-8">
-                    {/* URL Input Area if no files */}
-                    {files.length === 0 && (
-                      <div className="max-w-2xl mx-auto w-full space-y-4 pt-12">
-                        <div className="text-center space-y-2">
-                          <h3 className="text-2xl font-bold uppercase tracking-tighter">Webpage Synthesis</h3>
-                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Enter any URL to convert it to a high-fidelity PDF</p>
+          )}
+
+          {/* Configuration State */}
+          {url.trim() !== "" && (
+            <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
+              <div className="flex-1 grid lg:grid-cols-[1fr,400px] overflow-hidden">
+                  {/* Left: Preview */}
+                  <div className="h-full flex flex-col items-center justify-start overflow-auto bg-stone-50/30 border-r border-border/50">
+                    {previewUrl ? (
+                      <div className={cn(
+                        "w-full min-h-full transition-all duration-500 animate-in zoom-in-95",
+                        !oneLongPage ? "p-12 space-y-12" : "p-0"
+                      )}>
+                        {!oneLongPage ? (
+                          <>
+                            {/* Simulated multi-page view */}
+                            {[1, 2, 3].map((pageNum) => (
+                              <div 
+                                key={pageNum} 
+                                className={cn(
+                                  "mx-auto bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-border/40 relative",
+                                  pageSize === "A4" ? (orientation === "portrait" ? "aspect-[210/297] w-[85%]" : "aspect-[297/210] w-[95%]") :
+                                  pageSize === "letter" ? (orientation === "portrait" ? "aspect-[8.5/11] w-[85%]" : "aspect-[11/8.5] w-[95%]") :
+                                  (orientation === "portrait" ? "aspect-[8.5/14] w-[85%]" : "aspect-[14/8.5] w-[95%]")
+                                )}
+                              >
+                                {pageNum === 1 ? (
+                                  <div className={cn(
+                                    "w-full h-full bg-white transition-all duration-300",
+                                    margin === "none" ? "p-0" :
+                                    margin === "small" ? "p-8" : "p-16"
+                                  )}>
+                                    <div className="w-full h-full border border-dashed border-border/20 relative overflow-hidden">
+                                      <iframe
+                                        src={previewUrl}
+                                        className="w-full h-full border-none pointer-events-none"
+                                        style={{ zoom: 0.9 }}
+                                        title="Preview"
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-full bg-stone-50/30 flex items-center justify-center select-none">
+                                    <span className="text-3xl font-black text-stone-200 uppercase tracking-[0.2em]">Page {pageNum}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          /* One Long Page */
+                          <div className={cn(
+                            "w-full bg-white shadow-2xl",
+                            margin === "none" ? "p-0" :
+                            margin === "small" ? "p-8" : "p-16"
+                          )}>
+                            <iframe
+                              src={previewUrl}
+                              className="w-full h-[5000px] border-none pointer-events-none"
+                              style={{ zoom: 0.9 }}
+                              title="Preview"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center space-y-4 max-w-sm">
+                        <div className="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mx-auto ring-1 ring-primary/10">
+                          <Globe className="h-10 w-10 text-primary/40" />
                         </div>
-                        <div className="relative group">
-                          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                            <LinkIcon className="h-5 w-5 text-muted-foreground group-focus-within:text-red-500 transition-colors" />
-                          </div>
-                          <Input
-                            type="url"
-                            placeholder="https://example.com"
-                            value={url}
-                            onChange={e => setUrl(e.target.value)}
-                            className="h-16 pl-14 pr-16 rounded-2xl border-2 border-border bg-card font-medium text-base focus-visible:ring-red-500/20 focus-visible:border-red-500 transition-all shadow-xl"
-                            onKeyDown={e => e.key === "Enter" && handleProcess()}
-                          />
-                          <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                            <kbd className="hidden sm:inline-flex h-8 items-center gap-1 rounded border border-border bg-muted px-2 font-mono text-[10px] font-medium text-muted-foreground opacity-100 uppercase">
-                              URL Synthesis
-                            </kbd>
-                          </div>
+                        <div className="space-y-1">
+                          <h3 className="font-bold text-lg">No Preview Available</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Enter a website URL and click Add to generate a visual preview of your document.
+                          </p>
                         </div>
                       </div>
                     )}
-
-                    {/* Files Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {files.map((file, idx) => (
-                        <div key={idx} className="group flex flex-col gap-3 p-4 bg-background border border-border hover:border-red-500/50 rounded-2xl transition-all duration-200 text-left relative shadow-sm">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="h-14 w-12 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center justify-center relative shrink-0">
-                              <FileCode className="h-7 w-7 text-red-500" />
-                              <div className="absolute top-1 left-1 bg-red-500 text-white text-[7px] font-bold px-1 rounded-sm uppercase tracking-tighter">HTML</div>
-                            </div>
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <p className="text-[11px] font-bold text-foreground uppercase tracking-tight truncate">{file.name}</p>
-                              <div className="flex items-center gap-3">
-                                <p className="text-[9px] font-bold text-red-600 uppercase">{(file.size / (1024)).toFixed(1)} KB</p>
-                              </div>
-                            </div>
-                            <button onClick={() => removeFile(idx)} className="p-2 bg-secondary/50 rounded-xl hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
-                          </div>
-                          
-                          <div className="pt-2 border-t border-border mt-1">
-                            <div className="flex items-center gap-2">
-                              <ShieldCheck className="h-3 w-3 text-red-500" />
-                              <span className="text-[9px] font-bold text-muted-foreground uppercase">Local Asset Parsing</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {files.length > 0 && (
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          className="h-full min-h-[120px] border-2 border-dashed border-border hover:border-red-500/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-red-600 hover:bg-red-500/5 transition-all"
-                        >
-                          <Plus className="h-6 w-6" />
-                          Add More Files
-                        </button>
-                      )}
-                      <input type="file" ref={fileInputRef} className="hidden" multiple accept=".html,.htm" onChange={(e) => e.target.files && handleFilesChange(Array.from(e.target.files))} />
-                    </div>
                   </div>
-                </ScrollArea>
-              </div>
 
-              {/* RIGHT PANEL: Settings (30%) */}
-              <div className="flex-1 bg-secondary/10 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-6 lg:pt-8 lg:pb-12 lg:px-12">
-                  <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
-                    <div className="space-y-8">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-red-500/10 rounded-2xl">
-                          <Settings className="h-6 w-6 text-red-500" />
-                        </div>
-                        <div className="flex flex-col">
-                          <h4 className="text-base font-bold uppercase tracking-tighter leading-none text-red-600">Layout Hub</h4>
-                        </div>
-                      </div>
-
-                      <div className="space-y-6">
-                        {/* Page Size */}
-                        <div className="space-y-3">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Page Format</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(["A4", "letter", "legal", "auto"] as PageSize[]).map((size) => (
-                              <button
-                                key={size}
-                                onClick={() => setPageSize(size)}
-                                className={cn(
-                                  "h-10 rounded-xl border text-[10px] font-bold uppercase transition-all",
-                                  pageSize === size ? "border-red-500 bg-red-500/5 text-red-600 shadow-sm" : "border-border bg-background hover:border-red-500/20"
-                                )}
-                              >
-                                {size}
-                              </button>
-                            ))}
+                  {/* Right: Settings */}
+                  <div className="flex flex-col h-full bg-background border-l border-border/50 overflow-hidden">
+                    <div className="flex-1 flex flex-col min-h-0 p-6 pt-10">
+                      <ScrollArea className="flex-1 -mr-2 pr-2">
+                        <div className="space-y-8 pr-4 px-1 pb-8">
+                        {/* Tool Branding */}
+                        <div className="pb-6 border-b border-border/50">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-primary/10 rounded-xl">
+                              <Globe className="h-6 w-6 text-primary" />
+                            </div>
+                            <h2 className="text-xl font-bold tracking-tight">HTML to PDF</h2>
                           </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/70">Website URL</Label>
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                  value={urlInput}
+                                  onChange={(e) => handleUrlChange(e.target.value)}
+                                  onKeyDown={(e) => e.key === "Enter" && handleAddUrl()}
+                                  className="h-9 pl-8 text-xs rounded-lg border-border/40 bg-secondary/20 focus-visible:ring-primary/20 transition-all"
+                                  placeholder="https://example.com"
+                                />
+                              </div>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={handleAddUrl}
+                                className="h-9 w-9 bg-secondary/20 hover:bg-primary hover:text-white rounded-lg transition-all"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+
+
+                        {/* One Long Page */}
+                        <div className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-lg">
+                              <Maximize2 className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <Label htmlFor="one-long-page" className="font-semibold cursor-pointer">One long page</Label>
+                              <p className="text-xs text-muted-foreground">
+                                Convert to single page instead of multiple pages
+                              </p>
+                            </div>
+                          </div>
+                          <Switch
+                            id="one-long-page"
+                            checked={oneLongPage}
+                            onCheckedChange={setOneLongPage}
+                          />
                         </div>
 
                         {/* Orientation */}
                         <div className="space-y-3">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Orientation</Label>
+                          <Label className="text-base font-semibold">Orientation</Label>
                           <div className="grid grid-cols-2 gap-3">
-                            <button 
+                            <button
                               onClick={() => setOrientation("portrait")}
                               className={cn(
-                                "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase transition-all",
-                                orientation === "portrait" ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all shadow-sm",
+                                orientation === "portrait"
+                                  ? "border-primary bg-primary/5 ring-4 ring-primary/10"
+                                  : "border-border hover:border-primary/50"
                               )}
                             >
-                              <RectangleVertical className="h-4 w-4" /> Portrait
+                              <RectangleVertical className="h-6 w-6" />
+                              <span className="text-sm font-bold">Portrait</span>
                             </button>
-                            <button 
+                            <button
                               onClick={() => setOrientation("landscape")}
                               className={cn(
-                                "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase transition-all",
-                                orientation === "landscape" ? "border-red-500 bg-red-500/5 text-red-600 shadow-inner" : "border-border bg-background text-muted-foreground hover:border-red-500/20"
+                                "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all shadow-sm",
+                                orientation === "landscape"
+                                  ? "border-primary bg-primary/5 ring-4 ring-primary/10"
+                                  : "border-border hover:border-primary/50"
                               )}
                             >
-                              <RectangleHorizontal className="h-4 w-4" /> Landscape
+                              <RectangleHorizontal className="h-6 w-6" />
+                              <span className="text-sm font-bold">Landscape</span>
                             </button>
                           </div>
                         </div>
 
-                        {/* Margins */}
+                        {/* Page margin */}
                         <div className="space-y-3">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Margins</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(["none", "small", "normal", "large"] as MarginSize[]).map((m) => (
-                              <button
-                                key={m}
-                                onClick={() => setMargin(m)}
-                                className={cn(
-                                  "h-10 rounded-xl border text-[10px] font-bold uppercase transition-all",
-                                  margin === m ? "border-red-500 bg-red-500/5 text-red-600 shadow-sm" : "border-border bg-background hover:border-red-500/20"
-                                )}
-                              >
-                                {m}
-                              </button>
+                          <Label className="text-base font-semibold">Page margin</Label>
+                          <RadioGroup value={margin} onValueChange={(v) => setMargin(v as MarginSize)}>
+                            {[
+                               { id: "none", label: "No margin" },
+                               { id: "small", label: "Small" },
+                               { id: "normal", label: "Big" }
+                            ].map((m) => (
+                              <div key={m.id} className="flex items-center space-x-3">
+                                <RadioGroupItem value={m.id} id={`margin-${m.id}`} />
+                                <Label htmlFor={`margin-${m.id}`} className="cursor-pointer flex-1">
+                                  {m.label}
+                                </Label>
+                              </div>
                             ))}
-                          </div>
+                          </RadioGroup>
                         </div>
 
-                        {/* Scaling */}
-                        <div className="space-y-3">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Page Scaling</Label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <button 
-                              onClick={() => setScale("fit")}
-                              className={cn(
-                                "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase transition-all",
-                                scale === "fit" ? "border-red-500 bg-red-500/5 text-red-600" : "border-border bg-background text-muted-foreground"
-                              )}
-                            >
-                              <Minimize className="h-4 w-4" /> Fit to Page
-                            </button>
-                            <button 
-                              onClick={() => setScale("actual")}
-                              className={cn(
-                                "h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase transition-all",
-                                scale === "actual" ? "border-red-500 bg-red-500/5 text-red-600" : "border-border bg-background text-muted-foreground"
-                              )}
-                            >
-                              <Maximize className="h-4 w-4" /> Actual Size
-                            </button>
+                        {/* HTML Settings */}
+                        <div className="pt-4 border-t border-border mt-6 space-y-4">
+                          <Label className="text-base font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                             HTML Settings
+                          </Label>
+                          
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="block-ads" className="flex items-center gap-2 cursor-pointer font-medium">
+                              Try to block ads
+                            </Label>
+                            <Switch id="block-ads" checked={blockAds} onCheckedChange={setBlockAds} />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="remove-popups" className="flex items-center gap-2 cursor-pointer font-medium">
+                              Remove overlay popups
+                            </Label>
+                            <Switch id="remove-popups" checked={removePopups} onCheckedChange={setRemovePopups} />
                           </div>
                         </div>
                       </div>
+                    </ScrollArea>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3 pt-4 border-t">
+
+                      <Button
+                        className="w-full h-12"
+                        onClick={handleConvert}
+                        disabled={processing}
+                      >
+                        {processing ? (
+                          <>
+                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                            Converting...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-5 w-5 mr-2" />
+                            Convert to PDF
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
-
-                {/* Action Footer */}
-                <div className="mt-auto p-6 lg:px-12 bg-background border-t border-border shrink-0">
-                  <div className="max-w-xl mx-auto lg:mx-0 w-full">
-                    <Button 
-                      size="lg" 
-                      onClick={handleProcess} 
-                      disabled={processing}
-                      className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-red-500/20 hover:shadow-red-500/40 bg-red-600 hover:bg-red-700 transition-all gap-4 group"
-                    >
-                      {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Landing State: Modern Tabs Entry Area */}
-      {files.length === 0 && url.trim() === "" && !processing && results.length === 0 && (
-        <div className="w-full max-w-4xl mx-auto mt-12 space-y-12 px-6">
-          <Tabs value={mode} onValueChange={setMode} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-              <TabsTrigger value="url" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                <LinkIcon className="h-4 w-4" /> Webpage URL
-              </TabsTrigger>
-              <TabsTrigger value="file" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                <FileCode className="h-4 w-4" /> HTML File
-              </TabsTrigger>
-            </TabsList>
-
-            <div className="mt-12 text-center space-y-4">
-              <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-tight">
-                Web to PDF <span className="text-red-600">Synthesis.</span>
-              </h1>
-              <p className="text-lg text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
-                Choose your input vector to begin high-fidelity browser rendering.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-                <button 
-                  onClick={() => setMode('url')} 
-                  className={cn(
-                    "p-8 rounded-[2.5rem] border-2 text-left transition-all group relative overflow-hidden", 
-                    mode === 'url' ? 'border-red-500 bg-red-500/5' : 'border-border bg-card hover:border-red-500/30'
-                  )}
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl -translate-y-12 translate-x-12" />
-                  <LinkIcon className={cn("h-10 w-10 mb-6 transition-colors", mode === 'url' ? 'text-red-500' : 'text-muted-foreground group-hover:text-red-500')} />
-                  <h3 className="text-2xl font-bold uppercase tracking-tight mb-2">Webpage URL</h3>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest leading-relaxed mb-8">Render any public address into a PDF buffer.</p>
-                  
-                  {mode === 'url' && (
-                    <Input
-                      type="url"
-                      placeholder="Paste URL (e.g., magicdocx.com)"
-                      value={url}
-                      onChange={e => setUrl(e.target.value)}
-                      className="h-14 rounded-2xl border-2 border-red-500/20 bg-background font-bold focus-visible:ring-red-500/20 focus-visible:border-red-500 transition-all"
-                      onKeyDown={e => e.key === "Enter" && url.trim() && setUrl(url)}
-                    />
-                  )}
-                </button>
-
-                <button 
-                  onClick={() => {
-                    setMode('file');
-                    if (mode === 'file') fileInputRef.current?.click();
-                  }} 
-                  className={cn(
-                    "p-8 rounded-[2.5rem] border-2 text-left transition-all group relative overflow-hidden", 
-                    mode === 'file' ? 'border-red-500 bg-red-500/5' : 'border-border bg-card hover:border-red-500/30'
-                  )}
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl -translate-y-12 translate-x-12" />
-                  <FileCode className={cn("h-10 w-10 mb-6 transition-colors", mode === 'file' ? 'text-red-500' : 'text-muted-foreground group-hover:text-red-500')} />
-                  <h3 className="text-2xl font-bold uppercase tracking-tight mb-2">HTML Files</h3>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest leading-relaxed mb-auto">Upload .html files for local browser synthesis.</p>
-                  
-                  <div className="mt-8 flex items-center gap-2 text-red-600 font-bold uppercase tracking-widest text-[10px]">
-                    <Plus className="h-4 w-4" /> {mode === 'file' ? "Select Files Now" : "Switch to File Mode"}
-                  </div>
-                  <input type="file" ref={fileInputRef} className="hidden" multiple accept=".html,.htm" onChange={(e) => e.target.files && handleFilesChange(Array.from(e.target.files))} />
-                </button>
               </div>
             </div>
-          </Tabs>
-        </div>
+          )}
+        </>
       )}
 
       <ToolSeoSection
         toolName="HTML to PDF Converter"
         category="convert"
-        intro="MagicDocx HTML to PDF converter turns any webpage or raw HTML file into a professionally formatted PDF document. Paste a public URL to render the page as-is, or upload your custom HTML files to convert them directly. Ideal for developers, writers, and professionals who need print-ready PDF output from web content without any software installation."
+        intro="Convert any webpage URL into a professional PDF document. Our tool preserves layouts, styles, images, and formatting with high accuracy. Perfect for archiving web content, creating offline documentation, or sharing web pages as PDFs."
         steps={[
-          "Choose your input mode: Webpage URL or HTML File Upload.",
-          "For URL mode: paste the address and enter the Layout Hub to configure your settings.",
-          "For File mode: upload your .html files to the secure grid-based workbench.",
-          "Configure layout settings including Page Size, Orientation, Margins, and Scaling.",
-          "Click \"Initiate Synthesis\" to render and download your professional PDF."
+          "Enter a website URL",
+          "Select your preferred screen size (Desktop, Laptop, Tablet, or Mobile)",
+          "Choose orientation (Portrait or Landscape) and page size",
+          "Enable 'One Long Page' option if you want a single continuous page",
+          "Click 'Convert to PDF' to generate your document"
         ]}
-        formats={["HTML", "URL", "PDF"]}
+        formats={["URL", "PDF"]}
         relatedTools={[
           { name: "Word to PDF", path: "/word-to-pdf", icon: Globe },
           { name: "JPG to PDF", path: "/jpg-to-pdf", icon: Globe },
@@ -522,7 +666,7 @@ const HtmlToPdf = () => {
           { name: "Compress PDF", path: "/compress-pdf", icon: Globe },
         ]}
         schemaName="HTML to PDF Converter Online"
-        schemaDescription="Free online HTML to PDF converter. Convert any webpage URL or custom HTML file to a high-fidelity PDF document."
+        schemaDescription="Free online HTML to PDF converter. Convert webpages and HTML files to PDF with high accuracy and customizable settings."
       />
     </ToolLayout>
   );

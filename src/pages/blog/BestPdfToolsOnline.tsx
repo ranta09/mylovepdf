@@ -7,7 +7,7 @@ import { Calendar, Clock, ChevronRight, CheckCircle } from "lucide-react";
 import RelatedTools from "@/components/RelatedTools";
 
 const tools = [
-    { rank: 1, name: "PDF Merger", path: "/merge-pdf", desc: "Combine multiple PDFs into one. Drag, reorder, and merge — no size limit. Free." },
+    { rank: 1, name: "PDF Merger", path: "/merge-pdf", desc: "Combine multiple PDFs into one. Drag, reorder, and merge | no size limit. Free." },
     { rank: 2, name: "AI PDF Summarizer", path: "/pdf-summarizer", desc: "AI reads your PDF and generates overview, bullets, study notes, and quiz." },
     { rank: 3, name: "Compress PDF", path: "/compress-pdf", desc: "Reduce PDF file size by up to 90% without losing visible quality." },
     { rank: 4, name: "PDF to Word", path: "/pdf-to-word", desc: "Convert PDF to fully editable .docx format with formatting preserved." },
@@ -24,7 +24,7 @@ const BestPdfToolsOnline = () => (
     <>
         <Helmet>
             <title>11 Best Free PDF Tools Online in 2025 | MagicDOCX Blog</title>
-            <meta name="description" content="The definitive guide to the 11 best free PDF tools online in 2025. Merge, compress, convert, sign, and summarize PDFs — all without installing software. Updated for 2025." />
+            <meta name="description" content="The definitive guide to the 11 best free PDF tools online in 2025. Merge, compress, convert, sign, and summarize PDFs | all without installing software. Updated for 2025." />
             <meta name="keywords" content="best PDF tools online free, free PDF tools 2025, online PDF tools, PDF converter free, PDF editor online" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/blog/best-pdf-tools-online" />
         </Helmet>
@@ -48,7 +48,7 @@ const BestPdfToolsOnline = () => (
                         <div className="text-6xl text-center py-8 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl">🛠️</div>
                         <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
                             <p className="text-lg leading-relaxed">PDF is the world's most universal document format. Over 2.5 trillion PDFs exist, and billions more are created every day. Whether you're editing a contract, compressing a large presentation, or summarizing a research paper, you need reliable PDF tools that work fast, protect your privacy, and don't cost a fortune.</p>
-                            <p>Here are the 11 best free PDF tools online in 2025 — all available on <Link to="/" className="text-primary hover:underline">MagicDOCX</Link> with no signup, no watermarks, and no hidden fees.</p>
+                            <p>Here are the 11 best free PDF tools online in 2025 | all available on <Link to="/" className="text-primary hover:underline">MagicDOCX</Link> with no signup, no watermarks, and no hidden fees.</p>
                         </div>
                         <div className="space-y-4">
                             {tools.map(t => (
@@ -66,18 +66,18 @@ const BestPdfToolsOnline = () => (
                             <h2>What to Look for in a Free PDF Tool</h2>
                             <ul className="space-y-2">
                                 {[
-                                    "No hidden charges — some \"free\" tools watermark your output or charge for downloads",
-                                    "Privacy — your documents should never be stored on servers",
-                                    "Speed — good PDF tools process files in under 30 seconds",
-                                    "Quality — compression shouldn't destroy readability; conversion should preserve formatting",
-                                    "No installation — browser-based tools work on any device without downloads",
+                                    "No hidden charges | some \"free\" tools watermark your output or charge for downloads",
+                                    "Privacy | your documents should never be stored on servers",
+                                    "Speed | good PDF tools process files in under 30 seconds",
+                                    "Quality | compression shouldn't destroy readability; conversion should preserve formatting",
+                                    "No installation | browser-based tools work on any device without downloads",
                                 ].map(u => (
                                     <li key={u} className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />{u}</li>
                                 ))}
                             </ul>
-                            <p>MagicDOCX meets all five criteria — completely free, private-by-design, fast, high-quality output, and works in any browser on any device.</p>
+                            <p>MagicDOCX meets all five criteria | completely free, private-by-design, fast, high-quality output, and works in any browser on any device.</p>
                             <h2>The Rise of AI-Powered PDF Tools</h2>
-                            <p>The most significant development in PDF tools in recent years is the integration of AI. Beyond basic manipulation (merge, split, compress), AI tools can now understand document content — summarizing it, answering questions about it, translating it, generating study materials from it, and even checking your resume against a job description.</p>
+                            <p>The most significant development in PDF tools in recent years is the integration of AI. Beyond basic manipulation (merge, split, compress), AI tools can now understand document content | summarizing it, answering questions about it, translating it, generating study materials from it, and even checking your resume against a job description.</p>
                             <p>This shift from tools that manipulate PDFs to tools that understand them is revolutionizing how professionals, students, and researchers work with documents.</p>
                         </div>
                         <RelatedTools title="Try All These Tools Free" toolIds={["merge-pdf", "ai-summarizer", "compress-pdf", "pdf-to-word", "ai-chat", "ai-translate"]} />

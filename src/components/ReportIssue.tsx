@@ -80,14 +80,14 @@ const ReportIssue = () => {
             </div>
             <div>
               <Textarea
-                placeholder="Describe the issue — which tool, what went wrong, etc. *"
+                placeholder="Describe the issue: which tool, what went wrong, etc. *"
                 value={text}
                 onChange={e => setText(e.target.value)}
                 rows={4}
                 className="rounded-xl resize-none"
                 required
               />
-              <p className="mt-1 text-xs text-muted-foreground">Required — please be as specific as possible</p>
+              <p className="mt-1 text-xs text-muted-foreground">Required: please be as specific as possible</p>
             </div>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">

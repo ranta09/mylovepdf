@@ -139,7 +139,7 @@ const ChatWithPdf = () => {
       setExtractProgress(100);
       setMessages([{
         role: "assistant",
-        content: `I've read **${names.join(", ")}**. Ask me anything about ${names.length > 1 ? "these documents" : "this document"} — summaries, explanations, specific sections, comparisons, and more.\n\nOr use the quick actions above to instantly generate a summary, key points, study notes, or quiz!`,
+        content: `I've read **${names.join(", ")}**. Ask me anything about ${names.length > 1 ? "these documents" : "this document"} | summaries, explanations, specific sections, comparisons, and more.\n\nOr use the quick actions above to instantly generate a summary, key points, study notes, or quiz!`,
         mode: "chat"
       }]);
     } catch (e: any) {
@@ -228,7 +228,7 @@ const ChatWithPdf = () => {
                 return copy;
               });
             }
-          } catch { /* partial json — continue */ }
+          } catch { /* partial json | continue */ }
         }
       }
     } catch (e: any) {
@@ -272,7 +272,7 @@ const ChatWithPdf = () => {
       doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size);
       const lines = doc.splitTextToSize(text, mw); doc.text(lines, 20, y); y += lines.length * (size * 0.5 + 1) + 2;
     };
-    nl("Chat with Document — MagicDocx", true, 14); y += 4;
+    nl("Chat with Document | MagicDocx", true, 14); y += 4;
     messages.forEach(m => { if (m.content) { nl(`${m.role === "user" ? "You" : "AI"}:`, true, 10); nl(m.content, false, 9); y += 3; } });
     doc.save("chat-export.pdf");
   };
@@ -296,7 +296,7 @@ const ChatWithPdf = () => {
   return (
     <ToolLayout
       title="Chat With PDF"
-      description="Upload any document and ask questions — get instant AI answers."
+      description="Upload any document and ask questions | get instant AI answers."
       category="ai"
       icon={<MessageSquare className="h-7 w-7" />}
       metaTitle="Chat With PDF – Ask Questions About Documents | MagicDocx"
@@ -613,7 +613,7 @@ const ChatWithPdf = () => {
           category="ai"
           intro="The best free online tool to chat with PDF. Ask questions, get summaries, and extract insights from your documents instantly using advanced AI."
           features={[
-            { icon: MessageSquare, title: "Intelligent Chat", desc: "Natural conversation with your documents — ask anything and get accurate answers" },
+            { icon: MessageSquare, title: "Intelligent Chat", desc: "Natural conversation with your documents | ask anything and get accurate answers" },
             { icon: Zap, title: "Instant Summaries", desc: "Get a high-level overview of long documents in seconds" },
             { icon: ShieldCheck, title: "Privacy First", desc: "Your documents are processed securely and never stored on our servers" },
             { icon: Layout, title: "Interactive Interface", desc: "Clean, fast, and easy-to-use chat interface with file preview" },

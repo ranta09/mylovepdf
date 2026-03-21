@@ -220,7 +220,7 @@ const QuizGenerator = () => {
         doc.text(lines, 20, y);
         y += lines.length * (size * 0.5 + 1) + 2;
       };
-      nl("Quiz Report — MagicDocx", true, 16); y += 4;
+      nl("Quiz Report | MagicDocx", true, 16); y += 4;
       nl(`Difficulty: ${difficulty} | Questions: ${questions.length} | Score: ${getScore(selected)}/${questions.length}`, false, 10); y += 6;
       questions.forEach((q, i) => {
         nl(`Q${i + 1}. ${q.question}`, true, 11);
@@ -573,7 +573,7 @@ const QuizGenerator = () => {
             <div className={`rounded-2xl border p-8 text-center space-y-3 ${scoreBg}`}>
               <p className={`text-6xl font-black ${scoreColor}`}>{pct}%</p>
               <p className={`text-xl font-bold ${scoreColor}`}>{score} / {questions.length} correct</p>
-              <p className="text-muted-foreground text-sm">{pct >= 80 ? "🎉 Outstanding! You've mastered this topic." : pct >= 60 ? "👍 Good job! Keep practicing the weak areas." : "📚 Keep studying — review the explanations below."}</p>
+              <p className="text-muted-foreground text-sm">{pct >= 80 ? "🎉 Outstanding! You've mastered this topic." : pct >= 60 ? "👍 Good job! Keep practicing the weak areas." : "📚 Keep studying | review the explanations below."}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={downloadReport} className="rounded-xl gap-1.5 text-xs flex-1"><Download className="h-3.5 w-3.5" /> Download PDF Report</Button>
@@ -677,10 +677,10 @@ const QuizGenerator = () => {
           ]}
           faqs={[
             { q: "How does the AI quiz generator work?", a: "MagicDocx extracts text from your uploaded file, URL, or YouTube transcript, then sends it to an AI model that generates questions tailored to your chosen difficulty and question types." },
-            { q: "Can I generate quizzes from PDFs?", a: "Yes — PDFs are fully supported. The tool extracts text from text-based PDFs automatically, and uses OCR for scanned or image-based PDFs." },
+            { q: "Can I generate quizzes from PDFs?", a: "Yes | PDFs are fully supported. The tool extracts text from text-based PDFs automatically, and uses OCR for scanned or image-based PDFs." },
             { q: "Can teachers use this tool for exams?", a: "Absolutely. You can generate up to 50 questions per quiz, customize difficulty to Exam level, and download the full quiz with answer key as a formatted PDF." },
             { q: "Is the quiz generator free?", a: "Yes, MagicDocx AI Quiz Generator is completely free to use. No account required." },
-            { q: "Can I generate a quiz from a YouTube video?", a: "Yes — paste any YouTube video URL (with English captions enabled) and the tool will extract the transcript and generate a quiz from the video content." },
+            { q: "Can I generate a quiz from a YouTube video?", a: "Yes | paste any YouTube video URL (with English captions enabled) and the tool will extract the transcript and generate a quiz from the video content." },
           ]}
         />
       </div>

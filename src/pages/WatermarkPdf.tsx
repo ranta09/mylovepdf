@@ -583,7 +583,7 @@ const WatermarkPdf = () => {
         <ToolSeoSection
           toolName="Add Watermark to PDF"
           category="edit"
-          intro="MagicDocx Add Watermark tool lets you brand and protect your PDF documents with professional text or image watermarks. Configure the watermark text, font, size, color, opacity, rotation, and position. Use tiling mode to repeat the watermark across the entire page. Apply watermarks to all pages, first page only, last page only, or a custom range — all in your browser without any software."
+          intro="MagicDocx Add Watermark tool lets you brand and protect your PDF documents with professional text or image watermarks. Configure the watermark text, font, size, color, opacity, rotation, and position. Use tiling mode to repeat the watermark across the entire page. Apply watermarks to all pages, first page only, last page only, or a custom range | all in your browser without any software."
           steps={[
             "Upload a PDF file using the file upload area.",
             "Choose your watermark type: Text (enter your text, font, size, and color) or Image (upload a PNG/JPG).",

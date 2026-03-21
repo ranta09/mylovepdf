@@ -67,7 +67,7 @@ export default function DocumentInfoCard({
       transition={{ duration: 0.25 }}
       className={`rounded-2xl border bg-card shadow-sm overflow-hidden ${className}`}
     >
-      {/* Top bar — file type accent */}
+      {/* Top bar: file type accent */}
       <div className={`flex items-center gap-3 px-4 py-3 border-b ${typeColor} border-opacity-50`}>
         <span className="text-xl leading-none">{icon}</span>
         <div className="flex-1 min-w-0">

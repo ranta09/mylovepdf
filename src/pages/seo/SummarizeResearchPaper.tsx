@@ -10,7 +10,7 @@ import RelatedTools from "@/components/RelatedTools";
 const SummarizeResearchPaper = () => (
     <>
         <Helmet>
-            <title>Summarize Research Paper PDF — Free AI Academic Paper Summarizer | MagicDOCX</title>
+            <title>Summarize Research Paper PDF | Free AI Academic Paper Summarizer | MagicDOCX</title>
             <meta name="description" content="Instantly summarize research papers and academic PDFs using AI. Get methodology, findings, key insights, and critical analysis from any research paper in seconds. Free." />
             <meta name="keywords" content="summarize research paper, AI research paper summarizer, summarize academic PDF, summarize scientific paper online, research paper summary tool" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/summarize-research-paper" />
@@ -22,7 +22,7 @@ const SummarizeResearchPaper = () => (
                     <div className="container max-w-4xl text-center space-y-6">
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Summarize Research Papers with AI</h1>
-                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Read and understand research papers 10x faster. Upload any academic PDF — journal articles, conference papers, dissertations, reports — and get a comprehensive AI-generated summary instantly.</p>
+                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Read and understand research papers 10x faster. Upload any academic PDF | journal articles, conference papers, dissertations, reports | and get a comprehensive AI-generated summary instantly.</p>
                             <div className="mt-8">
                                 <Button asChild size="lg" className="rounded-2xl px-8 py-6 text-base font-bold gap-2">
                                     <Link to="/pdf-summarizer"><Wand2 className="h-5 w-5" /> Summarize Research Paper Free</Link>
@@ -35,7 +35,7 @@ const SummarizeResearchPaper = () => (
                     <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
                         <h2 className="text-2xl font-bold text-foreground">The Challenge of Reading Research Papers</h2>
                         <p>Academic research papers are notoriously dense. A single paper can run 20–50 pages, packed with technical jargon, statistical analysis, and nuanced arguments. Researchers, students, and professionals who need to stay current in their field face the impossible task of reading hundreds of papers per year.</p>
-                        <p>AI-powered research paper summarizers like MagicDOCX change this dynamic completely. Instead of spending two hours dissecting a paper, you can get the key information — research question, methodology, key findings, conclusions, and critical insights — in two minutes.</p>
+                        <p>AI-powered research paper summarizers like MagicDOCX change this dynamic completely. Instead of spending two hours dissecting a paper, you can get the key information | research question, methodology, key findings, conclusions, and critical insights | in two minutes.</p>
                         <h2 className="text-2xl font-bold text-foreground">What Our AI Extracts from Research Papers</h2>
                         <div className="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[
@@ -62,14 +62,14 @@ const SummarizeResearchPaper = () => (
                         <ol className="space-y-2 list-decimal list-inside">
                             <li>Download the research paper as a PDF (most journal sites have a PDF download button)</li>
                             <li>Go to MagicDOCX PDF Summarizer and upload the file</li>
-                            <li>Click "Summarize with AI" — takes 20–60 seconds depending on length</li>
+                            <li>Click "Summarize with AI" | takes 20–60 seconds depending on length</li>
                             <li>Switch between tabs: Overview for a quick read, Insights for key findings, Study Notes for deep understanding</li>
                             <li>Export to PDF or Markdown for your reference library</li>
                         </ol>
                         <h2 className="text-2xl font-bold text-foreground">FAQs About Summarizing Research Papers</h2>
                         {[
                             { q: "Does the AI understand statistical analysis?", a: "Yes. Our AI recognizes quantitative findings, p-values, confidence intervals, and effect sizes, and explains them in plain language within the summary." },
-                            { q: "Can I summarize papers from ArXiv, PubMed, or JSTOR?", a: "Yes — download the PDF from any of these sources and upload it directly. The AI handles all standard academic formats." },
+                            { q: "Can I summarize papers from ArXiv, PubMed, or JSTOR?", a: "Yes | download the PDF from any of these sources and upload it directly. The AI handles all standard academic formats." },
                             { q: "Is this suitable for a systematic review or meta-analysis?", a: "It's excellent for quickly scanning papers during initial screening. For extracting structured data tables, we recommend cross-referencing with the original." },
                         ].map(({ q, a }) => (
                             <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">

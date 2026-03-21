@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import * as XLSX from "xlsx";
 import pptxgen from "pptxgenjs";
-import { Presentation, Loader2, Info, FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileSpreadsheet, Upload } from "lucide-react";
+import { Presentation, Loader2, Info, FileText, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileSpreadsheet, Upload, Plus } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 import ProcessingView from "@/components/ProcessingView";
@@ -28,17 +29,29 @@ const ExcelToPpt = () => {
     const [progress, setProgress] = useState(0);
     const [results, setResults] = useState<ProcessingResult[]>([]);
     const { setDisableGlobalFeatures } = useGlobalUpload();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        setDisableGlobalFeatures(files.length > 0);
+        setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
         return () => setDisableGlobalFeatures(false);
-    }, [files, setDisableGlobalFeatures]);
+    }, [files.length, processing, results.length, setDisableGlobalFeatures]);
 
     const [options, setOptions] = useState({
         generateCharts: true,
         includeRawTables: true,
         createSummary: true,
     });
+
+    const handleAddFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newFiles = Array.from(e.target.files || []);
+        if (newFiles.length > 0) {
+            setFiles(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
 
     const convert = async () => {
         if (files.length === 0) return;
@@ -266,42 +279,17 @@ const ExcelToPpt = () => {
 
     return (
         <ToolLayout title="Excel to PPT (Smart Generator)" description="Turn spreadsheets into structured presentations instantly" category="convert" icon={<Presentation className="h-7 w-7" />}
-            metaTitle="Excel to PPT — Smart Presentation Generator" metaDescription="Convert Excel sheets automatically to PowerPoint presentations. Free AI-powered PPT generation." toolId="excel-to-ppt" hideHeader={files.length > 0 || results.length > 0 || processing}>
+            metaTitle="Excel to PPT | Smart Presentation Generator" metaDescription="Convert Excel sheets automatically to PowerPoint presentations. Free AI-powered PPT generation." toolId="excel-to-ppt" hideHeader={files.length > 0 || results.length > 0 || processing}>
             {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
             {(files.length > 0 || processing || results.length > 0) && (
                 <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-
-                    {/* Header Diagnostic / Execution Control */}
-                    <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
-                                <Presentation className="h-5 w-5 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-black uppercase tracking-tighter">Smart PPT Engine</h2>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                                    {processing ? "Synthesizing Slides..." : results.length > 0 ? "Generation Terminal" : "Awaiting Execution"}
-                                </p>
-                            </div>
+                    {results.length > 0 ? (
+                        <div className="flex-1 overflow-hidden">
+                            <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
                         </div>
-
-                        <div className="flex items-center gap-3">
-                            {(results.length > 0 || !processing) && (
-                                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                                    <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                                </Button>
-                            )}
-                            {results.length === 0 && !processing && (
-                                <Button size="sm" onClick={convert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                                    <ArrowRight className="h-4 w-4" /> Generate PPT
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-
-                    {processing ? (
-                        <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-                            <div className="w-full max-w-md space-y-8 text-center text-center">
+                    ) : processing ? (
+                        <div className="flex-1 flex flex-col items-center justify-center bg-secondary/5 p-8">
+                            <div className="w-full max-w-md space-y-8 text-center">
                                 <div className="relative flex justify-center items-center h-32">
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="w-24 h-24 rounded-full border-4 border-red-500/10" />
@@ -318,111 +306,128 @@ const ExcelToPpt = () => {
                                 </div>
                             </div>
                         </div>
-                    ) : results.length > 0 ? (
-                        <div className="flex-1 overflow-hidden">
-                            <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
-                        </div>
                     ) : (
-                        <div className="flex-1 flex flex-row overflow-hidden">
-                            {/* LEFT PANEL: File Manifest */}
-                            <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                                    <FileBox className="h-4 w-4 text-red-500" />
-                                    <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
+                        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden font-display leading-[1.1] tracking-tight">
+                            {/* Left Panel: File Grid Area - 70% Width */}
+                            <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+                                <div className="p-4 border-b border-border bg-background/50 flex items-center justify-between shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => { setFiles([]); setResults([]); }}
+                                            className="h-8 w-8 p-0 rounded-full hover:bg-secondary/20 font-black italic"
+                                        >
+                                            <ArrowRight className="h-4 w-4 rotate-180" />
+                                        </Button>
+                                        <div className="h-4 w-[1px] bg-border mx-1" />
+                                        <div className="flex items-center gap-2 text-left">
+                                            <FileSpreadsheet className="h-3.5 w-3.5 text-red-600 font-black italic" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{files.length} Excel Spreadsheets</span>
+                                        </div>
+                                    </div>
+                                    <input type="file" ref={fileInputRef} onChange={handleAddFiles} accept=".xlsx,.xls" multiple className="hidden" />
                                 </div>
+
                                 <ScrollArea className="flex-1">
-                                    <div className="p-6 space-y-3">
-                                        {files.map((file, idx) => (
-                                            <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-red-500/30 transition-all">
-                                                <div className="h-12 w-10 bg-red-50 dark:bg-red-950/30 rounded border border-red-200 dark:border-red-800 flex items-center justify-center shrink-0">
-                                                    <FileSpreadsheet className="h-5 w-5 text-red-500" />
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                                            {files.map((file, idx) => (
+                                                <div key={idx} className="group flex flex-col gap-2 p-2 bg-background border border-border hover:border-red-500/50 rounded-xl transition-all duration-200 text-left relative">
+                                                    <div className="aspect-[3/4] w-full bg-secondary/30 rounded-lg overflow-hidden flex items-center justify-center relative shadow-sm border border-border/10">
+                                                        <div className="relative">
+                                                            <div className="h-16 w-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-md border-2 border-emerald-500/20 flex flex-col items-center justify-center overflow-hidden">
+                                                                <div className="w-full bg-emerald-500 h-3 flex items-center justify-center">
+                                                                    <div className="h-[1px] w-full bg-white/20" />
+                                                                </div>
+                                                                <FileSpreadsheet className="h-6 w-6 text-emerald-600 mt-1" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                            <button onClick={() => removeFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-destructive transition-colors shadow-sm border border-border/50">
+                                                                <Plus className="h-3 w-3 rotate-45" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
+                                                            {idx + 1}
+                                                        </div>
+                                                    </div>
+                                                    <div className="px-1 min-w-0">
+                                                        <p className="text-[9px] font-black text-foreground uppercase tracking-tight truncate">{file.name}</p>
+                                                        <p className="text-[8px] font-black text-red-600 uppercase">{formatSize(file.size)}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
-                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => setFiles([])} className="w-full p-4 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
-                                            + Resync Payload
-                                        </button>
+                                            ))}
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="aspect-[3/4] border-2 border-dashed border-border hover:border-red-500/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-red-600 hover:bg-red-500/5 transition-all outline-none focus:ring-2 focus:ring-red-500/20"
+                                            >
+                                                <Plus className="h-5 w-5" />
+                                                Add More
+                                            </button>
+                                        </div>
                                     </div>
                                 </ScrollArea>
                             </div>
 
-                            {/* CENTER: Workbench */}
-                            <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
-                                <div className="w-full max-w-4xl space-y-8">
-                                    {/* Configuration Map */}
-                                    <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
-                                        <div className="p-6 border-b border-border bg-secondary/5">
-                                            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                                                <Settings className="h-4 w-4 text-red-500" />
-                                                Generation Parameters
-                                            </h3>
+                            {/* Right Panel: Settings Sidebar - 30% Width */}
+                            <div className="flex-1 lg:w-[30%] bg-secondary/10 flex flex-col overflow-hidden relative">
+                                <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
+                                    <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8 text-left">
+                                        <div className="space-y-1">
+                                            <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground font-heading italic">Excel to PPT</h2>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic">Smart AI Synthesis Engine</p>
                                         </div>
-                                        <div className="p-10 space-y-8">
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                {[
-                                                    { key: 'generateCharts', label: 'Auto-Charts', desc: 'Numeric Data Viz', icon: <Presentation className="h-5 w-5" /> },
-                                                    { key: 'includeRawTables', label: 'Data Tables', desc: 'Structured Grids', icon: <FileSpreadsheet className="h-5 w-5" /> },
-                                                    { key: 'createSummary', label: 'AI Summary', desc: 'Sheet Overviews', icon: <Info className="h-5 w-5" /> }
-                                                ].map((opt) => (
-                                                    <button
-                                                        key={opt.key}
-                                                        onClick={() => setOptions({ ...options, [opt.key]: !options[opt.key as keyof typeof options] })}
-                                                        className={cn(
-                                                            "flex flex-col items-center text-center gap-3 p-6 rounded-3xl border-2 transition-all group",
-                                                            options[opt.key as keyof typeof options] ? "border-red-500 bg-red-500/5" : "border-border bg-card/50 hover:border-red-500/30"
-                                                        )}>
-                                                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", options[opt.key as keyof typeof options] ? "bg-red-500 text-white" : "bg-secondary text-muted-foreground")}>
-                                                            {opt.icon}
-                                                        </div>
-                                                        <div>
-                                                            <p className={cn("text-xs font-black uppercase tracking-widest", options[opt.key as keyof typeof options] ? "text-red-600" : "text-foreground")}>{opt.label}</p>
-                                                            <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">{opt.desc}</p>
-                                                        </div>
-                                                    </button>
-                                                ))}
+
+                                        <div className="space-y-8 px-1">
+                                            <div className="space-y-4">
+                                                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Generation Parameters</Label>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {[
+                                                        { key: 'generateCharts', label: 'Auto-Charts', desc: 'Numeric Data Viz', icon: <Presentation className="h-4 w-4" /> },
+                                                        { key: 'includeRawTables', label: 'Data Tables', desc: 'Structured Grids', icon: <FileSpreadsheet className="h-4 w-4" /> },
+                                                        { key: 'createSummary', label: 'AI Summary', desc: 'Sheet Overviews', icon: <Info className="h-4 w-4" /> }
+                                                    ].map((opt) => (
+                                                        <button
+                                                            key={opt.key}
+                                                            onClick={() => setOptions({ ...options, [opt.key]: !options[opt.key as keyof typeof options] })}
+                                                            className={cn(
+                                                                "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
+                                                                options[opt.key as keyof typeof options] ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
+                                                            )}
+                                                        >
+                                                            <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", options[opt.key as keyof typeof options] ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
+                                                                {opt.icon}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className={cn("text-xs font-bold uppercase tracking-widest", options[opt.key as keyof typeof options] ? "text-red-600" : "text-foreground")}>{opt.label}</p>
+                                                                <p className="text-[9px] font-semibold text-muted-foreground uppercase mt-1 leading-tight">{opt.desc}</p>
+                                                            </div>
+                                                            {options[opt.key as keyof typeof options] && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
 
-                                            <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl flex items-start gap-4 text-center justify-center">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">
-                                                    * Kernel recommendation: Enable all features for maximum presentation intelligence.
-                                                </p>
+                                            <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl flex items-center justify-center gap-2">
+                                                <CheckCircle2 className="h-3.5 w-3.5 text-red-500" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 text-center uppercase">System Optimized · GPT-Buffer Ready</span>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Ready State */}
-                                    <div className="flex justify-center">
-                                        <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm">
-                                            <CheckCircle2 className="h-4 w-4 text-red-500" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for {files.length} documents · PPTX Buffer ready</span>
+                                            <Button
+                                                onClick={convert}
+                                                disabled={processing}
+                                                className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
+                                            >
+                                                {processing ? "Synthesizing..." : "Initiate Synthesis"}
+                                                <ArrowRight className="h-6 w-6" />
+                                            </Button>
                                         </div>
-                                    </div>
-
-                                    <div className="flex justify-center pt-4">
-                                        <Button size="lg" onClick={convert} className="h-16 rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95 gap-3">
-                                            Initiate Synthesis <ArrowRight className="h-6 w-6" />
-                                        </Button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
-
-                    {/* Footer Meta */}
-                    <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Secure Tunnel</span>
-                            <span className="w-1 h-1 rounded-full bg-border" />
-                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">MagicDocx PPT-AI v2.0.0</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest uppercase text-center">Optimized for structured tabular data with clear headers.</span>
-                        </div>
-                    </div>
                 </div>
             )}
 

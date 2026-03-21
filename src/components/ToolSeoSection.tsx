@@ -39,17 +39,17 @@ export interface ToolSeoSectionProps {
 }
 
 const defaultFeatures: SeoFeature[] = [
-    { icon: Zap, title: "Fast Processing", desc: "Convert and process files in seconds directly in your browser — no server queues." },
+    { icon: Zap, title: "Fast Processing", desc: "Convert and process files in seconds directly in your browser: no server queues." },
     { icon: ShieldCheck, title: "Secure File Handling", desc: "Your files are processed locally or with encrypted transfers and are never stored." },
     { icon: Star, title: "High-Quality Output", desc: "Industry-standard algorithms ensure maximum fidelity and accuracy in every result." },
-    { icon: Monitor, title: "Works on All Devices", desc: "Fully responsive — use it on desktop, tablet, or mobile without installing anything." },
+    { icon: Monitor, title: "Works on All Devices", desc: "Fully responsive: use it on desktop, tablet, or mobile without installing anything." },
 ];
 
 const defaultFaqs: SeoFaq[] = [
     { q: "Is this tool free to use?", a: "Yes, MagicDocx tools are completely free to use. There are no hidden fees, no subscriptions required, and no sign-up needed for most tools." },
     { q: "Are my files secure?", a: "Absolutely. All file transfers use HTTPS encryption. Files processed in the browser never leave your device. Server-processed files are automatically deleted within minutes after processing." },
     { q: "Do you store my uploaded files?", a: "No. MagicDocx does not permanently store your files. Any server-side processed files are automatically deleted shortly after your download. Your privacy is our priority." },
-    { q: "Can I use this tool on mobile?", a: "Yes! MagicDocx is fully responsive and works on any modern smartphone or tablet browser — iOS Safari, Android Chrome, and more. No app installation required." },
+    { q: "Can I use this tool on mobile?", a: "Yes! MagicDocx is fully responsive and works on any modern smartphone or tablet browser: iOS Safari, Android Chrome, and more. No app installation required." },
     { q: "What is the maximum file size supported?", a: "Most tools support files up to 100 MB. For very large files, we recommend compressing them first or splitting them into smaller parts before processing." },
 ];
 
@@ -150,7 +150,7 @@ const ToolSeoSection: React.FC<ToolSeoSectionProps> = ({
                 <section aria-labelledby="seo-intro-heading">
                     <div className="max-w-3xl">
                         <h1 id="seo-intro-heading" className="font-display text-3xl md:text-4xl font-black text-foreground tracking-tight mb-5">
-                            {toolName} — Free Online Tool
+                            {toolName} | Free Online PDF Tool
                         </h1>
                         <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
                             {intro}
@@ -212,15 +212,15 @@ const ToolSeoSection: React.FC<ToolSeoSectionProps> = ({
                             <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                                 MagicDocx is a free, browser-based toolkit that lets you work with PDFs, Office documents, and images
                                 without downloading any software. All tools run at high speed and are built to handle files of all
-                                types — whether you're converting a PDF to Word for editing, compressing a heavy document before
+                                types: whether you're converting a PDF to Word for editing, compressing a heavy document before
                                 emailing, or merging reports into a single file.
                             </p>
                         </div>
                         <div>
                             <ul className="space-y-3">
                                 {[
-                                    { icon: Zap, label: "Instant processing — results in seconds" },
-                                    { icon: Globe, label: "100% browser-based — no installation needed" },
+                                    { icon: Zap, label: "Instant processing: results in seconds" },
+                                    { icon: Globe, label: "100% browser-based: no installation needed" },
                                     { icon: ShieldCheck, label: "Encrypted file handling and auto-deletion" },
                                     { icon: Cpu, label: "High-quality output using modern algorithms" },
                                     { icon: Clock, label: "Available 24/7, completely free" },
@@ -265,7 +265,7 @@ const ToolSeoSection: React.FC<ToolSeoSectionProps> = ({
                             <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                                 We take your privacy and data security seriously. All file uploads use HTTPS encryption to ensure your
                                 documents are protected during transit. For browser-based tools, your files never leave your device at
-                                all — processing happens entirely on your computer. For server-side operations, uploaded files are stored
+                                all: processing happens entirely on your computer. For server-side operations, uploaded files are stored
                                 in isolated temporary environments and are permanently deleted within minutes after processing. We do not
                                 read, share, or analyze your file content in any way. MagicDocx does not retain any personal data or
                                 document metadata from your sessions. Your trust is the foundation of our service.

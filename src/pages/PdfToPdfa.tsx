@@ -14,8 +14,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PDFDocument } from "pdf-lib";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import * as pdfjsLib from "pdfjs-dist";
+import { Plus } from "lucide-react";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+
+interface FileData {
+  file: File;
+  previewUrl: string;
+  pageCount: number;
+}
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -25,70 +37,133 @@ const formatSize = (bytes: number): string => {
 
 const PdfToPdfa = () => {
   const [files, setFiles] = useState<File[]>([]);
+  const [fileDataList, setFileDataList] = useState<FileData[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState("Awaiting Execution");
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [compliance, setCompliance] = useState("pdfa-2b");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
+
+  useEffect(() => {
+    if (files.length > 0 && results.length === 0 && !processing) {
+      loadFilePreviews(files);
+    } else if (files.length === 0) {
+      setFileDataList([]);
+    }
+  }, [files]);
+
+  const loadFilePreviews = async (newFiles: File[]) => {
+    const newData: FileData[] = [];
+    for (const file of newFiles) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        if (context) {
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          await page.render({ canvasContext: context, viewport }).promise;
+          const previewUrl = canvas.toDataURL("image/jpeg", 0.8);
+          newData.push({ file, previewUrl, pageCount: pdf.numPages });
+        }
+      } catch (err) {
+        console.error("Error generating preview:", err);
+        newData.push({ file, previewUrl: "", pageCount: 0 });
+      }
+    }
+    setFileDataList(newData);
+  };
+
+  const handleAddFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length > 0) {
+      setFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFileDataList(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleConvert = async () => {
-    const file = files[0];
-    if (!file) return;
+    if (files.length === 0) return;
     setProcessing(true);
-    setProgress(20);
+    setProgress(0);
+    setStatusText("Initializing conversion...");
+    
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
-      setProgress(40);
+      const resultsList: ProcessingResult[] = [];
+      const zip = new JSZip();
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setStatusText(`Processing ${file.name}...`);
+        setProgress(Math.round((i / files.length) * 100));
+        
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        
+        // Set PDF/A compliant metadata
+        const title = file.name.replace(".pdf", "");
+        pdfDoc.setTitle(title);
+        pdfDoc.setAuthor("MagicDOCX User");
+        pdfDoc.setSubject(`PDF/A ${compliance.toUpperCase()} Compliant Document`);
+        pdfDoc.setProducer("MagicDOCX | PDF/A Converter");
+        pdfDoc.setCreator("MagicDOCX");
+        pdfDoc.setCreationDate(new Date());
+        pdfDoc.setModificationDate(new Date());
 
-      // Set PDF/A compliant metadata
-      const title = file.name.replace(".pdf", "");
-      pdfDoc.setTitle(title);
-      pdfDoc.setAuthor("MagicDOCX User");
-      pdfDoc.setSubject(`PDF/A ${compliance.toUpperCase()} Compliant Document`);
-      pdfDoc.setProducer("MagicDOCX — PDF/A Converter");
-      pdfDoc.setCreator("MagicDOCX");
-      pdfDoc.setCreationDate(new Date());
-      pdfDoc.setModificationDate(new Date());
+        // Re-serialize the document with object streams for optimization
+        const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+        
+        const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const filename = file.name.replace(".pdf", `_${compliance}.pdf`);
+        
+        resultsList.push({
+          file: blob,
+          url,
+          filename,
+        });
+        
+        if (files.length > 1) {
+          zip.file(filename, blob);
+        }
+      }
 
-      // Add XMP metadata for PDF/A compliance indication
-      const compliancePart = compliance === "pdfa-1b" ? "1" : "2";
-      const complianceConformance = "B";
-
-      setProgress(60);
-
-      // Re-serialize the document with object streams for optimization
-      const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-      setProgress(90);
-
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const filename = file.name.replace(".pdf", `_${compliance}.pdf`);
-
-      setResults([{
-        file: blob,
-        url,
-        filename,
-      }]);
-
-      // Auto download
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-
+      setResults(resultsList);
+      
+      if (files.length > 1) {
+        setStatusText("Creating ZIP archive...");
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        saveAs(zipBlob, "magicdocx_pdfa_bundle.zip");
+        toast.success(`Success! All files converted and zipped.`);
+      } else {
+        const result = resultsList[0];
+        saveAs(result.file, result.filename);
+        toast.success(`PDF/A (${compliance.toUpperCase()}) file generated!`);
+      }
+      
       setProgress(100);
-      toast.success(`PDF/A (${compliance.toUpperCase()}) file generated!`);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to convert PDF to PDF/A.");
     } finally {
       setProcessing(false);
       setProgress(0);
+      setStatusText("Awaiting Execution");
     }
   };
 
@@ -106,38 +181,11 @@ const PdfToPdfa = () => {
       {/* ── ARCHIVAL WORKSPACE ─────────────────────────────────────────── */}
       {(files.length > 0 || processing || results.length > 0) && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-
-          {/* Header Diagnostic / Execution Control */}
-          <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-                <Archive className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tighter">Archival Compliance Engine</h2>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                  {processing ? "Injecting ISO Metadata..." : results.length > 0 ? "Compliance Terminal" : "Awaiting Execution"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {(results.length > 0 || !processing) && (
-                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                  <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                </Button>
-              )}
-              {results.length === 0 && !processing && (
-                <Button size="sm" onClick={handleConvert} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                  <ArrowRight className="h-4 w-4" /> Convert to PDF/A
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center text-center">
+          {results.length > 0 ? (
+            <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
+          ) : processing ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/5 p-8">
+              <div className="w-full max-w-md space-y-8 text-center">
                 <div className="relative flex justify-center items-center h-32">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-24 h-24 rounded-full border-4 border-emerald-500/10" />
@@ -148,119 +196,132 @@ const PdfToPdfa = () => {
                   <Archive className="h-8 w-8 text-emerald-500 animate-pulse" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-black uppercase tracking-tighter">Standardizing PDF Kernel</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tighter">{statusText}</h3>
                   <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% ISO Compliant</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Processed</p>
                 </div>
               </div>
             </div>
-          ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden">
-              <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
-            </div>
           ) : (
-            <div className="flex-1 flex flex-row overflow-hidden">
-              {/* LEFT PANEL: File Manifest */}
-              <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                  <FileBox className="h-4 w-4 text-emerald-500" />
-                  <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden font-display">
+              {/* Left Panel: Preview Area (Thumbnail Grid) - 70% Width */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setFiles([]); setResults([]); }}
+                      className="h-8 w-8 p-0 rounded-full hover:bg-secondary/20 font-black italic"
+                    >
+                      <ArrowRight className="h-4 w-4 rotate-180" />
+                    </Button>
+                    <div className="h-4 w-[1px] bg-border mx-1" />
+                    <div className="flex items-center gap-2 text-left">
+                      <Archive className="h-3.5 w-3.5 text-red-600" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{files.length} Files</span>
+                    </div>
+                  </div>
+                  <input type="file" ref={fileInputRef} onChange={handleAddFiles} accept=".pdf" multiple className="hidden" />
                 </div>
+
                 <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-3">
-                    {files.map((file, idx) => (
-                      <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-emerald-500/30 transition-all">
-                        <div className="h-12 w-10 bg-emerald-50 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
-                          <FileText className="h-5 w-5 text-emerald-500" />
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {fileDataList.map((fd, idx) => (
+                        <div key={idx} className="group flex flex-col gap-2 p-2 bg-background border border-border hover:border-red-500/50 rounded-xl transition-all duration-200 text-left relative">
+                          <div className="aspect-[3/4] w-full bg-secondary/30 rounded-lg overflow-hidden flex items-center justify-center relative shadow-sm border border-border/10">
+                            {fd.previewUrl ? (
+                              <img src={fd.previewUrl} alt="Preview" className="w-full h-full object-contain" />
+                            ) : (
+                              <FileText className="h-8 w-8 text-muted-foreground/30" />
+                            )}
+                            <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                              <button onClick={() => removeFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-destructive transition-colors shadow-sm border border-border/50">
+                                <Plus className="h-3 w-3 rotate-45" />
+                              </button>
+                            </div>
+                            <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
+                              {idx + 1}
+                            </div>
+                          </div>
+                          <div className="px-1 min-w-0">
+                            <p className="text-[9px] font-black text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
+                            <p className="text-[8px] font-black text-red-600 uppercase">{formatSize(fd.file.size)}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <button onClick={() => setFiles([])} className="w-full p-4 border-2 border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary transition-all">
-                      + Resync Payload
-                    </button>
+                      ))}
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="aspect-[3/4] border-2 border-dashed border-border hover:border-red-500/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-red-600 hover:bg-red-500/5 transition-all outline-none focus:ring-2 focus:ring-red-500/20"
+                      >
+                        <Plus className="h-5 w-5" />
+                        Add More
+                      </button>
+                    </div>
                   </div>
                 </ScrollArea>
               </div>
 
-              {/* CENTER: Workbench */}
-              <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center">
-                <div className="w-full max-w-2xl space-y-8">
-                  {/* Configuration Map */}
-                  <div className="bg-background rounded-3xl border border-border shadow-2xl overflow-hidden">
-                    <div className="p-6 border-b border-border bg-secondary/5">
-                      <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                        <Settings className="h-4 w-4 text-emerald-500" />
-                        Compliance Map
-                      </h3>
+              {/* Right Panel: Settings Sidebar - 30% Width */}
+              <div className="flex-1 lg:w-[30%] bg-secondary/10 flex flex-col overflow-hidden relative">
+                <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
+                  <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8 text-left">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-bold uppercase tracking-tighter text-foreground font-heading">PDF to PDF/A</h2>
                     </div>
-                    <div className="p-10 space-y-8">
-                      <div className="space-y-4 text-center">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Standard Selection</Label>
-                        <div className="grid grid-cols-2 gap-4">
+
+                    <div className="space-y-8 px-1">
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Compliance Level</Label>
+                        <div className="grid grid-cols-1 gap-3">
                           {[
-                            { id: 'pdfa-1b', label: 'PDF/A-1b', desc: 'Basic Compliance', icon: <FileCheck className="h-5 w-5" /> },
-                            { id: 'pdfa-2b', label: 'PDF/A-2b', desc: 'Recommended ISO', icon: <Archive className="h-5 w-5" /> }
+                            { id: 'pdfa-1b', label: 'PDF/A-1b', desc: 'Basic compliance for long-term archiving.', icon: <FileCheck className="h-4 w-4" /> },
+                            { id: 'pdfa-2b', label: 'PDF/A-2b', desc: 'Modern standard with more features.', icon: <Archive className="h-4 w-4" /> }
                           ].map((std) => (
                             <button
                               key={std.id}
                               onClick={() => setCompliance(std.id)}
                               className={cn(
-                                "flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all group text-center",
-                                compliance === std.id ? "border-emerald-500 bg-emerald-500/5" : "border-border bg-card/50 hover:border-emerald-500/30"
-                              )}>
-                              <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110", compliance === std.id ? "bg-emerald-500 text-white" : "bg-secondary text-muted-foreground")}>
+                                "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
+                                compliance === std.id ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
+                              )}
+                            >
+                              <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", compliance === std.id ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
                                 {std.icon}
                               </div>
-                              <div>
-                                <p className={cn("text-xs font-black uppercase tracking-widest text-center", compliance === std.id ? "text-emerald-600" : "text-foreground")}>{std.label}</p>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 text-center">{std.desc}</p>
+                              <div className="flex-1">
+                                <p className={cn("text-xs font-bold uppercase tracking-widest", compliance === std.id ? "text-red-600" : "text-foreground")}>{std.label}</p>
+                                <p className="text-[9px] font-semibold text-muted-foreground uppercase mt-1 leading-tight">{std.desc}</p>
                               </div>
+                              {compliance === std.id && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-start gap-4 text-center justify-center">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                          * Kernel recommendation: PDF/A-2b is preferred for long-term document durability and searchability.
-                        </p>
+                      <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl flex items-center justify-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-red-500" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 text-center uppercase">ISO Protocol Standard Selection</span>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Ready State */}
-                  <div className="flex flex-col items-center gap-6 pt-4">
-                    <div className="flex items-center gap-4 px-6 py-3 bg-card rounded-full border border-border shadow-sm">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">System Optimized for Archival Conversion · ISO Protocol Set</span>
+                      <Button
+                        onClick={handleConvert}
+                        disabled={processing}
+                        className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        {processing ? "Converting..." : "Convert to PDF/A"}
+                        <ArrowRight className="h-6 w-6" />
+                      </Button>
                     </div>
-
-                    <Button size="lg" onClick={handleConvert} className="h-16 rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] px-16 shadow-2xl shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95 gap-3 text-center">
-                      Initiate Archival <ArrowRight className="h-6 w-6" />
-                    </Button>
                   </div>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Footer Meta */}
-          <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> ISO Tunnel</span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">MagicDocx Archival v3.2.0</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">Conforms to ISO 19005-2 Standard Protocols</span>
-            </div>
-          </div>
         </div>
       )}
+
 
       <div className="mt-5">
         {files.length === 0 && (
@@ -276,7 +337,7 @@ const PdfToPdfa = () => {
         steps={[
           "Upload a PDF file using the file upload area.",
           "Select your compliance standard: PDF/A-1b or PDF/A-2b.",
-          "Click \"Initiate Archival\" — the tool embeds all required metadata.",
+          "Click \"Initiate Archival\" | the tool embeds all required metadata.",
           "Download your ISO-compliant PDF/A file immediately."
         ]}
         formats={["PDF", "PDF/A-1b", "PDF/A-2b"]}

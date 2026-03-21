@@ -603,7 +603,7 @@ const CompressPdf = () => {
       <ToolSeoSection
         toolName="Compress PDF"
         category="compress"
-        intro="MagicDocx Compress PDF reduces your PDF file size without sacrificing readability. It's ideal for emailing large reports, uploading to portals with size limits, or optimizing documents for the web. Choose from three professional compression modes — Strong, Recommended, or Professional — or enter a custom target size. All processing happens in your browser, keeping your files private and secure."
+        intro="MagicDocx Compress PDF reduces your PDF file size without sacrificing readability. It's ideal for emailing large reports, uploading to portals with size limits, or optimizing documents for the web. Choose from three professional compression modes | Strong, Recommended, or Professional | or enter a custom target size. All processing happens in your browser, keeping your files private and secure."
         steps={[
           "Upload one or more PDF files to the compress tool.",
           "Select a compression mode: Strong, Recommended, or Professional quality.",

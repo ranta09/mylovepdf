@@ -3,7 +3,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const faqs = [
   {
     q: "What is MagicDOCX?",
-    a: "MagicDOCX is a free online PDF toolkit that lets you merge, split, compress, convert, edit, protect, and work with PDF files. It also includes AI-powered tools like PDF Summarizer, Quiz Generator, Chat with PDF, ATS Resume Checker, and PDF Translator — all completely free."
+    a: "MagicDOCX is a free online PDF toolkit that lets you merge, split, compress, convert, edit, protect, and work with PDF files. It also includes AI-powered tools like PDF Summarizer, Quiz Generator, Chat with PDF, ATS Resume Checker, and PDF Translator: all completely free."
   },
   {
     q: "Is MagicDOCX really free?",
@@ -11,7 +11,7 @@ const faqs = [
   },
   {
     q: "Are my files safe and secure?",
-    a: "Absolutely. Most PDF processing happens directly in your browser — your files are never uploaded to a server. For AI-powered features, files are processed securely and automatically deleted after use. We use encryption to protect all data transfers."
+    a: "Absolutely. Most PDF processing happens directly in your browser: your files are never uploaded to a server. For AI-powered features, files are processed securely and automatically deleted after use. We use encryption to protect all data transfers."
   },
   {
     q: "How do I merge PDF files?",
@@ -55,7 +55,7 @@ const faqs = [
   },
   {
     q: "Do I need to create an account?",
-    a: "No! MagicDOCX requires no sign-up or account creation. All tools are available immediately — just visit the tool page and start working with your PDFs."
+    a: "No! MagicDOCX requires no sign-up or account creation. All tools are available immediately: just visit the tool page and start working with your PDFs."
   },
   {
     q: "What file size limits are there?",

@@ -141,7 +141,7 @@ const EditPdf = () => {
     }
   };
 
-  // ─── Intersection observer — detect which page is visible ─────────────────
+  // ─── Intersection observer | detect which page is visible ─────────────────
 
   useEffect(() => {
     if (!scrollRef.current || previews.length === 0) return;
@@ -433,7 +433,7 @@ const EditPdf = () => {
     if (!file) return; setSaving(true);
     try {
       const bytes = await buildEditedPdf(file, state, setSaveProgress);
-      const name = `Version ${versions.length + 1} — ${new Date().toLocaleTimeString()}`;
+      const name = `Version ${versions.length + 1} | ${new Date().toLocaleTimeString()}`;
       setVersions(v => [...v, { name, data: bytes }]);
       toast.success(`Saved as "${name}"`);
     } catch { toast.error("Failed to save version."); }
@@ -588,10 +588,10 @@ const EditPdf = () => {
   return (
     <ToolLayout
       title="Edit PDF Online"
-      description="Edit PDF online — add text, replace images, annotate, sign and manage pages."
+      description="Edit PDF online | add text, replace images, annotate, sign and manage pages."
       category="edit"
       icon={<Edit3 className="h-7 w-7" />}
-      metaTitle="Edit PDF Online — Change Text & Images | MagicDocx"
+      metaTitle="Edit PDF Online | Change Text & Images | MagicDocx"
       metaDescription="Edit any PDF online. Add text, replace images, annotate, sign, and manage pages. Free in-browser PDF editor."
       toolId="edit"
       hideHeader={!!file}
@@ -696,7 +696,7 @@ const EditPdf = () => {
                   </button>
                 </div>
 
-                {/* Page canvas area — scrollable, large */}
+                {/* Page canvas area | scrollable, large */}
                 <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/20 px-4 py-6 custom-scrollbar" style={{ scrollBehavior: "smooth" }}>
                   {!thumbsOpen && (
                     <button onClick={() => setThumbsOpen(true)} className="mb-3 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -949,9 +949,9 @@ const EditPdf = () => {
       <ToolSeoSection
         toolName="Edit PDF Online"
         category="edit"
-        intro="MagicDocx PDF Editor lets you edit any PDF directly in your browser — no download, no registration. Add custom text in your chosen font, size, and color. Insert images by drawing a region and picking your file. Annotate with highlights, rectangles, ellipses, comments, and freehand drawings. Sign with your finger or mouse. Manage pages by reordering, rotating, or deleting them. All changes are embedded into a downloaded PDF that you own."
+        intro="MagicDocx PDF Editor lets you edit any PDF directly in your browser | no download, no registration. Add custom text in your chosen font, size, and color. Insert images by drawing a region and picking your file. Annotate with highlights, rectangles, ellipses, comments, and freehand drawings. Sign with your finger or mouse. Manage pages by reordering, rotating, or deleting them. All changes are embedded into a downloaded PDF that you own."
         steps={[
-          "Upload your PDF using the file upload area — it opens in the full editor workspace.",
+          "Upload your PDF using the file upload area | it opens in the full editor workspace.",
           "Use the toolbar tabs to switch between: Text, Image, Annotate, Pages, and Sign.",
           "Click on the page canvas to add text, draw image regions, or place annotations.",
           "Click Download to save your fully edited PDF with all changes embedded."

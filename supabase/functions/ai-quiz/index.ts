@@ -16,7 +16,7 @@ serve(async (req) => {
       easy: "Straightforward recall, basic definitions, and simple comprehension. Questions should be answerable by anyone who read the document once.",
       medium: "Comprehension and application of concepts. Requires understanding relationships between ideas, not just memorization.",
       hard: "Deep analysis, inference, and critical evaluation. Questions should challenge the reader to synthesize information and draw conclusions.",
-      exam: "Real exam conditions — precise wording, plausible distractors that require careful reading, nuanced distinctions between close answers.",
+      exam: "Real exam conditions: precise wording, plausible distractors that require careful reading, nuanced distinctions between close answers.",
     };
 
     const typeMap: Record<string, string> = {
@@ -30,17 +30,17 @@ serve(async (req) => {
     };
 
     const types = (questionTypes as string[]).filter((t) => typeMap[t]);
-    const focusCtx = focusTopic ? `\nFOCUS on the topic: "${focusTopic}" — prioritize questions about this area.` : "";
+    const focusCtx = focusTopic ? `\nFOCUS on the topic: "${focusTopic}": prioritize questions about this area.` : "";
 
     const sys = `You are a world-class educational quiz designer. Generate exactly ${count} high-quality quiz questions from the provided document.
 
-DIFFICULTY: ${difficulty} — ${diffMap[difficulty] || diffMap.medium}
+DIFFICULTY: ${difficulty}: ${diffMap[difficulty] || diffMap.medium}
 QUESTION TYPES (distribute evenly): ${types.map((t) => typeMap[t]).join(" | ")}
 ${focusCtx}
 
 QUALITY RULES:
 - No trivial, repetitive, or obvious questions
-- Distractors must be plausible — wrong but not absurd
+- Distractors must be plausible: wrong but not absurd
 - Each question must be clearly answerable from the document content
 - Explanations must reference WHY the answer is correct
 - sectionRef must identify WHERE in the document the question comes from (use section headings, paragraph context, or "beginning/middle/end of document")

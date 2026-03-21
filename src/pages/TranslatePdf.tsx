@@ -180,7 +180,7 @@ const TranslatePdf = () => {
         const translated: string[] = [];
 
         for (let ci = 0; ci < chunks.length; ci++) {
-          setStatusText(`Translating ${file.name} — chunk ${ci + 1}/${chunks.length}…`);
+          setStatusText(`Translating ${file.name}: chunk ${ci + 1}/${chunks.length}…`);
           setProgress(Math.round(
             ((fi / files.length) * 80) + ((ci / chunks.length) * (80 / files.length)) + 20
           ));
@@ -241,7 +241,7 @@ const TranslatePdf = () => {
       const lines = doc.splitTextToSize(text, mw); doc.text(lines, 20, y);
       y += lines.length * (size * 0.52 + 1.5);
     };
-    nl(`Translation — ${result.lang}`, true, 14); y += 4;
+    nl(`Translation: ${result.lang}`, true, 14); y += 4;
     nl(`Source: ${result.name}`, false, 9); y += 6;
     result.translated.split("\n").forEach(line => nl(line || " ", line.startsWith("#"), line.startsWith("#") ? 12 : 10));
     doc.save(`translated-${result.lang.toLowerCase()}-${result.name.replace(/\.[^.]+$/, "")}.pdf`);
@@ -303,7 +303,7 @@ const TranslatePdf = () => {
               label="Upload documents"
             />
 
-            {/* Document Info Card — shown after upload */}
+            {/* Document Info Card: shown after upload */}
             {fileMeta && (
               <DocumentInfoCard
                 name={fileMeta.name}
@@ -459,7 +459,7 @@ const TranslatePdf = () => {
                   )}
                   <div className="flex flex-col overflow-hidden">
                     <div className="bg-primary/5 px-6 py-2 border-b border-primary/10">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-primary">Translated — {active.lang}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-primary">Translated: {active.lang}</p>
                     </div>
                     <ScrollArea className="flex-1 p-8 bg-background">
                       <div className="max-w-3xl mx-auto prose prose-sm dark:prose-invert text-foreground text-xs leading-relaxed">

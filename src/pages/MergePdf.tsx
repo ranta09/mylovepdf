@@ -760,7 +760,7 @@ const MergePdf = () => {
       <ToolSeoSection
         toolName="Merge PDF"
         category="merge"
-        intro="MagicDocx Merge PDF lets you combine multiple PDF files into a single, organized document in seconds. Whether you're assembling reports, collating contracts, or joining presentation slides, our free online tool handles it all. Simply drag and drop your PDFs, arrange the order you need, and merge with one click — no software installation required, no file size limits for basic use, and no sign-up needed."
+        intro="MagicDocx Merge PDF lets you combine multiple PDF files into a single, organized document in seconds. Whether you're assembling reports, collating contracts, or joining presentation slides, our free online tool handles it all. Simply drag and drop your PDFs, arrange the order you need, and merge with one click | no software installation required, no file size limits for basic use, and no sign-up needed."
         steps={[
           "Upload two or more PDF files by dragging and dropping or clicking the upload area.",
           "Reorder files or individual pages by dragging them into your desired sequence.",

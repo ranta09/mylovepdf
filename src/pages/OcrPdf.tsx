@@ -217,7 +217,7 @@ const OcrPdf = () => {
       description="Extract text from scanned PDFs using high-accuracy text recognition technology."
       category="edit"
       icon={<ScanLine className="h-7 w-7" />}
-      metaTitle="OCR PDF — Make Scanned PDFs Searchable Online Free"
+      metaTitle="OCR PDF | Make Scanned PDFs Searchable Online Free"
       metaDescription="Convert scanned PDF documents into searchable, selectable text using AI-powered OCR technology. Support for multi-language and professional DOCX/PDF export."
       toolId="ocr-pdf"
       hideHeader={files.length > 0 || processing || results.length > 0}

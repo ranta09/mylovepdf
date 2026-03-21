@@ -10,7 +10,7 @@ import RelatedTools from "@/components/RelatedTools";
 const SummarizeLegalDocument = () => (
     <>
         <Helmet>
-            <title>Summarize Legal Documents Online Free — AI Contract Summarizer | MagicDOCX</title>
+            <title>Summarize Legal Documents Online Free | AI Contract Summarizer | MagicDOCX</title>
             <meta name="description" content="Summarize legal documents, contracts, and agreements online for free using AI. Get plain-English summaries of complex legal PDFs in seconds. No signup required." />
             <meta name="keywords" content="summarize legal document, legal PDF summarizer, contract summarizer AI, summarize contract online, legal document summary tool" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/summarize-legal-document" />
@@ -22,9 +22,9 @@ const SummarizeLegalDocument = () => (
                     <div className="container max-w-4xl text-center space-y-6">
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Summarize Legal Documents with AI</h1>
-                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Upload any legal PDF — contract, agreement, policy, court ruling — and get a clear, plain-English summary in seconds. Understand what you're signing without a law degree.</p>
+                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Upload any legal PDF | contract, agreement, policy, court ruling | and get a clear, plain-English summary in seconds. Understand what you're signing without a law degree.</p>
                             <div className="mt-8"><Button asChild size="lg" className="rounded-2xl px-8 py-6 text-base font-bold gap-2"><Link to="/pdf-summarizer"><Wand2 className="h-5 w-5" /> Summarize Legal Document Free</Link></Button></div>
-                            <p className="mt-4 text-xs text-muted-foreground">⚠️ For informational purposes only — not a substitute for professional legal advice.</p>
+                            <p className="mt-4 text-xs text-muted-foreground">⚠️ For informational purposes only | not a substitute for professional legal advice.</p>
                         </motion.div>
                     </div>
                 </section>
@@ -32,7 +32,7 @@ const SummarizeLegalDocument = () => (
                     <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
                         <h2 className="text-2xl font-bold text-foreground">Understand Legal Documents Without a Lawyer</h2>
                         <p>Legal documents are deliberately complex. Contracts, terms of service, privacy policies, and agreements are written in legal jargon that most people struggle to understand. Our AI legal document summarizer translates complex legalese into plain English, highlighting key obligations, rights, deadlines, and risk clauses so you know what you're actually agreeing to.</p>
-                        <p>While this tool does not replace professional legal advice, it can help you quickly understand the substance of a document before consulting a lawyer — saving you both time and money in legal fees.</p>
+                        <p>While this tool does not replace professional legal advice, it can help you quickly understand the substance of a document before consulting a lawyer | saving you both time and money in legal fees.</p>
                         <h2 className="text-2xl font-bold text-foreground">Types of Legal Documents We Can Summarize</h2>
                         <div className="not-prose grid grid-cols-2 md:grid-cols-3 gap-3">
                             {["Employment contracts", "NDA agreements", "Terms of service", "Privacy policies", "Lease agreements", "Purchase agreements", "Partnership agreements", "Court rulings", "Regulatory filings"].map(t => (

@@ -990,7 +990,7 @@ const RedactPdf = () => {
         <ToolSeoSection
           toolName="Redact PDF Online"
           category="edit"
-          intro="MagicDocx Redact PDF is a professional workspace for permanently removing sensitive information from your PDF documents. Choose from four redaction modes: draw a rectangle over any area, click on text blocks to redact individual words or sentences, search the entire document for a keyword and redact all occurrences at once, or redact an entire page. Four appearance styles are available: solid black, white cover, blur effect, or a custom label. The output PDF has the information permanently deleted — not just hidden."
+          intro="MagicDocx Redact PDF is a professional workspace for permanently removing sensitive information from your PDF documents. Choose from four redaction modes: draw a rectangle over any area, click on text blocks to redact individual words or sentences, search the entire document for a keyword and redact all occurrences at once, or redact an entire page. Four appearance styles are available: solid black, white cover, blur effect, or a custom label. The output PDF has the information permanently deleted | not just hidden."
           steps={[
             "Upload your PDF using the file upload area.",
             "Select your redaction tool from the toolbar: Area (draw box), Text (click words), Search & Redact All, or Full Page.",

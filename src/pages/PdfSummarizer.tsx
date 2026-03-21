@@ -222,7 +222,7 @@ const DocSummarizer = () => {
       }
 
       if (sources.every(s => !s.text.trim())) {
-        throw new Error("No text could be extracted from the provided document(s). The file may be a scanned image PDF — try uploading a text-based PDF.");
+        throw new Error("No text could be extracted from the provided document(s). The file may be a scanned image PDF | try uploading a text-based PDF.");
       }
 
       setExtractedFiles(sources);
@@ -436,7 +436,7 @@ const DocSummarizer = () => {
               </div>
             )}
 
-            {/* Document info card — shown after files are added */}
+            {/* Document info card | shown after files are added */}
             {files.length > 0 && !urlMode && (
               <DocumentInfoCard
                 name={files.length === 1 ? files[0].name : `${files.length} documents selected`}
@@ -444,7 +444,7 @@ const DocSummarizer = () => {
               />
             )}
 
-            {/* Summary Mode & Length — shown when files are ready */}
+            {/* Summary Mode & Length | shown when files are ready */}
             {(files.length > 0 || (urlMode && urlInput.trim().length > 5)) && (
               <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm">
                 <h3 className="text-sm font-bold text-foreground">Analysis Settings</h3>
@@ -730,7 +730,7 @@ const DocSummarizer = () => {
         <ToolSeoSection
           toolName="AI Document Summarizer"
           category="ai"
-          intro="The most powerful online tool to instantly summarize any document. Powered by AI — supports PDF, Word, PowerPoint, Excel, images, and URLs."
+          intro="The most powerful online tool to instantly summarize any document. Powered by AI | supports PDF, Word, PowerPoint, Excel, images, and URLs."
           features={[
             { icon: FileBarChart, title: "9 Summary Types", desc: "Overview, bullets, insights, executive, study notes, actions, TLDR, glossary, quiz" },
             { icon: MessageSquare, title: "Chat with Document", desc: "Ask any question and get accurate answers based on your document" },
@@ -752,10 +752,10 @@ const DocSummarizer = () => {
           ]}
           faqs={[
             { q: "How does the AI summarizer work?", a: "MagicDocx extracts text from your document using advanced parsing and OCR, then sends it to an AI model that generates structured summaries across 9 different formats." },
-            { q: "Can I summarize Word or PowerPoint files?", a: "Yes — DOCX, DOC, PPTX, and PPT files are all supported. Simply upload the file and the AI will process it automatically." },
+            { q: "Can I summarize Word or PowerPoint files?", a: "Yes | DOCX, DOC, PPTX, and PPT files are all supported. Simply upload the file and the AI will process it automatically." },
             { q: "Is my document secure?", a: "Absolutely. Your files are processed entirely in your browser for extraction, and no document content is ever stored on our servers. Files are automatically deleted after processing." },
             { q: "Can I summarize large PDFs?", a: "Yes. MagicDocx uses intelligent chunk processing to handle documents up to 300+ pages. Large documents are split, summarized in parts, and then combined into a coherent output." },
-            { q: "Can I summarize multiple files at once?", a: "Yes — upload multiple files and the AI will generate both individual summaries and a combined summary across all documents." },
+            { q: "Can I summarize multiple files at once?", a: "Yes | upload multiple files and the AI will generate both individual summaries and a combined summary across all documents." },
           ]}
         />
 

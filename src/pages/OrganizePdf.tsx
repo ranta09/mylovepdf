@@ -641,7 +641,7 @@ const OrganizePdf = () => {
       <ToolSeoSection
         toolName="Organize PDF Online"
         category="edit"
-        intro="MagicDocx Organize PDF is a professional drag-and-drop workspace for rearranging, rotating, deleting, and duplicating the pages of any PDF document. Upload multiple PDFs to combine them, drag pages into the perfect order, insert blank pages, and download your reorganized document instantly. Undo/redo history lets you experiment freely, and every action happens locally in your browser — your files are never uploaded to any server."
+        intro="MagicDocx Organize PDF is a professional drag-and-drop workspace for rearranging, rotating, deleting, and duplicating the pages of any PDF document. Upload multiple PDFs to combine them, drag pages into the perfect order, insert blank pages, and download your reorganized document instantly. Undo/redo history lets you experiment freely, and every action happens locally in your browser | your files are never uploaded to any server."
         steps={[
           "Upload one or more PDF files using the drag-and-drop area.",
           "Drag page thumbnails into your desired order, or select multiple pages for bulk actions.",

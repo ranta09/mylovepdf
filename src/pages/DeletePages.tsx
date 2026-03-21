@@ -316,7 +316,7 @@ const DeletePages = () => {
       description="Remove specific pages from your document with professional accuracy"
       category="edit"
       icon={<Trash2 className="h-7 w-7" />}
-      metaTitle="Delete PDF Pages — Remove Pages Online Free"
+      metaTitle="Delete PDF Pages | Remove Pages Online Free"
       metaDescription="Delete multiple pages from your PDF document easily. Use our grid view to select and remove pages by range or individually."
       toolId="delete-pages"
       hideHeader={files.length > 0}
@@ -623,7 +623,7 @@ const DeletePages = () => {
       <ToolSeoSection
         toolName="Delete PDF Pages"
         category="edit"
-        intro="MagicDocx Delete PDF Pages tool gives you a visual grid workspace to precisely remove unwanted pages from any PDF document. Click individual page thumbnails to mark them for deletion, use the range field to remove pages like '1-3, 5', select all and delete in bulk, or hover over a thumbnail to delete it instantly with one click. Undo the last deletion or restore all pages if you change your mind. Changes are applied client-side — your file never leaves your browser."
+        intro="MagicDocx Delete PDF Pages tool gives you a visual grid workspace to precisely remove unwanted pages from any PDF document. Click individual page thumbnails to mark them for deletion, use the range field to remove pages like '1-3, 5', select all and delete in bulk, or hover over a thumbnail to delete it instantly with one click. Undo the last deletion or restore all pages if you change your mind. Changes are applied client-side | your file never leaves your browser."
         steps={[
           "Upload your PDF using the file upload area.",
           "Click page thumbnails to select them, or type a range like '1-3, 5' in the Range Deletion field.",

@@ -305,7 +305,7 @@ const PdfToWord = () => {
       category="convert"
       icon={<FileText className="h-7 w-7" />}
       metaTitle="PDF to Word Converter Online Free – Fast & Secure | MagicDocx"
-      metaDescription="Convert PDF to Word (DOCX) online for free. Extract text and preserve layout. Fast, accurate, and secure PDF to Word conversion — no sign-up needed."
+      metaDescription="Convert PDF to Word (DOCX) online for free. Extract text and preserve layout. Fast, accurate, and secure PDF to Word conversion | no sign-up needed."
       toolId="pdf-to-word"
       hideHeader={results.length > 0}
       className="pdf-to-word-page"
@@ -518,11 +518,11 @@ const PdfToWord = () => {
       <ToolSeoSection
         toolName="PDF to Word Converter"
         category="convert"
-        intro="MagicDocx PDF to Word converter lets you transform any PDF document into a fully editable Microsoft Word file in seconds. Whether you need to extract text for editing, reuse content from a report, or update an old document, our tool handles standard PDFs and scanned PDFs with OCR support. Download your converted DOCX file instantly — no email, no sign-up, no software required."
+        intro="MagicDocx PDF to Word converter lets you transform any PDF document into a fully editable Microsoft Word file in seconds. Whether you need to extract text for editing, reuse content from a report, or update an old document, our tool handles standard PDFs and scanned PDFs with OCR support. Download your converted DOCX file instantly | no email, no sign-up, no software required."
         steps={[
           "Upload your PDF file by dragging and dropping or clicking the upload zone.",
           "Choose a conversion mode: Exact Layout or OCR (for scanned PDFs).",
-          "Click \"Convert to WORD\" — the conversion runs in your browser.",
+          "Click \"Convert to WORD\" | the conversion runs in your browser.",
           "Download your editable DOCX file immediately."
         ]}
         formats={["PDF", "DOC", "DOCX"]}

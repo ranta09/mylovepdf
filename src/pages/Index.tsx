@@ -36,7 +36,7 @@ const jsonLd = {
   "@type": "WebApplication",
   "name": "MagicDOCX",
   "url": "https://mylovepdf.lovable.app",
-  "description": "Free online PDF tools — merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker and translator.",
+  "description": "Free online PDF tools: merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker and translator.",
   "applicationCategory": "Productivity",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -129,11 +129,11 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>MagicDOCX — Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
-        <meta name="description" content="Every tool you need to work with PDFs — completely free. Merge, split, compress, convert, edit, protect PDFs. Plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker & translator. No sign-up required." />
+        <title>MagicDOCX | Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
+        <meta name="description" content="Every tool you need to work with PDFs - completely free. Merge, split, compress, convert, edit, protect PDFs. Plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker & translator. No sign-up required." />
         <meta name="keywords" content="PDF tools, merge PDF, split PDF, compress PDF, PDF to Word, PDF to JPG, edit PDF, AI PDF summarizer, PDF quiz generator, chat with PDF, ATS resume checker, translate PDF, free PDF tools, online PDF editor, convert PDF" />
         <link rel="canonical" href="https://mylovepdf.lovable.app" />
-        <meta property="og:title" content="MagicDOCX — Free Online PDF & AI Document Tools" />
+        <meta property="og:title" content="MagicDOCX | Free Online PDF & AI Document Tools" />
         <meta property="og:description" content="35+ free PDF tools: merge, split, compress, convert, edit, protect. Plus AI summarizer, quiz generator, chat & ATS checker. No sign-up." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://mylovepdf.lovable.app" />
@@ -410,7 +410,7 @@ const Index = () => {
               <h3 className="text-2xl font-bold text-foreground text-center">Free Tools, Professional Quality</h3>
               <p className="text-center text-muted-foreground">
                 We believe that powerful productivity shouldn't come with a subscription price tag. MagicDOCX
-                offers 35+ professional tools — from merging and splitting to OCR and electronic signatures —
+                offers 35+ professional tools | from merging and splitting to OCR and electronic signatures
                 completely free of charge. No watermarks, no sign-ups, and no hidden limits.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">

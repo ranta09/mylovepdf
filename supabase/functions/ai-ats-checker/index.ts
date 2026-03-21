@@ -15,7 +15,7 @@ serve(async (req) => {
 
     const jobCtx = jobDescription
       ? `\n\nJOB DESCRIPTION PROVIDED:\n${String(jobDescription).slice(0, 6000)}\nUse this to tailor keyword matching and role suggestions.`
-      : "\n\nNo job description provided — use general industry best practices for scoring.";
+      : "\n\nNo job description provided: use general industry best practices for scoring.";
 
     const sys = `You are a world-class ATS resume analyst and career coach with 15+ years of experience in hiring and recruitment. Analyze the resume comprehensively and return ONLY valid JSON (no markdown, no fences) matching this exact schema:
 
@@ -30,7 +30,7 @@ serve(async (req) => {
   },
   "sections": {
     "contact": { "score": <0-100>, "found": ["email","phone","LinkedIn",...], "issues": [], "suggestions": [] },
-    "summary": { "score": <0-100>, "issues": [], "suggestions": [], "rewrite": "<improved professional summary — 3-4 sentences using strong keywords and quantified value proposition>" },
+    "summary": { "score": <0-100>, "issues": [], "suggestions": [], "rewrite": "<improved professional summary: 3-4 sentences using strong keywords and quantified value proposition>" },
     "experience": { "score": <0-100>, "issues": [], "suggestions": [] },
     "skills": { "score": <0-100>, "technical": ["skill1",...], "soft": ["skill1",...], "missing": ["recommended skill1",...] },
     "education": { "score": <0-100>, "issues": [], "suggestions": [] }
@@ -51,8 +51,8 @@ serve(async (req) => {
     "suggestedRoles": [{"role":"Data Analyst","match":<0-100>,"missingFor":["skill1",...]}]
   },
   "linkedInSuggestions": {
-    "headline": "<compelling LinkedIn headline — 120 chars max, includes role + value prop + key skills>",
-    "about": "<optimized About section — 3 paragraphs: who you are, what you do, what you're looking for>"
+    "headline": "<compelling LinkedIn headline: 120 chars max, includes role + value prop + key skills>",
+    "about": "<optimized About section: 3 paragraphs: who you are, what you do, what you're looking for>"
   },
   "actionPlan": [
     "Priority 1: [Most critical action to take immediately]",
@@ -75,7 +75,7 @@ PRECISION SCORING RULES:
 
 BULLET REWRITE RULES: Find 5-8 of the weakest bullets (vague, responsibility-focused, no metrics). Rewrite each with: strong action verb + specific task + measurable result.
 
-Provide 3 suggestedRoles that match the candidate's profile. Return ONLY the JSON — no other text.`;
+Provide 3 suggestedRoles that match the candidate's profile. Return ONLY the JSON: no other text.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

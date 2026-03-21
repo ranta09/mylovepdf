@@ -28,7 +28,7 @@ serve(async (req) => {
 
         const htmlBody = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1a1a1a;">📩 New Contact Message — MagicDOCX</h2>
+        <h2 style="color: #1a1a1a;">📩 New Contact Message: MagicDOCX</h2>
         <hr style="border: 1px solid #eee;" />
         <p><strong>From:</strong> ${fullName} (${email})</p>
         <p><strong>Subject:</strong> ${subject}</p>

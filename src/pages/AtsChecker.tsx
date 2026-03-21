@@ -129,7 +129,7 @@ const AtsChecker = () => {
       doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size);
       const lines = doc.splitTextToSize(text, mw); doc.text(lines, 20, y); y += lines.length * (size * 0.5 + 1.5) + 1;
     };
-    nl("ATS Resume Analysis Report — MagicDocx", true, 15); y += 4;
+    nl("ATS Resume Analysis Report | MagicDocx", true, 15); y += 4;
     nl(`Overall Score: ${result.overallScore}/100 (${scoreLabel(result.overallScore)})`, true, 12); y += 4;
     nl("Score Breakdown:", true, 11);
     Object.entries(result.breakdown).forEach(([k, v]) => nl(`  ${BREAKDOWN_LABELS[k] ?? k}: ${v}/100`));
@@ -137,7 +137,7 @@ const AtsChecker = () => {
     if (result.atsWarnings?.length) { nl("ATS Warnings:", true, 11); result.atsWarnings.forEach(w => nl(`  ⚠ ${w}`)); y += 4; }
     if (result.keywords?.missing?.length) { nl("Missing Keywords:", true, 11); nl(`  ${result.keywords.missing.join(", ")}`); y += 4; }
     if (result.bulletRewrites?.length) { nl("Bullet Point Improvements:", true, 11); result.bulletRewrites.forEach(b => { nl(`  Before: ${b.original}`); nl(`  After: ${b.improved}`); y += 2; }); }
-    if (result.jobMatch?.suggestedRoles?.length) { nl("Suggested Job Roles:", true, 11); result.jobMatch.suggestedRoles.forEach(r => nl(`  ${r.role} — ${r.match}% match`)); y += 4; }
+    if (result.jobMatch?.suggestedRoles?.length) { nl("Suggested Job Roles:", true, 11); result.jobMatch.suggestedRoles.forEach(r => nl(`  ${r.role} | ${r.match}% match`)); y += 4; }
     if (result.overallSuggestions?.length) { nl("Top Suggestions:", true, 11); result.overallSuggestions.forEach(s => nl(`  • ${s}`)); }
     doc.save("ats-resume-report.pdf");
   };
@@ -214,7 +214,7 @@ const AtsChecker = () => {
             <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
               <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <BriefcaseBusiness className="h-3.5 w-3.5 text-primary" />
-                Job Description <span className="text-muted-foreground font-normal">(optional — improves keyword matching)</span>
+                Job Description <span className="text-muted-foreground font-normal">(optional | improves keyword matching)</span>
               </label>
               <textarea value={jobDescription} onChange={e => setJobDescription(e.target.value)} rows={4}
                 placeholder="Paste the job description here for tailored ATS analysis…"
@@ -640,7 +640,7 @@ const AtsChecker = () => {
         <ToolSeoSection
           toolName="ATS Resume Checker"
           category="ai"
-          intro="The most powerful free ATS resume checker online. Analyze your resume against real ATS algorithms, get keyword insights, bullet point improvements, and LinkedIn optimization — all in one tool."
+          intro="The most powerful free ATS resume checker online. Analyze your resume against real ATS algorithms, get keyword insights, bullet point improvements, and LinkedIn optimization | all in one tool."
           features={[
             { icon: ScanSearch, title: "5-Dimension Scoring", desc: "ATS, keyword match, content, formatting, and impact" },
             { icon: Wand2, title: "AI Bullet Rewrites", desc: "Before/after improved bullet points with strong action verbs" },
@@ -661,10 +661,10 @@ const AtsChecker = () => {
             { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
           ]}
           faqs={[
-            { q: "What is an ATS resume checker?", a: "An ATS (Applicant Tracking System) resume checker analyzes your resume the same way employer software does — checking for keywords, formatting issues, section completeness, and relevance to a job description to predict how likely your resume is to pass automated screening." },
+            { q: "What is an ATS resume checker?", a: "An ATS (Applicant Tracking System) resume checker analyzes your resume the same way employer software does | checking for keywords, formatting issues, section completeness, and relevance to a job description to predict how likely your resume is to pass automated screening." },
             { q: "How do ATS systems scan resumes?", a: "ATS systems parse resume text and look for relevant keywords, job titles, skills, and qualifications. They struggle with tables, columns, images, and unusual fonts. MagicDocx simulates this process and tells you exactly what to fix." },
             { q: "How can I improve my resume for ATS?", a: "Use a single-column format, include keywords from the job description, start bullet points with strong action verbs, quantify achievements, and ensure all standard sections (Contact, Summary, Experience, Skills, Education) are clearly labeled." },
-            { q: "Is this tool free?", a: "Yes — MagicDocx ATS Resume Checker is completely free to use. No account or credit card required. Upload your resume and get results in seconds." },
+            { q: "Is this tool free?", a: "Yes | MagicDocx ATS Resume Checker is completely free to use. No account or credit card required. Upload your resume and get results in seconds." },
           ]}
         />
       </div>

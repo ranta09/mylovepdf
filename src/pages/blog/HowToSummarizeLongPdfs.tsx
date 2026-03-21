@@ -9,7 +9,7 @@ import RelatedTools from "@/components/RelatedTools";
 const HowToSummarizeLongPdfs = () => (
     <>
         <Helmet>
-            <title>How to Summarize Long PDFs Quickly — 3 Best Methods | MagicDOCX Blog</title>
+            <title>How to Summarize Long PDFs Quickly | 3 Best Methods | MagicDOCX Blog</title>
             <meta name="description" content="Learn how to summarize long PDFs in 2025 using AI tools, targeted questioning, and structured manual techniques. Best for research papers, textbooks, and reports." />
             <meta name="keywords" content="how to summarize PDF, summarize long PDF, best way to summarize PDF, AI PDF summary, summarize research paper online" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/blog/how-to-summarize-long-pdfs" />
@@ -33,7 +33,7 @@ const HowToSummarizeLongPdfs = () => (
                         </div>
                         <div className="text-6xl text-center py-8 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl">📄</div>
                         <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
-                            <p className="text-lg leading-relaxed">Whether it's a 200-page dissertation, a dense legal contract, or a 50-page industry report, long PDFs are one of the biggest productivity challenges professionals and students face. This guide covers the 3 most effective methods to summarize long PDFs quickly — from AI tools to manual strategies.</p>
+                            <p className="text-lg leading-relaxed">Whether it's a 200-page dissertation, a dense legal contract, or a 50-page industry report, long PDFs are one of the biggest productivity challenges professionals and students face. This guide covers the 3 most effective methods to summarize long PDFs quickly | from AI tools to manual strategies.</p>
                             <h2>Method 1: Use an AI PDF Summarizer (Fastest)</h2>
                             <p>The fastest and most effective method in 2025 is to use an AI-powered PDF summarizer. Tools like <Link to="/pdf-summarizer" className="text-primary hover:underline">MagicDOCX PDF Summarizer</Link> can process and summarize an entire 100-page document in under 60 seconds.</p>
                             <p>AI summarizers work best when you need a comprehensive overview quickly. They analyze the document holistically, identifying the most important themes, key points, and conclusions.</p>
@@ -44,11 +44,11 @@ const HowToSummarizeLongPdfs = () => (
                                 <li>Click "Summarize" and wait 30 seconds</li>
                                 <li>Browse the Overview, Bullets, and Key Insights</li>
                             </ol>
-                            <h2>Method 2: Chat with PDF — For Targeted Questions</h2>
+                            <h2>Method 2: Chat with PDF | For Targeted Questions</h2>
                             <p>When you don't need a full summary but need answers to specific questions, <Link to="/chat-with-pdf" className="text-primary hover:underline">Chat with PDF</Link> is the superior approach. Rather than reading 200 pages to find mentions of a specific clause, date, or concept, you can simply ask the AI.</p>
                             <p>This is particularly effective for legal documents, technical manuals, financial reports, and any document where you have pre-existing questions.</p>
                             <h2>Method 3: Section-by-Section Manual Review (For Critical Documents)</h2>
-                            <p>For documents where you can't afford to miss anything — contracts you'll sign, theses you'll grade — AI alone may not suffice. Use a structured approach:</p>
+                            <p>For documents where you can't afford to miss anything | contracts you'll sign, theses you'll grade | AI alone may not suffice. Use a structured approach:</p>
                             <ul>
                                 <li>Read the abstract/executive summary and conclusions first</li>
                                 <li>Skim section headings to build a mental map</li>

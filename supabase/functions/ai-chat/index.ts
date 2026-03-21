@@ -64,7 +64,7 @@ HELPFUL COMMANDS (user may ask these):
 DOCUMENT CONTENT:
 ${doc}`;
 
-    // Quick action modes — non-streaming JSON response
+    // Quick action modes: non-streaming JSON response
     if (mode !== "chat") {
       const prompt = QUICK_PROMPTS[mode] ?? QUICK_PROMPTS.summarize;
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -92,7 +92,7 @@ ${doc}`;
       });
     }
 
-    // Chat mode — streaming SSE
+    // Chat mode: streaming SSE
     const chatMessages = (messages ?? []).map((m: { role: string; content: string }) => ({
       role: m.role,
       content: m.content,

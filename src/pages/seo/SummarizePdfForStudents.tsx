@@ -10,7 +10,7 @@ import RelatedTools from "@/components/RelatedTools";
 const SummarizePdfForStudents = () => (
     <>
         <Helmet>
-            <title>Summarize PDF for Students — Free AI Study Tool | MagicDOCX</title>
+            <title>Summarize PDF for Students | Free AI Study Tool | MagicDOCX</title>
             <meta name="description" content="Free AI tool to summarize PDFs for students. Get instant study notes, flashcards, quizzes, and key insights from textbooks, lecture notes, and research papers. No signup." />
             <meta name="keywords" content="summarize PDF for students, PDF summarizer for students, student PDF tool, summarize textbook PDF free, AI study tool" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/summarize-pdf-for-students" />
@@ -25,7 +25,7 @@ const SummarizePdfForStudents = () => (
                                 <GraduationCap className="h-3 w-3" /> For Students
                             </span>
                             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">Summarize PDF for Students</h1>
-                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">The ultimate free AI study tool for students. Upload any textbook, lecture note, or research paper — get instant summaries, flashcards, study guides, and quizzes.</p>
+                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">The ultimate free AI study tool for students. Upload any textbook, lecture note, or research paper | get instant summaries, flashcards, study guides, and quizzes.</p>
                             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                                 <Button asChild size="lg" className="rounded-2xl px-8 py-6 text-base font-bold gap-2">
                                     <Link to="/pdf-summarizer"><Wand2 className="h-5 w-5" /> Start Summarizing Free</Link>
@@ -43,8 +43,8 @@ const SummarizePdfForStudents = () => (
                 <section className="container max-w-4xl py-16 space-y-12">
                     <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
                         <h2 className="text-2xl font-bold text-foreground">Why Students Love AI PDF Summarizers</h2>
-                        <p>As a student, you're constantly battling dense reading lists, long textbooks, and back-to-back assignments. Traditional note-taking is slow, inefficient, and inconsistent. AI PDF summarizers change everything — they read your documents for you and extract exactly what you need to know, in the format you need it.</p>
-                        <p>MagicDOCX is specifically designed with students in mind. Unlike generic summarizers, we generate study-formatted outputs including structured notes, flashcards for memorization, quizzes for self-testing, and glossaries of key terms — all from one upload.</p>
+                        <p>As a student, you're constantly battling dense reading lists, long textbooks, and back-to-back assignments. Traditional note-taking is slow, inefficient, and inconsistent. AI PDF summarizers change everything | they read your documents for you and extract exactly what you need to know, in the format you need it.</p>
+                        <p>MagicDOCX is specifically designed with students in mind. Unlike generic summarizers, we generate study-formatted outputs including structured notes, flashcards for memorization, quizzes for self-testing, and glossaries of key terms | all from one upload.</p>
 
                         <h2 className="text-2xl font-bold text-foreground">Study Smarter: 7 AI Tools Students Can Use</h2>
                         <div className="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -93,9 +93,9 @@ const SummarizePdfForStudents = () => (
                         <h2 className="text-2xl font-bold text-foreground">Frequently Asked Questions</h2>
                         {[
                             { q: "Is this legal to use for studying?", a: "Absolutely. Using AI to understand and summarize study materials is no different from using a dictionary or reference book. It's a learning aid, not a shortcut for submitting work." },
-                            { q: "Can I summarize exam papers and past questions?", a: "Yes — upload any past exam PDF and use the Question Generator to identify question patterns and the Summary mode to spot frequent topics." },
+                            { q: "Can I summarize exam papers and past questions?", a: "Yes | upload any past exam PDF and use the Question Generator to identify question patterns and the Summary mode to spot frequent topics." },
                             { q: "Does this work for scientific papers and research articles?", a: "Yes. Our AI handles academic language, statistical findings, and research methodology well. Check out our Research Paper summarizer for an optimized experience." },
-                            { q: "Can I use this on mobile?", a: "Yes — MagicDOCX is fully mobile-responsive. Access it from any browser on iPhone or Android, no app download needed." },
+                            { q: "Can I use this on mobile?", a: "Yes | MagicDOCX is fully mobile-responsive. Access it from any browser on iPhone or Android, no app download needed." },
                         ].map(({ q, a }) => (
                             <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
                                 <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">{q}<span className="text-muted-foreground group-open:rotate-180 transition-transform">▾</span></summary>

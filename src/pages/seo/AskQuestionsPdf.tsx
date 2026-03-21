@@ -10,12 +10,12 @@ import RelatedTools from "@/components/RelatedTools";
 const AskQuestionsPdf = () => (
     <>
         <Helmet>
-            <title>Ask Questions from PDF — Chat with PDF AI | MagicDOCX</title>
+            <title>Ask Questions from PDF | Chat with PDF AI | MagicDOCX</title>
             <meta name="description" content="Ask any question from your PDF and get instant AI answers. Chat with PDF documents, research papers, contracts, textbooks, and more. Free online AI PDF chat tool." />
             <meta name="keywords" content="ask questions from PDF, chat with PDF, PDF question answering, AI PDF chat, ask PDF questions online free" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/ask-questions-from-pdf" />
-            <meta property="og:title" content="Ask Questions from Any PDF — AI Chat | MagicDOCX" />
-            <meta property="og:description" content="Have a conversation with your PDF. Ask anything — get instant AI-powered answers from the document. Free, no signup." />
+            <meta property="og:title" content="Ask Questions from Any PDF | AI Chat | MagicDOCX" />
+            <meta property="og:description" content="Have a conversation with your PDF. Ask anything | get instant AI-powered answers from the document. Free, no signup." />
         </Helmet>
         <div className="flex min-h-screen flex-col bg-background">
             <Navbar />
@@ -32,11 +32,11 @@ const AskQuestionsPdf = () => (
                                 <br />from Any PDF
                             </h1>
                             <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                                Upload a PDF and have a conversation with it. Ask questions about specific pages, get explanations of complex concepts, extract data, or just have the AI walk you through the content — like having an expert read the document for you.
+                                Upload a PDF and have a conversation with it. Ask questions about specific pages, get explanations of complex concepts, extract data, or just have the AI walk you through the content | like having an expert read the document for you.
                             </p>
                             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
                                 <Button asChild size="lg" className="rounded-2xl px-10 py-7 text-lg font-extrabold shadow-xl gap-2.5 bg-primary hover:bg-primary/90">
-                                    <Link to="/chat-with-pdf"><MessageSquare className="h-5 w-5" /> Start Chatting with PDF — Free</Link>
+                                    <Link to="/chat-with-pdf"><MessageSquare className="h-5 w-5" /> Start Chatting with PDF | Free</Link>
                                 </Button>
                             </div>
                             <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
@@ -125,10 +125,10 @@ const AskQuestionsPdf = () => (
                         <h2 className="text-2xl font-bold text-foreground">Frequently Asked Questions</h2>
                         {[
                             { q: "How many questions can I ask per session?", a: "There's no hard limit. You can have an extended conversation with your PDF, asking dozens of questions in a single session." },
-                            { q: "Does the AI remember previous answers in the chat?", a: "Yes — the AI maintains context throughout your chat session, so you can ask follow-up questions like 'Tell me more about that' or 'What does that mean?'" },
+                            { q: "Does the AI remember previous answers in the chat?", a: "Yes | the AI maintains context throughout your chat session, so you can ask follow-up questions like 'Tell me more about that' or 'What does that mean?'" },
                             { q: "What's the maximum PDF size it can handle?", a: "Documents up to 300+ pages are supported. Very large documents may take a few extra seconds on the first load." },
-                            { q: "Can I use this for academic research?", a: "Yes — it's excellent for quickly navigating dense academic papers. You can ask it to explain methodology, interpret statistics, or summarize the literature review section." },
-                            { q: "Is all my data private?", a: "Completely. No document data is ever stored on our servers. Your session is ephemeral — as soon as you close the page, everything is deleted." },
+                            { q: "Can I use this for academic research?", a: "Yes | it's excellent for quickly navigating dense academic papers. You can ask it to explain methodology, interpret statistics, or summarize the literature review section." },
+                            { q: "Is all my data private?", a: "Completely. No document data is ever stored on our servers. Your session is ephemeral | as soon as you close the page, everything is deleted." },
                         ].map(({ q, a }) => (
                             <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
                                 <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">{q}<span className="text-muted-foreground">▾</span></summary>

@@ -288,7 +288,7 @@ const SplitPdf = () => {
 
   return (
     <ToolLayout title="Split PDF Online" description="Extract specific pages or split one PDF into multiple files" category="split" icon={<Scissors className="h-7 w-7" />}
-      metaTitle="Split PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Split PDF files into multiple documents online for free. Extract pages, define ranges, or split every page. Fast and secure — no software needed." toolId="split" hideHeader={files.length > 0}>
+      metaTitle="Split PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Split PDF files into multiple documents online for free. Extract pages, define ranges, or split every page. Fast and secure | no software needed." toolId="split" hideHeader={files.length > 0}>
 
       <div className="mt-2">
         {files.length === 0 ? (
@@ -696,7 +696,7 @@ const SplitPdf = () => {
       <ToolSeoSection
         toolName="Split PDF"
         category="split"
-        intro="MagicDocx Split PDF allows you to break any PDF file into smaller, separate documents instantly. Whether you need to extract specific pages, define custom ranges, split every page into its own file, or create fixed-size chunks, our free tool gives you full control. No software installation required — just upload your PDF, configure your split settings, and download all results in a ZIP file or individual PDFs."
+        intro="MagicDocx Split PDF allows you to break any PDF file into smaller, separate documents instantly. Whether you need to extract specific pages, define custom ranges, split every page into its own file, or create fixed-size chunks, our free tool gives you full control. No software installation required | just upload your PDF, configure your split settings, and download all results in a ZIP file or individual PDFs."
         steps={[
           "Upload a PDF file by clicking the upload area or dragging and dropping it.",
           "Select your split mode: Extract, Range, Every Page, or Fixed Split.",

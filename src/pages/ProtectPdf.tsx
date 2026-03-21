@@ -36,7 +36,7 @@ const ProtectPdf = () => {
 
       // Set metadata to indicate protection
       doc.setTitle(doc.getTitle() || "Protected Document");
-      doc.setProducer("MagicDOCX — Protected");
+      doc.setProducer("MagicDOCX | Protected");
       doc.setCreator("MagicDOCX");
 
       // pdf-lib doesn't support native encryption
@@ -203,7 +203,7 @@ const ProtectPdf = () => {
         <ToolSeoSection
           toolName="Protect PDF Online"
           category="edit"
-          intro="MagicDocx Protect PDF lets you add password protection to any PDF document directly in your browser. Set an open password to control who can view the document, or set permissions passwords to restrict printing, copying, and editing. Choose 128-bit RC4 or 256-bit AES encryption to meet your security requirements. All encryption is performed client-side — your file never leaves your device."
+          intro="MagicDocx Protect PDF lets you add password protection to any PDF document directly in your browser. Set an open password to control who can view the document, or set permissions passwords to restrict printing, copying, and editing. Choose 128-bit RC4 or 256-bit AES encryption to meet your security requirements. All encryption is performed client-side | your file never leaves your device."
           steps={[
             "Upload your PDF using the file upload area.",
             "Enter an Open Password if you want to restrict who can open the file.",

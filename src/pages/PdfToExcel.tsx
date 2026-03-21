@@ -396,11 +396,11 @@ const PdfToExcel = () => {
       <ToolSeoSection
         toolName="PDF to Excel Converter"
         category="convert"
-        intro="MagicDocx PDF to Excel converter intelligently extracts tables, data, and numerical content from any PDF file and converts them into structured Excel spreadsheets or CSV files. Whether you're pulling data from financial reports, invoices, or scanned forms, our tool uses smart spatial analysis and optional OCR to deliver clean, accurate results in XLSX or CSV format — instantly and for free."
+        intro="MagicDocx PDF to Excel converter intelligently extracts tables, data, and numerical content from any PDF file and converts them into structured Excel spreadsheets or CSV files. Whether you're pulling data from financial reports, invoices, or scanned forms, our tool uses smart spatial analysis and optional OCR to deliver clean, accurate results in XLSX or CSV format | instantly and for free."
         steps={[
           "Upload a PDF containing tables or data by dragging and dropping or clicking the upload area.",
           "Choose your output format: Standard Excel (XLSX) or CSV for universal compatibility.",
-          "Click \"Convert to EXCEL\" — our engine extracts and structures the data.",
+          "Click \"Convert to EXCEL\" | our engine extracts and structures the data.",
           "Download your spreadsheet immediately."
         ]}
         formats={["PDF", "XLSX", "CSV"]}

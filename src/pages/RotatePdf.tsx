@@ -653,7 +653,7 @@ const RotatePdf = () => {
       <ToolSeoSection
         toolName="Rotate PDF Online"
         category="edit"
-        intro="MagicDocx Rotate PDF tool permanently rotates pages in your PDF without any loss of quality. Select specific pages by clicking, choose a range like '1-3, 5', or rotate the entire document at once. Individually rotate pages using the hover buttons, or use the bulk rotation controls to apply 90°, 180°, or -90° to all selected pages. Your PDF is processed locally — files never leave your device."
+        intro="MagicDocx Rotate PDF tool permanently rotates pages in your PDF without any loss of quality. Select specific pages by clicking, choose a range like '1-3, 5', or rotate the entire document at once. Individually rotate pages using the hover buttons, or use the bulk rotation controls to apply 90°, 180°, or -90° to all selected pages. Your PDF is processed locally | files never leave your device."
         steps={[
           "Upload your PDF file using the file upload area.",
           "Click on page thumbnails to select pages, or use 'Select All' for bulk rotation.",

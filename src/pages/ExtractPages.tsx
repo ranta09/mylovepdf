@@ -310,7 +310,7 @@ const ExtractPages = () => {
       description="Pull specific pages into a new document or separate files with professional precision"
       category="edit"
       icon={<FileDown className="h-7 w-7" />}
-      metaTitle="Extract PDF Pages — Pull Pages Online Free"
+      metaTitle="Extract PDF Pages | Pull Pages Online Free"
       metaDescription="Extract specific pages from PDF into a new file or individual PDFs. Professional workspace for visual page extraction."
       toolId="extract-pages"
       hideHeader={files.length > 0}
@@ -646,7 +646,7 @@ const ExtractPages = () => {
       <ToolSeoSection
         toolName="Extract PDF Pages"
         category="edit"
-        intro="MagicDocx Extract PDF Pages lets you pull specific pages from any PDF document and save them as a new PDF or as individual files packaged in a ZIP archive. Use the visual grid to click-select pages, type a range like '1-3, 5', or use Select All. You can also rotate pages before extracting. All processing happens entirely in your browser — no uploads, no servers, no data retention."
+        intro="MagicDocx Extract PDF Pages lets you pull specific pages from any PDF document and save them as a new PDF or as individual files packaged in a ZIP archive. Use the visual grid to click-select pages, type a range like '1-3, 5', or use Select All. You can also rotate pages before extracting. All processing happens entirely in your browser | no uploads, no servers, no data retention."
         steps={[
           "Upload your PDF using the drag-and-drop area.",
           "Click thumbnails to select pages, or type a range (e.g. '1-3, 5') to auto-select.",

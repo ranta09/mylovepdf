@@ -157,7 +157,7 @@ const toolFaqs: Record<string, ToolFaq[]> = {
   "ai-quiz": [
     { q: "How does the Quiz Generator work?", a: "Upload a PDF with study material and AI will generate multiple-choice and short-answer questions based on the content." },
     { q: "What types of questions are generated?", a: "The AI creates a mix of multiple-choice questions with answer options and explanations based on your document." },
-    { q: "Can I use it for exam preparation?", a: "Yes! The Quiz Generator is perfect for studying — upload your notes, textbook chapters, or study guides to generate practice questions." },
+    { q: "Can I use it for exam preparation?", a: "Yes! The Quiz Generator is perfect for studying | upload your notes, textbook chapters, or study guides to generate practice questions." },
   ],
   "ai-chat": [
     { q: "How does Chat with PDF work?", a: "Upload your PDF and then ask questions about its content. The AI will read the document and provide accurate answers." },

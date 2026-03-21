@@ -27,7 +27,7 @@ const posts = [
     {
         slug: "ai-study-tools-for-college-students",
         title: "AI Study Tools for College Students: The Complete Guide",
-        excerpt: "College is harder than ever. Learn how AI-powered study tools can help you tackle assignments, ace exams, and study smarter — not harder.",
+        excerpt: "College is harder than ever. Learn how AI-powered study tools can help you tackle assignments, ace exams, and study smarter | not harder.",
         date: "March 5, 2025",
         readTime: "10 min read",
         category: "Study Tips",
@@ -47,7 +47,7 @@ const posts = [
 const Blog = () => (
     <>
         <Helmet>
-            <title>Blog — AI Tools, PDF Tips & Study Guides | MagicDOCX</title>
+            <title>Blog | AI Tools, PDF Tips & Study Guides | MagicDOCX</title>
             <meta name="description" content="Expert articles on AI document tools, PDF productivity, study strategies, and document management. Free guides for students, professionals, and researchers." />
             <link rel="canonical" href="https://mylovepdf.lovable.app/blog" />
         </Helmet>

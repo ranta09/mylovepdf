@@ -20,7 +20,7 @@ export type TranslationKeys = typeof en;
 const en = {
   // Hero
   heroTitle: "Every PDF tool you need",
-  heroDesc: "Merge, split, compress, convert, edit and protect your PDFs — plus {ai} to summarize, quiz, translate, and chat with your documents. All free, no sign-up.",
+  heroDesc: "Merge, split, compress, convert, edit and protect your PDFs | plus {ai} to summarize, quiz, translate, and chat with your documents. All free, no sign-up.",
   heroAi: "AI-powered tools",
   trustTools: "34 Free Tools",
   trustSecure: "100% Secure",
@@ -35,7 +35,7 @@ const en = {
   howTitle: "How MagicDOCX Works",
   howSubtitle: "Three simple steps to work with any PDF",
   step1Title: "Choose a Tool",
-  step1Desc: "Pick from 34+ PDF and AI tools — merge, split, compress, convert, edit, summarize, and more.",
+  step1Desc: "Pick from 34+ PDF and AI tools | merge, split, compress, convert, edit, summarize, and more.",
   step2Title: "Upload Your File",
   step2Desc: "Drag and drop your PDF or document. All processing happens securely in your browser.",
   step3Title: "Download Result",
@@ -123,7 +123,7 @@ const en = {
 
 const hi: TranslationKeys = {
   heroTitle: "आपको हर PDF टूल चाहिए",
-  heroDesc: "अपनी PDFs को मर्ज, स्प्लिट, कंप्रेस, कन्वर्ट, एडिट और प्रोटेक्ट करें — साथ ही {ai} से सारांश, क्विज़, अनुवाद और अपने दस्तावेज़ों के साथ चैट करें। सब मुफ्त, बिना साइन-अप।",
+  heroDesc: "अपनी PDFs को मर्ज, स्प्लिट, कंप्रेस, कन्वर्ट, एडिट और प्रोटेक्ट करें | साथ ही {ai} से सारांश, क्विज़, अनुवाद और अपने दस्तावेज़ों के साथ चैट करें। सब मुफ्त, बिना साइन-अप।",
   heroAi: "AI-संचालित टूल्स",
   trustTools: "34+ मुफ्त टूल्स",
   trustSecure: "100% सुरक्षित",
@@ -136,7 +136,7 @@ const hi: TranslationKeys = {
   howTitle: "MagicDOCX कैसे काम करता है",
   howSubtitle: "किसी भी PDF के साथ काम करने के तीन सरल कदम",
   step1Title: "टूल चुनें",
-  step1Desc: "34+ PDF और AI टूल्स में से चुनें — मर्ज, स्प्लिट, कंप्रेस, कन्वर्ट, एडिट, सारांश, और बहुत कुछ।",
+  step1Desc: "34+ PDF और AI टूल्स में से चुनें | मर्ज, स्प्लिट, कंप्रेस, कन्वर्ट, एडिट, सारांश, और बहुत कुछ।",
   step2Title: "फाइल अपलोड करें",
   step2Desc: "अपनी PDF या दस्तावेज़ को ड्रैग और ड्रॉप करें। सारी प्रोसेसिंग आपके ब्राउज़र में सुरक्षित रूप से होती है।",
   step3Title: "परिणाम डाउनलोड करें",
@@ -176,7 +176,7 @@ const hi: TranslationKeys = {
 
 const es: TranslationKeys = {
   heroTitle: "Todas las herramientas PDF que necesitas",
-  heroDesc: "Fusiona, divide, comprime, convierte, edita y protege tus PDFs — además de {ai} para resumir, hacer cuestionarios, traducir y chatear con tus documentos. Todo gratis, sin registro.",
+  heroDesc: "Fusiona, divide, comprime, convierte, edita y protege tus PDFs | además de {ai} para resumir, hacer cuestionarios, traducir y chatear con tus documentos. Todo gratis, sin registro.",
   heroAi: "herramientas con IA",
   trustTools: "34+ herramientas gratis", trustSecure: "100% seguro", trustNoSignup: "Sin registro", trustBrowser: "Procesamiento en el navegador",
   searchPlaceholder: "Buscar herramientas… ej. fusionar, resumir, cuestionario",
@@ -208,7 +208,7 @@ const es: TranslationKeys = {
 
 const fr: TranslationKeys = {
   heroTitle: "Tous les outils PDF dont vous avez besoin",
-  heroDesc: "Fusionnez, divisez, compressez, convertissez, éditez et protégez vos PDFs — plus des {ai} pour résumer, quiz, traduire et discuter avec vos documents. Tout gratuit, sans inscription.",
+  heroDesc: "Fusionnez, divisez, compressez, convertissez, éditez et protégez vos PDFs | plus des {ai} pour résumer, quiz, traduire et discuter avec vos documents. Tout gratuit, sans inscription.",
   heroAi: "outils IA",
   trustTools: "34+ outils gratuits", trustSecure: "100% sécurisé", trustNoSignup: "Sans inscription", trustBrowser: "Traitement dans le navigateur",
   searchPlaceholder: "Rechercher des outils… ex. fusionner, résumer, quiz",
@@ -239,7 +239,7 @@ const fr: TranslationKeys = {
 
 const de: TranslationKeys = {
   heroTitle: "Alle PDF-Tools die Sie brauchen",
-  heroDesc: "PDFs zusammenführen, teilen, komprimieren, konvertieren, bearbeiten und schützen — plus {ai} zum Zusammenfassen, Quiz erstellen, Übersetzen und Chatten. Alles kostenlos, ohne Anmeldung.",
+  heroDesc: "PDFs zusammenführen, teilen, komprimieren, konvertieren, bearbeiten und schützen | plus {ai} zum Zusammenfassen, Quiz erstellen, Übersetzen und Chatten. Alles kostenlos, ohne Anmeldung.",
   heroAi: "KI-gestützte Tools",
   trustTools: "34+ kostenlose Tools", trustSecure: "100% sicher", trustNoSignup: "Keine Anmeldung nötig", trustBrowser: "Browser-basierte Verarbeitung",
   searchPlaceholder: "Tools suchen… z.B. zusammenführen, zusammenfassen, Quiz",
@@ -270,7 +270,7 @@ const de: TranslationKeys = {
 
 const zh: TranslationKeys = {
   heroTitle: "您需要的所有PDF工具",
-  heroDesc: "合并、拆分、压缩、转换、编辑和保护您的PDF — 还有{ai}来总结、测验、翻译和与文档对话。全部免费，无需注册。",
+  heroDesc: "合并、拆分、压缩、转换、编辑和保护您的PDF | 还有{ai}来总结、测验、翻译和与文档对话。全部免费，无需注册。",
   heroAi: "AI驱动工具",
   trustTools: "34+免费工具", trustSecure: "100%安全", trustNoSignup: "无需注册", trustBrowser: "浏览器端处理",
   searchPlaceholder: "搜索工具…例如合并、总结、测验",
@@ -301,7 +301,7 @@ const zh: TranslationKeys = {
 
 const ja: TranslationKeys = {
   heroTitle: "必要なPDFツールがすべて揃っています",
-  heroDesc: "PDFの結合、分割、圧縮、変換、編集、保護 — さらに{ai}で要約、クイズ、翻訳、チャット。すべて無料、登録不要。",
+  heroDesc: "PDFの結合、分割、圧縮、変換、編集、保護 | さらに{ai}で要約、クイズ、翻訳、チャット。すべて無料、登録不要。",
   heroAi: "AI搭載ツール",
   trustTools: "34以上の無料ツール", trustSecure: "100%安全", trustNoSignup: "登録不要", trustBrowser: "ブラウザ内処理",
   searchPlaceholder: "ツールを検索…例：結合、要約、クイズ",
@@ -332,7 +332,7 @@ const ja: TranslationKeys = {
 
 const ar: TranslationKeys = {
   heroTitle: "كل أدوات PDF التي تحتاجها",
-  heroDesc: "ادمج، قسّم، اضغط، حوّل، عدّل واحمِ ملفات PDF — بالإضافة إلى {ai} للتلخيص والاختبارات والترجمة والدردشة مع مستنداتك. مجاني بالكامل، بدون تسجيل.",
+  heroDesc: "ادمج، قسّم، اضغط، حوّل، عدّل واحمِ ملفات PDF | بالإضافة إلى {ai} للتلخيص والاختبارات والترجمة والدردشة مع مستنداتك. مجاني بالكامل، بدون تسجيل.",
   heroAi: "أدوات مدعومة بالذكاء الاصطناعي",
   trustTools: "+34 أداة مجانية", trustSecure: "آمن 100%", trustNoSignup: "بدون تسجيل", trustBrowser: "معالجة في المتصفح",
   searchPlaceholder: "ابحث عن أدوات… مثل دمج، تلخيص، اختبار",
@@ -363,7 +363,7 @@ const ar: TranslationKeys = {
 
 const pt: TranslationKeys = {
   heroTitle: "Todas as ferramentas PDF que você precisa",
-  heroDesc: "Mescle, divida, comprima, converta, edite e proteja seus PDFs — além de {ai} para resumir, quiz, traduzir e conversar com seus documentos. Tudo grátis, sem cadastro.",
+  heroDesc: "Mescle, divida, comprima, converta, edite e proteja seus PDFs | além de {ai} para resumir, quiz, traduzir e conversar com seus documentos. Tudo grátis, sem cadastro.",
   heroAi: "ferramentas com IA",
   trustTools: "34+ ferramentas grátis", trustSecure: "100% seguro", trustNoSignup: "Sem cadastro", trustBrowser: "Processamento no navegador",
   searchPlaceholder: "Buscar ferramentas… ex. mesclar, resumir, quiz",
@@ -394,7 +394,7 @@ const pt: TranslationKeys = {
 
 const ko: TranslationKeys = {
   heroTitle: "필요한 모든 PDF 도구",
-  heroDesc: "PDF 병합, 분할, 압축, 변환, 편집, 보호 — 또한 {ai}로 요약, 퀴즈, 번역, 문서와 채팅. 모두 무료, 가입 불필요.",
+  heroDesc: "PDF 병합, 분할, 압축, 변환, 편집, 보호 | 또한 {ai}로 요약, 퀴즈, 번역, 문서와 채팅. 모두 무료, 가입 불필요.",
   heroAi: "AI 기반 도구",
   trustTools: "34개 이상 무료 도구", trustSecure: "100% 안전", trustNoSignup: "가입 불필요", trustBrowser: "브라우저 기반 처리",
   searchPlaceholder: "도구 검색… 예: 병합, 요약, 퀴즈",
@@ -425,7 +425,7 @@ const ko: TranslationKeys = {
 
 const ru: TranslationKeys = {
   heroTitle: "Все PDF-инструменты, которые вам нужны",
-  heroDesc: "Объединяйте, разделяйте, сжимайте, конвертируйте, редактируйте и защищайте PDF — плюс {ai} для резюме, тестов, перевода и чата с документами. Всё бесплатно, без регистрации.",
+  heroDesc: "Объединяйте, разделяйте, сжимайте, конвертируйте, редактируйте и защищайте PDF | плюс {ai} для резюме, тестов, перевода и чата с документами. Всё бесплатно, без регистрации.",
   heroAi: "инструменты на базе ИИ",
   trustTools: "34+ бесплатных инструментов", trustSecure: "100% безопасно", trustNoSignup: "Без регистрации", trustBrowser: "Обработка в браузере",
   searchPlaceholder: "Поиск инструментов… например: объединить, резюме, тест",
@@ -456,7 +456,7 @@ const ru: TranslationKeys = {
 
 const it: TranslationKeys = {
   heroTitle: "Tutti gli strumenti PDF di cui hai bisogno",
-  heroDesc: "Unisci, dividi, comprimi, converti, modifica e proteggi i tuoi PDF — più {ai} per riassumere, quiz, tradurre e chattare con i documenti. Tutto gratis, senza registrazione.",
+  heroDesc: "Unisci, dividi, comprimi, converti, modifica e proteggi i tuoi PDF | più {ai} per riassumere, quiz, tradurre e chattare con i documenti. Tutto gratis, senza registrazione.",
   heroAi: "strumenti IA",
   trustTools: "34+ strumenti gratis", trustSecure: "100% sicuro", trustNoSignup: "Senza registrazione", trustBrowser: "Elaborazione nel browser",
   searchPlaceholder: "Cerca strumenti… es. unire, riassumere, quiz",

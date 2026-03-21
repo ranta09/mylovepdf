@@ -118,7 +118,7 @@ Format:
 
   glossary: `You are a knowledge organizer. From the document, extract:
 ### 📖 Glossary
-All technical terms, jargon, or domain-specific words. Format: **Term** — Definition.
+All technical terms, jargon, or domain-specific words. Format: **Term**: Definition.
 
 ### 🏢 Organizations
 All companies, institutions, or groups mentioned.
@@ -151,7 +151,7 @@ A structured self-study guide: what to focus on, what's most testable.`,
 function getSynthesisPrompt(mode: string, length: string): string {
   const lengthGuide = LENGTH_GUIDANCE[length] ?? LENGTH_GUIDANCE.medium;
   const targetPrompt = PROMPTS[mode] ?? PROMPTS.overview;
-  return `${targetPrompt}\n\nIMPORTANT: You are synthesizing summaries of different sections of the same document. Merge them into one coherent, unified output — eliminate redundancy, resolve any conflicts, and produce a single polished analysis. ${lengthGuide}`;
+  return `${targetPrompt}\n\nIMPORTANT: You are synthesizing summaries of different sections of the same document. Merge them into one coherent, unified output: eliminate redundancy, resolve any conflicts, and produce a single polished analysis. ${lengthGuide}`;
 }
 
 serve(async (req) => {

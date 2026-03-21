@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
-import { PDFDocument } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
+import { jsPDF } from "jspdf";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 import { Unlock, Loader2, Info, ShieldCheck } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
@@ -28,28 +31,62 @@ const UnlockPdf = () => {
   const unlock = async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(20);
+    setProgress(10);
     try {
       const bytes = await files[0].arrayBuffer();
-      setProgress(40);
-      const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-      setProgress(70);
+      
+      const pdf = await pdfjsLib.getDocument({ 
+        data: bytes,
+        password: password
+      }).promise;
+      
+      const numPages = pdf.numPages;
+      let pdfDoc: jsPDF | null = null;
+      
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdf.getPage(i);
+        const scale = 2.0; // High quality render scale
+        const viewport = page.getViewport({ scale });
+        
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d")!;
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
-      // Re-save without encryption flags
-      const pdfBytes = await doc.save({ useObjectStreams: true });
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
+        await page.render({ canvasContext: context, viewport }).promise;
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+        const widthPt = viewport.width / scale;
+        const heightPt = viewport.height / scale;
+
+        if (!pdfDoc) {
+          pdfDoc = new jsPDF({
+            orientation: widthPt > heightPt ? "l" : "p",
+            unit: "pt",
+            format: [widthPt, heightPt]
+          });
+        } else {
+          pdfDoc.addPage([widthPt, heightPt], widthPt > heightPt ? "l" : "p");
+        }
+        
+        pdfDoc.addImage(imgData, "JPEG", 0, 0, widthPt, heightPt);
+        setProgress(Math.round(10 + (i / numPages) * 80));
+      }
+
+      if (!pdfDoc) throw new Error("No pages extracted");
+
       const filename = files[0].name.replace(/\.pdf$/i, "_unlocked.pdf");
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+      pdfDoc.save(filename);
+      
       setProgress(100);
       toast.success("PDF unlocked and downloaded!");
-    } catch {
-      toast.error("Failed to unlock PDF. The file may have strong encryption.");
+    } catch (err: any) {
+      console.error(err);
+      if (err.name === 'PasswordException') {
+        toast.error("Incorrect password.");
+      } else {
+        toast.error("Failed to unlock PDF. The file may be corrupted.");
+      }
     } finally {
       setProcessing(false);
       setProgress(0);
@@ -189,7 +226,7 @@ const UnlockPdf = () => {
         <ToolSeoSection
           toolName="Unlock PDF Online"
           category="edit"
-          intro="MagicDocx Unlock PDF removes the open password (user password) from any password-protected PDF document. Enter the correct password, and MagicDocx will generate an unlocked version of your PDF that can be opened without any password in the future. The entire process happens locally in your browser — no files are sent to any server. Note: MagicDocx cannot bypass or crack an unknown password."
+          intro="MagicDocx Unlock PDF removes the open password (user password) from any password-protected PDF document. Enter the correct password, and MagicDocx will generate an unlocked version of your PDF that can be opened without any password in the future. The entire process happens locally in your browser | no files are sent to any server. Note: MagicDocx cannot bypass or crack an unknown password."
           steps={[
             "Upload your password-protected PDF using the file upload area.",
             "Enter the correct password in the password field.",

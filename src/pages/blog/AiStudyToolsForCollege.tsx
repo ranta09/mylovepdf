@@ -9,7 +9,7 @@ import RelatedTools from "@/components/RelatedTools";
 const AiStudyToolsForCollege = () => (
     <>
         <Helmet>
-            <title>AI Study Tools for College Students 2025 — Complete Guide | MagicDOCX Blog</title>
+            <title>AI Study Tools for College Students 2025 | Complete Guide | MagicDOCX Blog</title>
             <meta name="description" content="Complete guide to AI study tools for college students. Learn how to use AI to write better, study faster, and ace exams with free AI study tools in 2025." />
             <meta name="keywords" content="AI study tools college students, AI learning tools 2025, best AI for college, study smarter AI, AI flashcards for college" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/blog/ai-study-tools-for-college-students" />
@@ -33,10 +33,10 @@ const AiStudyToolsForCollege = () => (
                         </div>
                         <div className="text-6xl text-center py-8 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl">🎓</div>
                         <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
-                            <p className="text-lg leading-relaxed">College demands more of students than ever before. The average college student is expected to read hundreds of pages per week, write multiple assignments, prepare presentations, and maintain a social life — all while often working part-time. AI study tools have become an essential equalizer, helping students manage this load without burning out.</p>
+                            <p className="text-lg leading-relaxed">College demands more of students than ever before. The average college student is expected to read hundreds of pages per week, write multiple assignments, prepare presentations, and maintain a social life | all while often working part-time. AI study tools have become an essential equalizer, helping students manage this load without burning out.</p>
                             <h2>The AI Study Revolution in College Education</h2>
                             <p>2023–2025 marked a turning point in AI adoption in education. According to academic surveys, over 70% of college students now regularly use AI tools for some aspect of their studies. The question is no longer whether to use AI, but how to use it effectively and ethically.</p>
-                            <p>The key distinction: AI study tools should help you understand and engage with material more deeply — not replace actual learning. Used correctly, they dramatically accelerate comprehension without undermining genuine knowledge acquisition.</p>
+                            <p>The key distinction: AI study tools should help you understand and engage with material more deeply | not replace actual learning. Used correctly, they dramatically accelerate comprehension without undermining genuine knowledge acquisition.</p>
                             <h2>AI Tools Every College Student Should Know</h2>
                             <h3>For Reading Heavy Syllabi</h3>
                             <p>Most college courses require 50–100 pages of reading per week. Use <Link to="/pdf-summarizer" className="text-primary hover:underline">MagicDOCX PDF Summarizer</Link> to pre-read everything before class. The Bullet Points mode gives you the key arguments in 5 minutes, preparing you to engage meaningfully with the material in lectures.</p>
@@ -61,10 +61,10 @@ const AiStudyToolsForCollege = () => (
                                 ))}
                             </div>
                             <h2>Academic Integrity and AI</h2>
-                            <p>Using AI to help you understand and study material is academically ethical. Using AI to write assignments and submit them as your own is not — and most universities now use AI detection tools. The tools described in this article are study aids, not writing generators. They help you comprehend and retain content, which actually makes you a better student.</p>
+                            <p>Using AI to help you understand and study material is academically ethical. Using AI to write assignments and submit them as your own is not | and most universities now use AI detection tools. The tools described in this article are study aids, not writing generators. They help you comprehend and retain content, which actually makes you a better student.</p>
                             <h2>Free vs. Paid AI Study Tools</h2>
                             <p>Most of the tools in this guide are completely free. Premium tools often add features like multi-file processing, longer document support, and offline access. For most college students, free tools are more than sufficient.</p>
-                            <p>MagicDOCX is entirely free — no subscriptions, no credits, no hidden paywalls. All features mentioned in this guide work without even creating an account.</p>
+                            <p>MagicDOCX is entirely free | no subscriptions, no credits, no hidden paywalls. All features mentioned in this guide work without even creating an account.</p>
                         </div>
                         <RelatedTools title="Start Studying Smarter Now" toolIds={["ai-summarizer", "ai-quiz", "ai-chat", "ai-translate", "ats-checker"]} />
                         <div className="border-t border-border pt-8"><Link to="/blog" className="text-sm text-primary hover:underline font-semibold">← Back to Blog</Link></div>

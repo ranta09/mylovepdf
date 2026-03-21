@@ -10,7 +10,7 @@ import RelatedTools from "@/components/RelatedTools";
 const SummarizeBookPdf = () => (
     <>
         <Helmet>
-            <title>Summarize a Book PDF Online Free — AI Book Summary Generator | MagicDOCX</title>
+            <title>Summarize a Book PDF Online Free | AI Book Summary Generator | MagicDOCX</title>
             <meta name="description" content="Get an AI-generated summary of any book PDF online for free. Upload your book, ebook, or novel and get chapter summaries, key themes, characters, and insights instantly." />
             <meta name="keywords" content="summarize book PDF, book PDF summarizer, AI book summary, summarize ebook, summarize novel PDF online" />
             <link rel="canonical" href="https://mylovepdf.lovable.app/summarize-book-pdf" />
@@ -29,7 +29,7 @@ const SummarizeBookPdf = () => (
                 </section>
                 <section className="container max-w-4xl py-16 space-y-12">
                     <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none space-y-8">
-                        <h2 className="text-2xl font-bold text-foreground">AI Book Summarizer — Get the Gist in Minutes</h2>
+                        <h2 className="text-2xl font-bold text-foreground">AI Book Summarizer | Get the Gist in Minutes</h2>
                         <p>Reading a full book takes anywhere from 5 to 20 hours. An AI book summarizer can give you the core ideas, key arguments, main characters, themes, and conclusions in under 5 minutes. Whether you're a student required to read a novel, a professional trying to stay current with business books, or a curious reader who wants to decide if a book is worth your time, MagicDOCX is the perfect tool.</p>
                         <p>Our AI handles both fiction and non-fiction. For non-fiction books, it extracts the central argument, supporting frameworks, and actionable takeaways. For fiction, it identifies plot arcs, character motivations, themes, and narrative structure.</p>
                         <h2 className="text-2xl font-bold text-foreground">What You Get from a Book PDF Summary</h2>
@@ -48,7 +48,7 @@ const SummarizeBookPdf = () => (
                         {[
                             { q: "What's the maximum book length you can summarize?", a: "Our chunked processing handles books of any length. A standard 300-page business book typically takes 2–4 minutes. A 600-page novel may take 5–8 minutes." },
                             { q: "Can I summarize an EPUB ebook?", a: "Yes! MagicDOCX supports EPUB format natively, in addition to PDF." },
-                            { q: "Does it handle scanned or photographed book pages?", a: "Yes — our OCR engine processes scanned book pages and image-based PDFs automatically." },
+                            { q: "Does it handle scanned or photographed book pages?", a: "Yes | our OCR engine processes scanned book pages and image-based PDFs automatically." },
                         ].map(({ q, a }) => (
                             <details key={q} className="group rounded-xl border border-border bg-card px-5 py-4 cursor-pointer">
                                 <summary className="flex items-center justify-between font-semibold text-foreground list-none text-sm">{q}<span className="text-muted-foreground">▾</span></summary>

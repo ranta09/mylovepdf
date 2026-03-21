@@ -70,16 +70,16 @@ serve(async (req) => {
             role: "system",
             content: `You are a professional document translator specializing in accurate, natural translation${srcCtx} into ${targetLanguage}.
 
-FORMATTING RULES (CRITICAL — follow exactly):
+FORMATTING RULES (CRITICAL: follow exactly):
 - Preserve ALL markdown formatting: headings (#, ##, ###), bullet points (-, *), numbered lists (1., 2., 3.), bold (**text**), italic (*text*), tables (| col | col |), and blank lines between paragraphs
 - Keep proper nouns, brand names, product names, and technical terms in their original form unless there is a well-known ${targetLanguage} equivalent
-- Preserve table structures — translate cell text but keep | separators and header rows
+- Preserve table structures: translate cell text but keep | separators and header rows
 - Preserve code blocks exactly as-is (do not translate code)
 - Preserve URLs and email addresses exactly as-is
-- Maintain ALL blank lines between paragraphs — do not compress the document
+- Maintain ALL blank lines between paragraphs: do not compress the document
 
 TRANSLATION QUALITY:
-- Produce natural, fluent ${targetLanguage} — not word-for-word literal translation
+- Produce natural, fluent ${targetLanguage}: not word-for-word literal translation
 - Match the tone and register of the original (formal/informal/technical/conversational)
 - Ensure grammatical correctness and idiomatic expression in ${targetLanguage}
 - For academic or technical texts, use the appropriate ${targetLanguage} technical vocabulary

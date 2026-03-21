@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import * as pdfjsLib from "pdfjs-dist";
 import pptxgen from "pptxgenjs";
@@ -48,8 +48,7 @@ const PdfToPpt = () => {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing structure...");
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [showOcrModal, setShowOcrModal] = useState(false);
-  const [conversionMode, setConversionMode] = useState<"standard" | "ocr">("standard");
+  const [conversionMode, setConversionMode] = useState<"auto" | "ocr">("auto");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
@@ -138,27 +137,27 @@ const PdfToPpt = () => {
   const convert = async (applyOcr: boolean = false, skipScannedCheck: boolean = false) => {
     if (files.length === 0) return;
 
-    if (!applyOcr && !skipScannedCheck) {
-      const isScanned = await detectScanned(files[0]);
-      if (isScanned) {
-        setShowOcrModal(true);
-        return;
-      }
-    }
-
     setProcessing(true);
     setProgress(0);
-    setStatusText("Initializing High-Fidelity Engine...");
+    setStatusText("Uploading and analyzing PDF...");
 
     try {
-      // Use the new advanced engine for high-fidelity editable conversion
-      // Note: For now we pass all files to the engine or process them sequentially
-      // For simplicity and better control over multi-file, we wrap it
-      
+      // Automatically enable OCR for scanned PDFs while keeping text-based PDFs fast
+      let useOcr = applyOcr;
+      if (!useOcr && !skipScannedCheck) {
+        const isScanned = await detectScanned(files[0]);
+        if (isScanned) {
+          useOcr = true;
+          setConversionMode("ocr");
+        } else {
+          setConversionMode("auto");
+        }
+      }
+
       const combinedBlob = await convertPdfToPptEditable(
         files,
         { 
-          useOcr: applyOcr,
+          useOcr,
           ocrLang: "eng" // Or from state if added
         },
         (p, s) => {
@@ -186,13 +185,18 @@ const PdfToPpt = () => {
       toast.success(`Converted ${files.length} document(s) to editable PowerPoint!`);
     } catch (err) {
       console.error("Conversion Error Details:", err);
-      toast.error(`Conversion Failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setStatusText("Conversion failed. Please try again or upload a different PDF.");
+      toast.error("Conversion failed. Please try again or upload a different PDF.");
     } finally {
       setProcessing(false);
       setProgress(0);
-      setShowOcrModal(false);
     }
   };
+
+  const totalPages = useMemo(
+    () => fileDataList.reduce((sum, fd) => sum + (fd.pageCount || 0), 0),
+    [fileDataList]
+  );
 
   return (
     <ToolLayout
@@ -312,6 +316,14 @@ const PdfToPpt = () => {
                   <h2 className="text-2xl font-bold uppercase tracking-tighter text-foreground font-heading">PDF to PowerPoint</h2>
                 </div>
 
+                {fileDataList.length > 0 && (
+                  <div className="mt-2 space-y-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <p>File: <span className="text-foreground">{fileDataList[0].file.name}{files.length > 1 ? ` + ${files.length - 1} more` : ""}</span></p>
+                    <p>Pages: <span className="text-foreground">{totalPages || "Detecting..."}</span></p>
+                    <p>Conversion mode: <span className="text-foreground">{conversionMode === "ocr" ? "OCR (scanned PDF detected)" : "Auto (text + OCR for scanned pages)"}</span></p>
+                  </div>
+                )}
+
                 <div className="space-y-4 leading-relaxed">
                   <div className="flex items-center gap-2 text-red-600">
                     <Sparkles className="h-4 w-4" />
@@ -356,62 +368,13 @@ const PdfToPpt = () => {
           <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
         </div>
       )}
-
-      <AlertDialog open={showOcrModal} onOpenChange={setShowOcrModal}>
-        <AlertDialogContent className="max-w-md rounded-3xl p-8">
-          <AlertDialogHeader>
-            <div className="h-12 w-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 mb-4 mx-auto">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <AlertDialogTitle className="text-xl font-bold uppercase tracking-tighter text-center">
-              You are trying to convert a scanned PDF
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center pt-4 space-y-4">
-              <p className="text-sm font-bold text-foreground">
-                To extract content from scanned documents, OCR is required.
-                Premium users can convert scanned PDFs to editable PowerPoint slides using OCR.
-              </p>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider italic">
-                Otherwise, the pages will be converted as images inside PowerPoint slides.
-              </p>
-              <p className="text-sm font-bold uppercase tracking-widest pt-4">
-                Do you want to apply OCR?
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-8">
-            <Button
-              variant="outline"
-              className="w-full h-12 rounded-xl text-[10px] font-bold uppercase tracking-widest border-2"
-              onClick={() => {
-                setShowOcrModal(false);
-                convert(false, true); // Continue without OCR
-              }}
-            >
-              Continue without OCR
-            </Button>
-            <AlertDialogAction asChild>
-              <Button
-                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-500/20"
-                onClick={() => {
-                  setConversionMode("ocr");
-                  setShowOcrModal(false);
-                  convert(true, true); // Apply OCR
-                }}
-              >
-                Apply OCR
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <ToolSeoSection
         toolName="PDF to PowerPoint Converter"
         category="convert"
-        intro="MagicDocx PDF to PowerPoint converter transforms your PDF pages into fully editable PPTX slides. Each PDF page is intelligently reconstructed as a 16:9 slide with text blocks, images, and layout preserved. Ideal for re-purposing reports, academic papers, or any document into a presentation — no Acrobat required, no software to install."
+        intro="MagicDocx PDF to PowerPoint converter transforms your PDF pages into fully editable PPTX slides. Each PDF page is intelligently reconstructed as a 16:9 slide with text blocks, images, and layout preserved. Ideal for re-purposing reports, academic papers, or any document into a presentation | no Acrobat required, no software to install."
         steps={[
           "Upload a PDF file by dragging and dropping or clicking the upload area.",
-          "Wait for auto-detection — our engine checks whether the PDF is text-based or scanned.",
+          "Wait for auto-detection | our engine checks whether the PDF is text-based or scanned.",
           "For scanned PDFs, choose whether to apply OCR or convert pages as images.",
           "Download your PPTX file with each PDF page as a fully editable slide."
         ]}
