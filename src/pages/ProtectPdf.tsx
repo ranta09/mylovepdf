@@ -1,224 +1,428 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
-import { PDFDocument } from "pdf-lib";
-import { Lock, Loader2, Info, ShieldCheck } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
+import { protectPdf } from "@/lib/protectPdfEngine";
+import { Lock, Loader2, ShieldCheck, CheckCircle2, FileText, ChevronDown, AlignLeft, Printer, Copy, Edit2, ShieldAlert } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { pdfjs, Document, Page } from "react-pdf";
+import { cn } from "@/lib/utils";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+
+// Setup PDF worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
+
+const formatSize = (bytes: number): string => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+};
+
+const getPasswordStrength = (pass: string) => {
+  if (!pass) return { score: 0, label: "None", color: "bg-secondary" };
+  let score = 0;
+  if (pass.length >= 8) score += 1;
+  if (/[A-Z]/.test(pass)) score += 1;
+  if (/[0-9]/.test(pass)) score += 1;
+  if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+  
+  if (score <= 1) return { score: 25, label: "Weak", color: "bg-red-500" };
+  if (score === 2) return { score: 50, label: "Fair", color: "bg-orange-500" };
+  if (score === 3) return { score: 75, label: "Good", color: "bg-blue-500" };
+  return { score: 100, label: "Strong", color: "bg-green-500" };
+};
 
 const ProtectPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
-  const [password, setPassword] = useState("");
   const { setDisableGlobalFeatures } = useGlobalUpload();
-
-  useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
-    return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
-
+  
+  // UI State
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ProcessingResult[]>([]);
+  
+  // Password State
+  const [userPassword, setUserPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  
+  // Permissions State
+  const [permissions, setPermissions] = useState({
+    printing: true,
+    copying: true,
+    modifying: true,
+  });
+
+  // Preview State
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
+
+  // Generate URL for preview caching
+  useEffect(() => {
+    if (files.length > 0) {
+      const url = URL.createObjectURL(files[0]);
+      setPreviewUrl(url);
+      setPreviewLoaded(false);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+      setNumPages(null);
+    }
+  }, [files]);
+
+  const strength = useMemo(() => getPasswordStrength(userPassword), [userPassword]);
+  const passwordsMatch = userPassword && userPassword === confirmPassword;
+  
+  const isValid = passwordsMatch && userPassword.length > 0;
 
   const protect = async () => {
-    if (files.length === 0 || !password) return;
+    if (files.length === 0 || !isValid) {
+      toast.error("Please provide a valid password and confirm it.");
+      return;
+    }
+    
     setProcessing(true);
-    setProgress(20);
+    setProgress(10);
+    
     try {
-      const bytes = await files[0].arrayBuffer();
-      const doc = await PDFDocument.load(bytes);
-      setProgress(40);
+      const file = files[0];
+      const bytes = await file.arrayBuffer();
+      setProgress(30);
 
-      // Set metadata to indicate protection
-      doc.setTitle(doc.getTitle() || "Protected Document");
-      doc.setProducer("MagicDOCX | Protected");
-      doc.setCreator("MagicDOCX");
-
-      // pdf-lib doesn't support native encryption
-      // We use the render-and-rebuild approach to create a clean copy
-      // and embed password metadata for compatibility
-      doc.setSubject(`Protected with MagicDOCX | Key: ${btoa(password).substring(0, 8)}***`);
-      doc.setKeywords(["protected", "encrypted"]);
-
-      setProgress(70);
-      const pdfBytes = await doc.save({ useObjectStreams: true });
-      setProgress(90);
-
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      // We do AES-256 via our Engine
+      const protectedBytes = await protectPdf(bytes, {
+        userPassword,
+        ownerPassword: ownerPassword || userPassword, // use userPassword if no owner specified
+        permissions: {
+          printing: permissions.printing,
+          copying: permissions.copying,
+          modifying: permissions.modifying,
+          annotating: permissions.modifying,
+          fillingForms: permissions.modifying,
+          documentAssembly: permissions.modifying,
+          contentAccessibility: true // usually best to leave true for readers
+        }
+      });
+      
+      setProgress(85);
+      
+      const blob = new Blob([protectedBytes as any], { type: "application/pdf" });
+      const filename = file.name.replace(/\.pdf$/i, "_protected.pdf");
       const url = URL.createObjectURL(blob);
-      const filename = files[0].name.replace(/\.pdf$/i, "_protected.pdf");
-
-      // Auto download
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-
+      
       setProgress(100);
-      toast.success("PDF protected and downloaded! Note: For AES-256 encryption, use Adobe Acrobat to apply the password to this optimized file.");
-    } catch {
-      toast.error("Failed to process PDF");
+      
+      setResults([{
+        file: blob,
+        url,
+        filename
+      }]);
+      
+      toast.success("PDF protected successfully with AES-256 encryption.");
+    } catch (err: any) {
+      console.error("Protection error:", err);
+      toast.error("Failed to protect PDF. Please try a different file.");
     } finally {
+      if (progress !== 100) setProgress(0);
       setProcessing(false);
-      setProgress(0);
     }
   };
 
+  const resetState = () => {
+    setFiles([]);
+    setResults([]);
+    setUserPassword("");
+    setConfirmPassword("");
+    setOwnerPassword("");
+    setPermissions({ printing: true, copying: true, modifying: true });
+    setAdvancedOpen(false);
+  };
+
   return (
-    <ToolLayout title="Protect PDF" description="Add password protection metadata to your PDF" category="protect" icon={<Lock className="h-7 w-7" />}
-      metaTitle="Protect PDF Online Free – Add Password | MagicDocx" metaDescription="Password-protect your PDF online for free. Set open and permission passwords, choose encryption strength. No sign-up required." toolId="protect" hideHeader={files.length > 0}>
-      <div className="mt-5">
-        {files.length === 0 && (
-          <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to protect" />
-        )}
-      </div>
-      {files.length > 0 && !processing && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-          <div className="flex-1 flex flex-row overflow-hidden relative">
+    <ToolLayout
+      title="Protect PDF"
+      description="Add strong AES-256 password protection and set permissions"
+      category="protect"
+      icon={<Lock className="h-7 w-7" />}
+      metaTitle="Protect PDF Online Free – Add Password | MagicDocx"
+      metaDescription="Password-protect your PDF online for free. Set open and permission passwords with strong AES-256 encryption."
+      toolId="protect"
+      hideHeader={files.length > 0 || results.length > 0 || processing}
+      className="protect-pdf-page"
+    >
+      <style>{`
+        .protect-pdf-page h1, 
+        .protect-pdf-page h2, 
+        .protect-pdf-page h3,
+        .protect-pdf-page span,
+        .protect-pdf-page button,
+        .protect-pdf-page p,
+        .protect-pdf-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
 
-            {/* LEFT SIDE: Security Info */}
-            <div className="w-80 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-              <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <span className="text-xs font-black uppercase tracking-widest">Protective Logic</span>
+      {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
+      {(files.length > 0 || processing || results.length > 0) && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
+          
+          {processing ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
+              <div className="w-full max-w-md space-y-8 text-center">
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  <ShieldCheck className="h-10 w-10 text-primary animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">Encrypting Document (AES-256)</h3>
+                  <Progress value={progress} className="h-2 rounded-full" />
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Encrypted</p>
+                </div>
               </div>
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h3 className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Encryption Level</h3>
-                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl space-y-1">
-                      <p className="text-[10px] font-black text-primary uppercase">AES-256 Protocol</p>
-                      <p className="text-[9px] text-muted-foreground uppercase leading-tight font-bold">Military-grade protection applied during serialization</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Security Features</h3>
-                    <div className="space-y-2">
-                      {[
-                        "Standard PDF encryption",
-                        "Metadata protection",
-                        "Acrobat compatibility",
-                        "Permanent locking"
-                      ].map((feature, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-1 h-1 bg-primary rounded-full" />
-                          <p className="text-[10px] font-bold text-foreground uppercase tracking-tight">{feature}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-border">
-                    <div className="bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Info className="h-3.5 w-3.5 text-amber-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Critical Note</span>
+            </div>
+          ) : results.length > 0 ? (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ResultView results={results} onReset={resetState} hideShare={true} />
+            </div>
+          ) : (
+            <>
+              {/* LEFT SIDE: Preview (70%) */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex flex-col">
+                   <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
-                        Do not lose the password. Documents cannot be recovered without the original key.
-                      </p>
-                    </div>
-                  </div>
+                      <div className="flex-1 truncate">
+                        <h4 className="text-sm font-bold uppercase tracking-tight text-foreground truncate">{files[0].name}</h4>
+                        <div className="flex gap-3 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">
+                          <span>{formatSize(files[0].size)}</span>
+                          {numPages && <span>{numPages} Pages</span>}
+                        </div>
+                      </div>
+                   </div>
                 </div>
-              </ScrollArea>
-            </div>
-
-            {/* CENTER: Document Context */}
-            <div className="flex-1 bg-secondary/10 flex flex-col items-center justify-center p-8 overflow-y-auto">
-              <div className="w-full max-w-xl bg-background shadow-2xl rounded-2xl border border-border p-12 text-center relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-0" />
-
-                <div className="relative z-10 space-y-6">
-                  <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20">
-                    <Lock className="h-10 w-10 text-primary" />
+                
+                <ScrollArea className="flex-1 p-6 relative">
+                  <div className="mx-auto w-full max-w-2xl min-h-[400px] flex items-center justify-center">
+                     {previewUrl && (
+                       <div className="relative inline-block isolate group shadow-2xl rounded-sm overflow-hidden border border-border">
+                          {!previewLoaded && (
+                            <div className="absolute inset-0 bg-secondary/30 animate-pulse flex items-center justify-center z-10 w-[400px] h-[550px]">
+                              <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                            </div>
+                          )}
+                          <Document 
+                             file={previewUrl} 
+                             onLoadSuccess={(pdf) => setNumPages(pdf.numPages)}
+                             className={cn("transition-opacity duration-300", previewLoaded ? "opacity-100" : "opacity-0")}
+                          >
+                            <Page 
+                              pageNumber={1} 
+                              renderTextLayer={false} 
+                              renderAnnotationLayer={false}
+                              width={400}
+                              onLoadSuccess={() => setPreviewLoaded(true)}
+                              className="bg-white"
+                            />
+                          </Document>
+                       </div>
+                     )}
                   </div>
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-black uppercase tracking-tighter">{files[0].name}</h2>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic tracking-wider">Awaiting Security Seal</p>
+                </ScrollArea>
+              </div>
+
+              {/* RIGHT SIDE: Settings (30%) */}
+              <div className="flex-1 bg-background flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-border bg-secondary/5 flex items-center gap-2 shrink-0">
+                   <ShieldAlert className="h-4 w-4 text-primary" />
+                   <span className="text-[11px] font-black uppercase tracking-widest text-foreground">Security Settings</span>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                     
+                     {/* Required Password */}
+                     <div className="space-y-5">
+                       <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Open Password</h3>
+                       
+                       <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Type Password</Label>
+                            <Input 
+                              type="password" 
+                              value={userPassword} 
+                              onChange={(e) => setUserPassword(e.target.value)} 
+                              placeholder="••••••••" 
+                              className="h-12 bg-secondary/30 focus-visible:ring-primary"
+                            />
+                            {userPassword.length > 0 && (
+                               <div className="flex items-center gap-2 mt-2">
+                                  <div className="flex-1 h-1 bg-secondary rounded-full overflow-hidden">
+                                    <div className={`h-full ${strength.color} transition-all duration-300`} style={{ width: `${strength.score}%` }} />
+                                  </div>
+                                  <span className={cn("text-[9px] font-bold uppercase", strength.color.replace('bg-', 'text-'))}>{strength.label}</span>
+                               </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Confirm Password</Label>
+                            <div className="relative">
+                              <Input 
+                                type="password" 
+                                value={confirmPassword} 
+                                onChange={(e) => setConfirmPassword(e.target.value)} 
+                                placeholder="••••••••" 
+                                className={cn("h-12 bg-secondary/30 pr-10 focus-visible:ring-primary", 
+                                  userPassword && confirmPassword && (passwordsMatch ? "border-green-500/50 focus-visible:ring-green-500" : "border-red-500/50 focus-visible:ring-red-500")
+                                )}
+                              />
+                              {userPassword && confirmPassword && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                  {passwordsMatch ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <div className="h-4 w-4 text-red-500 flex items-center justify-center text-xs font-black">X</div>}
+                                </div>
+                              )}
+                            </div>
+                            {!passwordsMatch && confirmPassword.length > 0 && (
+                              <p className="text-[10px] font-semibold text-red-500 uppercase">Passwords do not match</p>
+                            )}
+                          </div>
+                       </div>
+                     </div>
+
+                     {/* Advanced Permissions */}
+                     <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen} className="space-y-2">
+                       <CollapsibleTrigger asChild>
+                         <Button variant="ghost" className="w-full justify-between h-12 bg-secondary/10 hover:bg-secondary/20 font-bold uppercase tracking-widest text-[10px]">
+                           Advanced Options (Permissions)
+                           <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
+                         </Button>
+                       </CollapsibleTrigger>
+                       
+                       <CollapsibleContent className="space-y-6 pt-4 px-2">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex justify-between">
+                              Owner Password (Optional)
+                            </Label>
+                            <Input 
+                              type="password" 
+                              value={ownerPassword} 
+                              onChange={(e) => setOwnerPassword(e.target.value)} 
+                              placeholder="For changing permissions later..." 
+                              className="h-10 text-sm bg-secondary/30"
+                            />
+                            <p className="text-[9px] text-muted-foreground font-semibold">Leave empty to use the standard Open Password as Owner Password.</p>
+                          </div>
+
+                          <div className="space-y-4 pt-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Allowed Actions</Label>
+                            
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-secondary/10 hover:border-primary/30 transition-colors">
+                               <div className="flex items-center gap-3">
+                                  <Printer className="h-4 w-4 text-muted-foreground" />
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] font-bold">Printing</span>
+                                    <span className="text-[9px] text-muted-foreground font-medium">Allow high-res printing</span>
+                                  </div>
+                               </div>
+                               <Switch checked={permissions.printing} onCheckedChange={(c) => setPermissions(p => ({ ...p, printing: c }))} />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-secondary/10 hover:border-primary/30 transition-colors">
+                               <div className="flex items-center gap-3">
+                                  <Copy className="h-4 w-4 text-muted-foreground" />
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] font-bold">Copying</span>
+                                    <span className="text-[9px] text-muted-foreground font-medium">Allow text extraction</span>
+                                  </div>
+                               </div>
+                               <Switch checked={permissions.copying} onCheckedChange={(c) => setPermissions(p => ({ ...p, copying: c }))} />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-secondary/10 hover:border-primary/30 transition-colors">
+                               <div className="flex items-center gap-3">
+                                  <Edit2 className="h-4 w-4 text-muted-foreground" />
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] font-bold">Modifying</span>
+                                    <span className="text-[9px] text-muted-foreground font-medium">Allow filling forms & edits</span>
+                                  </div>
+                               </div>
+                               <Switch checked={permissions.modifying} onCheckedChange={(c) => setPermissions(p => ({ ...p, modifying: c }))} />
+                            </div>
+                          </div>
+                       </CollapsibleContent>
+                     </Collapsible>
                   </div>
+                </ScrollArea>
+                
+                {/* Fixed Footer */}
+                <div className="p-4 border-t border-border bg-card shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                  <Button 
+                    size="lg" 
+                    onClick={protect} 
+                    disabled={!isValid || processing} 
+                    className="w-full h-14 rounded-xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl transition-all"
+                  >
+                     <Lock className="h-4 w-4 mr-2" />
+                     Protect PDF
+                  </Button>
                 </div>
               </div>
-            </div>
-
-            {/* RIGHT SIDE: Password Controls */}
-            <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
-              <div className="p-4 border-b border-border bg-secondary/5 flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Security Center</span>
-                <Button variant="ghost" size="sm" onClick={() => setFiles([])} className="h-7 text-[10px] font-black uppercase tracking-widest hover:bg-destructive/5 hover:text-destructive">
-                  Cancel
-                </Button>
-              </div>
-
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-8">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                      Set Access Password
-                    </label>
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="h-12 rounded-xl bg-secondary/5 border-border font-black text-sm tracking-widest"
-                    />
-                    <p className="text-[9px] text-muted-foreground uppercase font-bold text-center">Minimum 8 characters recommended</p>
-                  </div>
-
-                  <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 space-y-3">
-                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      Data Integrity Warning
-                    </p>
-                    <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
-                      This process will re-serialize the PDF structure with a password requirement. Ensure all edits are complete.
-                    </p>
-                  </div>
-                </div>
-              </ScrollArea>
-
-              <div className="p-6 border-t border-border bg-background">
-                <Button
-                  size="lg"
-                  onClick={protect}
-                  disabled={processing || !password}
-                  className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-3"
-                >
-                  {processing ? <><Loader2 className="h-4 w-4 animate-spin" /> Locking...</> : <>Secure Document <Lock className="h-4 w-4" /></>}
-                </Button>
-                {processing && <Progress value={progress} className="mt-4 h-1 rounded-full" />}
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
-      {!files.length && (
+
+      {/* ── BEFORE UPLOAD: SEO AND DRAG-DROP AREA ─────────────────────── */}
+      <div className="mt-5">
+        {files.length === 0 && !processing && results.length === 0 && (
+          <div className="mt-10 text-center">
+            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF to encrypt" multiple={false} />
+          </div>
+        )}
+      </div>
+
+      {!files.length && !processing && results.length === 0 && (
         <ToolSeoSection
           toolName="Protect PDF Online"
-          category="edit"
-          intro="MagicDocx Protect PDF lets you add password protection to any PDF document directly in your browser. Set an open password to control who can view the document, or set permissions passwords to restrict printing, copying, and editing. Choose 128-bit RC4 or 256-bit AES encryption to meet your security requirements. All encryption is performed client-side | your file never leaves your device."
+          category="protect"
+          intro="Secure your PDF files with military-grade AES-256 encryption. Prevent unauthorized access, copying, editing, and printing with granular permissions. Everything is processed directly in your browser ensuring complete privacy."
           steps={[
-            "Upload your PDF using the file upload area.",
-            "Enter an Open Password if you want to restrict who can open the file.",
-            "Set a Permissions Password to restrict printing, copying, or editing.",
-            "Choose your encryption strength and click 'Protect PDF' to download your password-protected file."
+            "Upload your PDF document to our secure local workspace.",
+            "Type a strong Open Password to restrict who can open the file.",
+            "Optionally configure an Owner Password and toggle specific permissions (print, copy, modify).",
+            "Click 'Protect PDF' and download your locked document."
           ]}
           formats={["PDF"]}
           relatedTools={[
             { name: "Unlock PDF", path: "/unlock-pdf", icon: Lock },
-            { name: "Redact PDF", path: "/redact-pdf", icon: Lock },
-            { name: "Edit PDF", path: "/edit-pdf", icon: Lock },
+            { name: "Merge PDF", path: "/merge-pdf", icon: Lock },
             { name: "Compress PDF", path: "/compress-pdf", icon: Lock },
           ]}
-          schemaName="Protect PDF Online"
-          schemaDescription="Free online PDF password protection. Add open and permission passwords with 128-bit or 256-bit encryption. 100% local processing."
+          schemaName="Protect PDF Tool"
+          schemaDescription="Encrypt PDF documents securely via client-side AES-256 encryption. Add passwords and set permissions without uploading files to any server."
         />
       )}
     </ToolLayout>

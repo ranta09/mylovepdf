@@ -1,18 +1,27 @@
 import { useState, useEffect } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
-import { PDFDocument } from "pdf-lib";
-import * as pdfjsLib from "pdfjs-dist";
-import { Layers, Loader2, Info, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, FileText } from "lucide-react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { flattenPdfDocument, analyzePdfFlattenState, FlattenAnalysis, FlattenMode } from "@/lib/flattenPdfEngine";
+import { Layers, Loader2, ShieldCheck, FileText, CheckCircle2, FileBox, AlertTriangle, Download, Settings, MousePointerClick, Zap } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import ResultView, { ProcessingResult } from "@/components/ResultView";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { pdfjs, Document, Page } from "react-pdf";
+import { cn } from "@/lib/utils";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+// Setup PDF worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -22,230 +31,380 @@ const formatSize = (bytes: number): string => {
 
 const FlattenPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
+  const { setDisableGlobalFeatures } = useGlobalUpload();
+  
+  // UI State
+  const [analyzing, setAnalyzing] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
-  const { setDisableGlobalFeatures } = useGlobalUpload();
+  
+  // Flatten State
+  const [analysis, setAnalysis] = useState<FlattenAnalysis | null>(null);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [mode, setMode] = useState<FlattenMode>("full");
+
+  // Preview State
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0 || analyzing);
     return () => setDisableGlobalFeatures(false);
-  }, [files, setDisableGlobalFeatures]);
+  }, [files.length, processing, results.length, analyzing, setDisableGlobalFeatures]);
 
-  const flatten = async () => {
+  // Analyze file and set up preview
+  useEffect(() => {
+    if (files.length > 0) {
+      const file = files[0];
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setPreviewLoaded(false);
+      
+      const analyze = async () => {
+        setAnalyzing(true);
+        setErrorStatus(null);
+        setAnalysis(null);
+        try {
+          const bytes = await file.arrayBuffer();
+          const { status, error } = await analyzePdfFlattenState(bytes);
+          if (error) {
+            setErrorStatus("error");
+            toast.error("Failed to analyze PDF file.");
+          } else {
+            setAnalysis(status);
+            // Default select form flatten natively if it's strictly forms.
+            if (status.hasForms && !status.hasAnnotations) {
+              setMode("forms_only");
+            } else {
+              setMode("full");
+            }
+          }
+        } catch (err) {
+          setErrorStatus("error");
+          toast.error("Error reading file.");
+        } finally {
+          setAnalyzing(false);
+        }
+      };
+      
+      analyze();
+      
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+      setNumPages(null);
+      setAnalysis(null);
+      setErrorStatus(null);
+      setMode("full");
+    }
+  }, [files]);
+
+  const handleFlatten = async () => {
     if (files.length === 0) return;
+    
+    // If it's already completely flattened, just download directly
+    if (analysis?.isFlattened) {
+       setResults([{
+         file: files[0],
+         url: URL.createObjectURL(files[0]),
+         filename: files[0].name.replace(/\.pdf$/i, "_flattened.pdf")
+       }]);
+       toast.success("PDF is ready for download!");
+       return;
+    }
+
     setProcessing(true);
-    setProgress(10);
+    setProgress(0);
+    
     try {
-      const bytes = await files[0].arrayBuffer();
-
-      // Render each page to canvas and rebuild as flat PDF (burns in all annotations/forms)
-      const srcPdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-      const outDoc = await PDFDocument.create();
-      setProgress(20);
-
-      for (let i = 1; i <= srcPdf.numPages; i++) {
-        const page = await srcPdf.getPage(i);
-        const origViewport = page.getViewport({ scale: 1 });
-        const scale = 2; // render at 2x for quality
-        const viewport = page.getViewport({ scale });
-
-        const canvas = document.createElement("canvas");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const ctx = canvas.getContext("2d")!;
-        await page.render({ canvasContext: ctx, viewport }).promise;
-
-        // Convert to JPEG
-        const jpegBlob = await new Promise<Blob>((resolve) =>
-          canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
-        );
-        const jpegData = new Uint8Array(await jpegBlob.arrayBuffer());
-        const jpegImage = await outDoc.embedJpg(jpegData);
-
-        const pdfPage = outDoc.addPage([origViewport.width, origViewport.height]);
-        pdfPage.drawImage(jpegImage, {
-          x: 0, y: 0,
-          width: origViewport.width,
-          height: origViewport.height,
-        });
-
-        setProgress(20 + Math.round((i / srcPdf.numPages) * 70));
-      }
-
-      const pdfBytes = await outDoc.save({ useObjectStreams: true });
-      setProgress(95);
-
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const file = files[0];
+      const bytes = await file.arrayBuffer();
+      
+      const flattenedBytes = await flattenPdfDocument(bytes, mode, (p) => setProgress(p));
+      
+      const blob = new Blob([flattenedBytes as any], { type: "application/pdf" });
+      const filename = file.name.replace(/\.pdf$/i, "_flattened.pdf");
       const url = URL.createObjectURL(blob);
-      const filename = files[0].name.replace(/\.pdf$/i, "_flattened.pdf");
-
-      setResults([{ file: blob, url, filename }]);
-
-      // Auto download
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-
-      setProgress(100);
+      
+      setResults([{
+        file: blob,
+        url,
+        filename
+      }]);
+      
       toast.success("PDF flattened successfully!");
-    } catch {
-      toast.error("Failed to flatten PDF");
+    } catch (err: any) {
+      console.error("Flatten error:", err);
+      toast.error("Failed to flatten PDF. The file may be corrupted.");
     } finally {
+      if (progress !== 100) setProgress(0);
       setProcessing(false);
-      setProgress(0);
     }
   };
 
+  const resetState = () => {
+    setFiles([]);
+    setResults([]);
+    setAnalysis(null);
+    setErrorStatus(null);
+  };
+
   return (
-    <ToolLayout title="Flatten PDF" description="Flatten form fields and annotations into the PDF" category="edit" icon={<Layers className="h-7 w-7" />}
-      metaTitle="Flatten PDF Online Free – Remove Form Fields | MagicDocx" metaDescription="Flatten PDF form fields, annotations, and interactive elements online for free. Makes your PDF static and printer-ready. No sign-up."
-      toolId="flatten-pdf"
-      hideHeader={files.length > 0 || results.length > 0 || processing}>
+    <ToolLayout
+      title="Flatten PDF"
+      description="Merge form fields, annotations, and layers into a single static PDF document."
+      category="edit"
+      icon={<Layers className="h-7 w-7" />}
+      metaTitle="Flatten PDF Online Free – Remove Form Fields | MagicDocx"
+      metaDescription="Flatten PDF form fields, annotations, and interactive elements online for free. Makes your PDF static and printer-ready. No sign-up."
+      toolId="flatten"
+      hideHeader={files.length > 0 || results.length > 0 || processing || analyzing}
+      className="flatten-pdf-page"
+    >
+      <style>{`
+        .flatten-pdf-page h1, 
+        .flatten-pdf-page h2, 
+        .flatten-pdf-page h3,
+        .flatten-pdf-page span,
+        .flatten-pdf-page button,
+        .flatten-pdf-page p,
+        .flatten-pdf-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
 
+      {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
       {(files.length > 0 || processing || results.length > 0) && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-          <div className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
-                <Layers className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tighter">Flatten Engine</h2>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                  {processing ? "Burning Annotations..." : results.length > 0 ? "Flatten Terminal" : "Awaiting Execution"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {(results.length > 0 || !processing) && (
-                <Button variant="outline" size="sm" onClick={() => { setFiles([]); setResults([]); }} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                  <RotateCcw className="h-3.5 w-3.5" /> Start Over
-                </Button>
-              )}
-              {results.length === 0 && !processing && (
-                <Button size="sm" onClick={flatten} className="h-9 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-widest px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2">
-                  <ArrowRight className="h-4 w-4" /> Flatten PDF
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {processing ? (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
+          
+          {processing || analyzing ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
               <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative flex justify-center items-center h-32">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-purple-500/10" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
-                  </div>
-                  <Layers className="h-8 w-8 text-purple-500 animate-pulse" />
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  {analyzing ? <FileBox className="h-10 w-10 text-primary animate-pulse" /> : <Layers className="h-10 w-10 text-primary animate-pulse" />}
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-black uppercase tracking-tighter">Flattening Layers</h3>
-                  <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Complete</p>
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">
+                    {analyzing ? "Analyzing Structure" : mode === "forms_only" ? "Converting Form Fields" : "Burning Document Layers"}
+                  </h3>
+                  {!analyzing && (
+                    <>
+                      <Progress value={progress} className="h-2 rounded-full" />
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Flattened</p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden">
-              <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ResultView results={results} onReset={resetState} hideShare={true} />
             </div>
           ) : (
-            <div className="flex-1 flex flex-row overflow-hidden">
-              <div className="w-96 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2 shrink-0">
-                  <FileBox className="h-4 w-4 text-purple-500" />
-                  <span className="text-xs font-black uppercase tracking-widest">Payload Manifest</span>
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-3">
-                    {files.map((file, idx) => (
-                      <div key={idx} className="p-4 bg-background rounded-2xl border border-border flex items-center gap-4 group hover:border-purple-500/30 transition-all">
-                        <div className="h-12 w-10 bg-purple-50 dark:bg-purple-950/30 rounded border border-purple-200 dark:border-purple-800 flex items-center justify-center shrink-0">
-                          <FileText className="h-5 w-5 text-purple-500" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-black uppercase truncate tracking-tight">{file.name}</p>
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">{formatSize(file.size)}</p>
+            <>
+              {/* LEFT SIDE: Preview (70%) */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex flex-col">
+                   <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 truncate">
+                        <h4 className="text-sm font-bold uppercase tracking-tight text-foreground truncate">{files[0].name}</h4>
+                        <div className="flex gap-3 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">
+                          <span>{formatSize(files[0].size)}</span>
+                          {numPages && <span>{numPages} Pages</span>}
                         </div>
                       </div>
-                    ))}
+                   </div>
+                </div>
+                
+                <ScrollArea className="flex-1 p-6 relative">
+                  <div className="mx-auto w-full max-w-2xl min-h-[400px] flex items-center justify-center">
+                     {errorStatus === "error" ? (
+                       <div className="w-[400px] h-[550px] bg-background border border-border shadow-2xl rounded-sm flex flex-col items-center justify-center space-y-4 p-8 text-center text-muted-foreground">
+                         <div className="h-20 w-20 rounded-full bg-secondary/30 flex items-center justify-center mb-4">
+                           <AlertTriangle className="h-10 w-10 opacity-50 text-amber-500" />
+                         </div>
+                         <h3 className="font-bold uppercase tracking-widest text-sm text-foreground">Preview Unavailable</h3>
+                         <p className="text-xs max-w-[200px]">The file is corrupted or protected against layout analysis.</p>
+                       </div>
+                     ) : previewUrl ? (
+                       <div className="relative inline-block isolate group shadow-2xl rounded-sm overflow-hidden border border-border">
+                          {!previewLoaded && (
+                            <div className="absolute inset-0 bg-secondary/30 animate-pulse flex items-center justify-center z-10 w-[400px] h-[550px]">
+                              <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                            </div>
+                          )}
+                          <Document 
+                             file={previewUrl} 
+                             onLoadSuccess={(pdf) => setNumPages(pdf.numPages)}
+                             className={cn("transition-opacity duration-300", previewLoaded ? "opacity-100" : "opacity-0")}
+                             error={null}
+                          >
+                            <Page 
+                              pageNumber={1} 
+                              renderTextLayer={true} // Essential for showing selectable text
+                              renderAnnotationLayer={true} // Critical for showing the raw form fields before flattening
+                              width={400}
+                              onLoadSuccess={() => setPreviewLoaded(true)}
+                              className="bg-white pointer-events-none" // Disable interaction in preview
+                            />
+                          </Document>
+                       </div>
+                     ) : null}
                   </div>
                 </ScrollArea>
               </div>
-              <div className="flex-1 bg-secondary/10 p-8 flex flex-col items-center justify-center">
-                <div className="w-full max-w-2xl text-center space-y-8">
-                  <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-background border border-border shadow-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-purple-500/5 group-hover:bg-purple-500/10 transition-colors" />
-                    <Layers className="h-8 w-8 text-purple-500 relative z-10" />
+
+              {/* RIGHT SIDE: Settings (30%) */}
+              <div className="flex-1 bg-background flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-border bg-secondary/5 flex items-center gap-2 shrink-0">
+                   <Settings className="h-4 w-4 text-primary" />
+                   <span className="text-[11px] font-black uppercase tracking-widest text-foreground">Flatten Options</span>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                     
+                     {analysis?.isFlattened && (
+                        <div className="space-y-4 animate-in slide-in-from-bottom-2">
+                           <div className="mx-auto w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20 mb-4">
+                              <CheckCircle2 className="h-6 w-6 text-green-500" />
+                           </div>
+                           <h3 className="text-sm font-black uppercase tracking-wider text-center border-b border-border pb-3">Already Flattened</h3>
+                           <p className="text-xs text-muted-foreground font-semibold text-center leading-relaxed">
+                             This PDF contains no interactive components. It is already fully flattened!
+                           </p>
+                        </div>
+                     )}
+
+                     {!analysis?.isFlattened && analysis && (
+                       <div className="space-y-6">
+                         
+                         <div className="space-y-2">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Detection Results</h3>
+                            <div className="grid gap-2">
+                              <div className={cn("p-3 rounded-lg border text-xs font-bold uppercase tracking-tight flex items-center justify-between", analysis.hasForms ? "bg-amber-500/10 border-amber-500/20 text-amber-600" : "bg-secondary/50 border-transparent text-muted-foreground")}>
+                                <span className="flex items-center gap-2"><MousePointerClick className="h-4 w-4" /> Form Fields</span>
+                                <span>{analysis.hasForms ? "Detected" : "None"}</span>
+                              </div>
+                              <div className={cn("p-3 rounded-lg border text-xs font-bold uppercase tracking-tight flex items-center justify-between", analysis.hasAnnotations ? "bg-blue-500/10 border-blue-500/20 text-blue-600" : "bg-secondary/50 border-transparent text-muted-foreground")}>
+                                <span className="flex items-center gap-2"><FileBox className="h-4 w-4" /> Annotations</span>
+                                <span>{analysis.hasAnnotations ? "Detected" : "None"}</span>
+                              </div>
+                            </div>
+                         </div>
+
+                         <div className="space-y-4">
+                           <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-t border-border pt-6">Select Mode</h3>
+                           
+                           <RadioGroup value={mode} onValueChange={(v) => setMode(v as FlattenMode)} className="space-y-3">
+                              <Label 
+                                htmlFor="forms_only"
+                                className={cn(
+                                  "flex flex-col gap-2 p-4 border rounded-xl cursor-pointer transition-all hover:bg-secondary/10",
+                                  mode === "forms_only" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border",
+                                  (!analysis.hasForms) && "opacity-50 grayscale"
+                                )}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <RadioGroupItem value="forms_only" id="forms_only" disabled={!analysis.hasForms} />
+                                    <span className="text-sm font-bold uppercase">Flatten Forms Only</span>
+                                  </div>
+                                  <Zap className="h-4 w-4 text-amber-500" />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground ml-6 leading-relaxed">
+                                  Natively converts forms to pure vectors. Extremely fast and 100% preserves text selection and crisp quality. Ignores annotations.
+                                </p>
+                              </Label>
+
+                              <Label 
+                                htmlFor="full"
+                                className={cn(
+                                  "flex flex-col gap-2 p-4 border rounded-xl cursor-pointer transition-all hover:bg-secondary/10",
+                                  mode === "full" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border"
+                                )}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <RadioGroupItem value="full" id="full" />
+                                    <span className="text-sm font-bold uppercase">Full Flatten (Rasterize)</span>
+                                  </div>
+                                  <ShieldCheck className="h-4 w-4 text-green-600" />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground ml-6 leading-relaxed">
+                                  Maximum security. Burns all forms, annotations, signatures, and layers into a completely un-editable static image layer.
+                                </p>
+                              </Label>
+                           </RadioGroup>
+                         </div>
+
+                       </div>
+                     )}
+                     
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-3xl font-black uppercase tracking-tighter">Ready to Flatten</h3>
-                    <p className="text-muted-foreground font-medium">All form fields, annotations, and interactive elements will be permanently burned into the document as static content.</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <Button size="lg" onClick={flatten} className="h-14 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-[0.1em] px-12 shadow-2xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-3 hover:scale-105 active:scale-95">
-                      Flatten Document <ArrowRight className="h-5 w-5" />
+                </ScrollArea>
+                
+                {/* Fixed Footer */}
+                {errorStatus !== "error" && analysis && (
+                  <div className="p-4 border-t border-border bg-card shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                    <Button 
+                      size="lg" 
+                      onClick={handleFlatten} 
+                      disabled={processing} 
+                      className={cn(
+                        "w-full h-14 rounded-xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl transition-all gap-2",
+                        analysis.isFlattened ? "bg-green-600 hover:bg-green-700 shadow-green-600/20" : ""
+                      )}
+                    >
+                      {analysis.isFlattened ? (
+                         <><Download className="h-4 w-4" /> Download Original</>
+                      ) : (
+                         <><Layers className="h-4 w-4" /> Flatten PDF</>
+                      )}
                     </Button>
                   </div>
-                  <div className="flex items-center justify-center gap-6 pt-4">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Form Fields
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Annotations
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Comments
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
+            </>
           )}
-
-          <div className="h-10 border-t border-border bg-card flex items-center justify-between px-8 shrink-0">
-            <div className="flex items-center gap-4">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Secure Buffer</span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">MagicDocx Flatten v2.0.0</span>
-            </div>
-          </div>
         </div>
       )}
 
+      {/* ── BEFORE UPLOAD: SEO AND DRAG-DROP AREA ─────────────────────── */}
       <div className="mt-5">
-        {files.length === 0 && results.length === 0 && (
-          <div className="mt-5">
-            <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to flatten" />
+        {files.length === 0 && !processing && results.length === 0 && !analyzing && (
+          <div className="mt-10 text-center">
+            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF to flatten" multiple={false} />
           </div>
         )}
       </div>
-      {!files.length && (
+
+      {!files.length && !processing && results.length === 0 && !analyzing && (
         <ToolSeoSection
           toolName="Flatten PDF Online"
           category="edit"
           intro="MagicDocx Flatten PDF permanently merges all interactive form fields, annotations, and digital signatures into the PDF's static page content. Once flattened, form fields can no longer be edited, and the document appears the same in every PDF viewer. This is essential before archiving, sharing, or printing documents with filled-in forms that must not be modified. All processing is 100% client-side."
           steps={[
-            "Upload your PDF form using the file upload area.",
-            "Review the detected element counts (form fields, annotations, etc.).",
-            "Click 'Flatten PDF' to merge all interactive elements into static content.",
-            "Your flattened PDF will download automatically."
+            "Upload your PDF form using the seamless drop zone.",
+            "Our smart engine automatically detects interactive fields and annotations.",
+            "Choose between native fast vector flattening or full maximum-security rasterization.",
+            "Click 'Flatten PDF' to instantly merge and download your static file."
           ]}
           formats={["PDF"]}
           relatedTools={[
             { name: "Edit PDF", path: "/edit-pdf", icon: Layers },
             { name: "Protect PDF", path: "/protect-pdf", icon: Layers },
-            { name: "Compress PDF", path: "/compress-pdf", icon: Layers },
-            { name: "Repair PDF", path: "/repair-pdf", icon: Layers },
+            { name: "Sign PDF", path: "/sign-pdf", icon: Layers },
           ]}
-          schemaName="Flatten PDF Online"
-          schemaDescription="Free online PDF flattener. Permanently merge form fields, annotations, and interactive elements into a static PDF document."
+          schemaName="Flatten PDF Tool"
+          schemaDescription="Instantly flatten complex PDF forms and annotations into locked static documents."
         />
       )}
     </ToolLayout>

@@ -2,51 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import * as pdfjsLib from "pdfjs-dist";
 import {
-  FileText, FileBox, CheckCircle2, RotateCcw,
-  ShieldCheck, Settings, Layout, Sparkles, Upload,
-  Maximize, Layers, Image as ImageIcon, Globe,
-  Type, Languages, Download, FileDown,
-  MousePointer2, Loader2, X, Sparkle, Search, Plus, ArrowRight, ArrowLeft, RefreshCw
+  FileText, CheckCircle2,
+  Type, Languages, ArrowRight, ArrowLeft, Loader2, ScanSearch, FileBox, AlertTriangle
 } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
-import { saveAs } from "file-saver";
 import { convertPdfToWord } from "@/lib/pdfToWordEngine";
+import { validatePdfFile, sanitizeFilename } from "@/lib/fileValidation";
+import { globalMemoryManager } from "@/lib/memoryManager";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + " B";
@@ -56,6 +26,156 @@ const formatSize = (bytes: number): string => {
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-Page Canvas Component — solves race condition completely
+// Each page manages its own lifecycle mount → render → display
+// ─────────────────────────────────────────────────────────────────────────────
+interface PdfPageProps {
+  pdfDoc: pdfjsLib.PDFDocumentProxy;
+  pageNumber: number;
+  containerWidth: number;
+}
+
+const PdfPageCanvas: React.FC<PdfPageProps> = ({ pdfDoc, pageNumber, containerWidth }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
+  const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const renderPage = async () => {
+      // Cancel any ongoing render task
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
+
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      try {
+        // PDF.js pages are 1-indexed — always correct
+        const page = await pdfDoc.getPage(pageNumber);
+
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+        // Scale so the page fits the container width; clamp between 1.0 and 1.5
+        const targetWidth = Math.max(containerWidth - 80, 400);
+        const scale = Math.min(Math.max(targetWidth / unscaledViewport.width, 1.0), 1.5);
+        const viewport = page.getViewport({ scale });
+
+        if (cancelled) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { setStatus("error"); return; }
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        // Clear before render
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const renderTask = page.render({ canvasContext: ctx, viewport });
+        renderTaskRef.current = renderTask;
+
+        await renderTask.promise;
+
+        if (cancelled) return;
+
+        // Validate — check if canvas has non-white pixels (retry once if blank first page)
+        const imageData = ctx.getImageData(0, 0, Math.min(canvas.width, 50), Math.min(canvas.height, 50));
+        const hasContent = imageData.data.some((v, i) => i % 4 !== 3 && v !== 255);
+        
+        if (!hasContent && pageNumber === 1) {
+          // Retry once for first page with higher scale
+          const retryViewport = page.getViewport({ scale: 1.2 });
+          canvas.width = retryViewport.width;
+          canvas.height = retryViewport.height;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const retryTask = page.render({ canvasContext: ctx, viewport: retryViewport });
+          renderTaskRef.current = retryTask;
+          await retryTask.promise;
+        }
+
+        if (!cancelled) setStatus("done");
+      } catch (err: any) {
+        if (err?.name === "RenderingCancelledException") return;
+        console.error(`[PDF Preview] Page ${pageNumber} render failed:`, err);
+        if (!cancelled) setStatus("error");
+      }
+    };
+
+    renderPage();
+
+    return () => {
+      cancelled = true;
+      renderTaskRef.current?.cancel();
+    };
+  }, [pdfDoc, pageNumber, containerWidth]);
+
+  return (
+    <div className="relative group w-full">
+      {/* Skeleton shown while loading */}
+      {status === "loading" && (
+        <div className="w-full bg-white dark:bg-zinc-800 border border-border/10 rounded-sm shadow-lg animate-pulse" style={{ minHeight: "400px" }}>
+          <div className="flex items-center justify-center h-full opacity-30 pt-40">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </div>
+      )}
+
+      {/* Error state */}
+      {status === "error" && (
+        <div className="w-full bg-white dark:bg-zinc-800 border border-red-200 rounded-sm shadow flex items-center justify-center gap-2 text-red-500 text-xs font-bold uppercase tracking-widest" style={{ minHeight: "160px" }}>
+          <AlertTriangle className="h-4 w-4" />
+          Failed to render page {pageNumber}
+        </div>
+      )}
+
+      {/* The actual canvas — hidden while loading to avoid flash of white */}
+      <canvas
+        ref={canvasRef}
+        className={cn("block rounded-sm max-w-full shadow-2xl bg-white", status === "done" ? "opacity-100" : "opacity-0 absolute inset-0 pointer-events-none")}
+      />
+
+      {/* Page badge */}
+      {status === "done" && (
+        <div className="absolute top-2 right-2 bg-black/60 text-white text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          Page {pageNumber}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Friendly error message — no fake "check internet connection"
+// ─────────────────────────────────────────────────────────────────────────────
+function friendlyConversionError(err: any): string {
+  const msg = (err?.message || "").toLowerCase();
+
+  console.error("[PDF to Word] Conversion error details:", {
+    message: err?.message,
+    name: err?.name,
+    stack: err?.stack,
+  });
+
+  if (msg.includes("password") || err?.name === "PasswordException")
+    return "This PDF is password-protected. Please unlock it first using our Unlock PDF tool.";
+  if (msg.includes("invalid pdf") || msg.includes("corrupted") || msg.includes("malformed"))
+    return "The file appears to be corrupted or invalid. Please try a different PDF.";
+  if (msg.includes("memory") || msg.includes("heap") || msg.includes("out of memory"))
+    return "File is too large to process in your browser. Try splitting it into smaller parts first.";
+  if (msg.includes("cancelled") || msg.includes("canceled"))
+    return "Processing was cancelled. Please try again.";
+
+  // IMPORTANT: do NOT surface "check internet connection" for local in-browser errors
+  return "File generation failed. Please try again. If the issue persists, try a simpler PDF.";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────────────────────
 const PdfToWord = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -63,33 +183,38 @@ const PdfToWord = () => {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing structure...");
 
-  // Settings State
-  const [outputFormat, setOutputFormat] = useState("docx");
   const [conversionMode, setConversionMode] = useState<"exact" | "text">("exact");
-  const [ocrEnabled, setOcrEnabled] = useState(false);
-  const [ocrLanguage, setOcrLanguage] = useState("eng");
-  const [imageHandling, setImageHandling] = useState("keep");
-  const [pageRange, setPageRange] = useState("all");
-  const [customRange, setCustomRange] = useState("");
+  const [ocrLanguage] = useState("eng");
 
-  // Modal State
-  const [showOcrModal, setShowOcrModal] = useState(false);
-  const [pendingConversion, setPendingConversion] = useState<{ file: File, isScanned: boolean } | null>(null);
-
-  // Viewer State
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [zoom, setZoom] = useState(100);
-  const [thumbnails, setThumbnails] = useState<string[]>([]);
-  const viewerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [containerWidth, setContainerWidth] = useState(700);
+  const viewerContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isScanned, setIsScanned] = useState<boolean | null>(null);
+
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
     setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
-    return () => setDisableGlobalFeatures(false);
+    return () => {
+      setDisableGlobalFeatures(false);
+      globalMemoryManager.cleanup();
+    };
   }, [files.length, processing, results.length, setDisableGlobalFeatures]);
+
+  // Track container width for proper page scaling
+  useEffect(() => {
+    const el = viewerContainerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(entries => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    obs.observe(el);
+    setContainerWidth(el.clientWidth || 700);
+    return () => obs.disconnect();
+  }, [viewerContainerRef.current]);
 
   useEffect(() => {
     if (files.length > 0) {
@@ -97,205 +222,106 @@ const PdfToWord = () => {
     } else {
       setPdfDoc(null);
       setNumPages(0);
-      setThumbnails([]);
+      setIsScanned(null);
     }
   }, [files]);
 
-  const loadPdf = async (file: File) => {
+  const detectScanned = async (pdf: pdfjsLib.PDFDocumentProxy): Promise<boolean> => {
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-      setPdfDoc(pdf);
-      setNumPages(pdf.numPages);
-
-      // Generate thumbnails
-      const thumbs: string[] = [];
-      const count = Math.min(pdf.numPages, 10); // Limit thumbs for performance
-      for (let i = 1; i <= count; i++) {
-        const page = await pdf.getPage(i);
-        const canvas = document.createElement("canvas");
-        const viewport = page.getViewport({ scale: 0.2 });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        await page.render({ canvasContext: canvas.getContext("2d")!, viewport }).promise;
-        thumbs.push(canvas.toDataURL());
-      }
-      setThumbnails(thumbs);
-    } catch (error) {
-      console.error("PDF loading failed:", error);
-      toast.error("Failed to load PDF preview.");
-    }
-  };
-
-  const detectScanned = async (file: File): Promise<boolean> => {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-      // Check first few pages for text content
       const checkPages = Math.min(pdf.numPages, 3);
-      let hasText = false;
-
       for (let i = 1; i <= checkPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        if (textContent.items.length > 0) {
-          hasText = true;
-          break;
-        }
+        const visibleItems = textContent.items.filter((it: any) => "str" in it && it.str.trim().length > 0);
+        if (visibleItems.length > 3) return false;
       }
-      return !hasText;
-    } catch (e) {
-      console.error("Detection failed:", e);
+      return true;
+    } catch {
       return false;
     }
   };
 
-  const convert = async (forceOcr?: boolean) => {
-    if (files.length === 0) return;
+  const loadPdf = async (file: File) => {
+    setIsAnalyzing(true);
+    setPdfDoc(null);
+    setNumPages(0);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
 
-    for (const file of files) {
-      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-        toast.error(`File ${file.name} is not a PDF.`);
-        return;
-      }
+      console.log(`[PDF Preview] Loaded PDF: ${pdf.numPages} pages`);
+
+      setPdfDoc(pdf);
+      setNumPages(pdf.numPages);
+
+      const scanned = await detectScanned(pdf);
+      setIsScanned(scanned);
+      setConversionMode(scanned ? "text" : "exact");
+    } catch (error: any) {
+      console.error("[PDF Preview] Load failed:", error);
+      toast.error("Failed to load PDF. Please check the file is not corrupted.");
+    } finally {
+      setIsAnalyzing(false);
     }
+  };
 
-    // Check if any file is scanned
-    if (!forceOcr && conversionMode === 'exact') {
-      const isScanned = await detectScanned(files[0]);
-      if (isScanned) {
-        setPendingConversion({ file: files[0], isScanned: true });
-        setShowOcrModal(true);
-        return;
-      }
+  const convert = async () => {
+    if (files.length === 0 || numPages === 0) return;
+
+    const file = files[0];
+    const validation = await validatePdfFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error, { duration: 5000 });
+      return;
     }
 
     setProcessing(true);
     setProgress(0);
-
-    const newResults: ProcessingResult[] = [];
+    setStatusText("Starting Word reconstruction...");
 
     try {
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pagesToConvert = Array.from({ length: numPages }, (_, i) => i + 1);
 
-        let pagesToConvert: number[] = [];
-        if (pageRange === "all") {
-          pagesToConvert = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
-        } else {
-          const parts = customRange.split(',').map(p => p.trim());
-          parts.forEach(p => {
-            if (p.includes('-')) {
-              const [start, end] = p.split('-').map(Number);
-              if (!isNaN(start) && !isNaN(end)) {
-                for (let i = start; i <= end; i++) if (i > 0 && i <= pdf.numPages) pagesToConvert.push(i);
-              }
-            } else {
-              const n = Number(p);
-              if (!isNaN(n) && n > 0 && n <= pdf.numPages) pagesToConvert.push(n);
-            }
-          });
-          pagesToConvert = [...new Set(pagesToConvert)].sort((a, b) => a - b);
-        }
+      console.log(`[PDF to Word] Starting conversion: ${pagesToConvert.length} pages, mode=${conversionMode}`);
 
-        if (pagesToConvert.length === 0) {
-          toast.error("Invalid page range specified.");
-          setProcessing(false);
-          return;
-        }
+      const blob = await convertPdfToWord(
+        file,
+        { mode: conversionMode, pages: pagesToConvert, useOcr: conversionMode === "text", ocrLang: ocrLanguage },
+        (p, s) => { setProgress(p); setStatusText(s); }
+      );
 
-        const blob = await convertPdfToWord(file, {
-          mode: conversionMode,
-          pages: pagesToConvert,
-          useOcr: !!forceOcr || conversionMode === 'text',
-          ocrLang: ocrLanguage
-        }, (p, s) => {
-          setProgress(p);
-          setStatusText(s);
-        });
+      console.log(`[PDF to Word] Blob generated: ${blob.size} bytes, type=${blob.type}`);
 
-        const outName = file.name.replace(/\.[^/.]+$/, "") + "_converted.docx";
-        saveAs(blob, outName);
-        newResults.push({ file: blob, url: URL.createObjectURL(blob), filename: outName });
+      if (!blob || blob.size === 0) {
+        throw new Error("Generated file is empty — possible conversion failure.");
       }
 
-      setResults(newResults);
-      toast.success("Conversion successful!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Conversion failed");
+      const outName = sanitizeFilename(file.name.replace(/\.[^/.]+$/, "") + ".docx");
+      const url = URL.createObjectURL(blob);
+      globalMemoryManager.registerObjectUrl(url);
+
+      setResults([{ file: blob, url, filename: outName }]);
+      toast.success("Word document generated successfully!", { duration: 3000 });
+
+    } catch (error: any) {
+      const userMessage = friendlyConversionError(error);
+      toast.error(userMessage, { duration: 7000 });
     } finally {
       setProcessing(false);
+      setProgress(100);
     }
   };
 
   const resetAll = () => {
+    globalMemoryManager.cleanup();
     setFiles([]);
     setResults([]);
     setProgress(0);
+    setPdfDoc(null);
+    setNumPages(0);
+    setIsScanned(null);
     setStatusText("Analyzing structure...");
-  };
-
-  const FileCard = ({ file, index }: { file: File, index: number }) => {
-    const [thumb, setThumb] = useState<string | null>(null);
-
-    useEffect(() => {
-      const generateThumb = async () => {
-        try {
-          const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
-          const page = await pdf.getPage(1);
-          const viewport = page.getViewport({ scale: 0.5 });
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          await page.render({ canvasContext: context!, viewport }).promise;
-          setThumb(canvas.toDataURL());
-        } catch (e) {
-          console.error(e);
-        }
-      };
-      generateThumb();
-    }, [file]);
-
-    return (
-      <div className="relative group w-full max-w-[220px]">
-        <div className="bg-white rounded-3xl p-5 shadow-xl border-2 border-transparent group-hover:border-red-500 transition-all duration-300 flex flex-col items-center">
-          <div className="absolute top-3 left-3 h-6 w-6 rounded-lg bg-secondary flex items-center justify-center text-[9px] font-black tabular-nums text-muted-foreground z-10 group-hover:bg-red-600 group-hover:text-white transition-all shadow-sm">
-            {index + 1}
-          </div>
-
-          <div className="aspect-[3/4] w-full rounded-2xl bg-secondary/30 overflow-hidden border border-border/50 relative mb-4">
-            {thumb ? (
-              <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <FileText className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-          </div>
-
-          <div className="w-full text-center space-y-1">
-            <p className="text-[11px] font-black text-foreground truncate w-full px-2" title={file.name}>{file.name}</p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-wider">{formatSize(file.size)}</span>
-              <span className="text-[9px] font-black text-red-600/60 uppercase tracking-tighter italic">PDF</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setFiles(prev => prev.filter((_, i) => i !== index))}
-            className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-white shadow-lg border border-border flex items-center justify-center text-muted-foreground hover:text-red-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-20"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -307,235 +333,194 @@ const PdfToWord = () => {
       metaTitle="PDF to Word Converter Online Free – Fast & Secure | MagicDocx"
       metaDescription="Convert PDF to Word (DOCX) online for free. Extract text and preserve layout. Fast, accurate, and secure PDF to Word conversion | no sign-up needed."
       toolId="pdf-to-word"
-      hideHeader={results.length > 0}
-      className="pdf-to-word-page"
+      hideHeader={files.length > 0 || processing || results.length > 0}
+      className="pdf-to-word-page font-sans text-foreground"
     >
       <style>{`
-        .pdf-to-word-page h1, 
-        .pdf-to-word-page h2, 
-        .pdf-to-word-page h3,
-        .pdf-to-word-page span,
-        .pdf-to-word-page button,
-        .pdf-to-word-page p,
-        .pdf-to-word-page div {
-          font-family: 'Inter', sans-serif !important;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      {results.length > 0 ? (
-        <ResultView
-          results={results}
-          hideShare={true}
-          hideIndividualDownload={true}
-          onReset={resetAll}
-        />
-      ) : processing ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-12 bg-secondary/5 min-h-[60vh]">
-          <div className="w-full max-w-lg space-y-8 text-center">
-            <div className="relative flex justify-center">
-              <div className="w-24 h-24 rounded-full border-4 border-red-500/20 border-t-red-600 animate-spin" />
-              <FileText className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-red-600" />
+
+      {(files.length > 0 || processing || results.length > 0) && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
+
+          {processing ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/5 p-8">
+              <div className="w-full max-w-md space-y-8 text-center">
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-red-500/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
+                  <FileText className="h-10 w-10 text-red-600 animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">{statusText}</h3>
+                  <Progress value={progress} className="h-2 rounded-full" />
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Complete</p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-4">
-              <h3 className="text-2xl font-black uppercase tracking-tighter text-foreground">{statusText}</h3>
-              <Progress value={progress} className="h-3 rounded-full bg-secondary" />
-              <p className="text-xs font-bold text-muted-foreground uppercase tabular-nums">{progress}% Complete</p>
+          ) : results.length > 0 ? (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ResultView results={results} onReset={resetAll} hideShare={true} />
             </div>
-          </div>
-        </div>
-      ) : files.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 top-16 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-display">
-          {/* LEFT SIDE: Thumbnails Grid - 70% Width */}
-          <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
-            <div className="p-4 border-b border-border bg-background/50 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetAll}
-                  className="h-8 w-8 p-0 rounded-full hover:bg-secondary/20"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="h-4 w-[1px] bg-border mx-1" />
-                <div className="flex items-center gap-2 text-left">
-                  <FileBox className="h-3.5 w-3.5 text-red-600" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{files.length} Files</span>
+          ) : (
+            <>
+              {/* LEFT: PDF Viewer */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-[#F0F0F0] dark:bg-zinc-950 flex flex-col h-[60vh] lg:h-full overflow-hidden shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex items-center gap-3 shrink-0 shadow-sm backdrop-blur-md">
+                  <Button variant="ghost" size="icon" onClick={resetAll} className="h-8 w-8 rounded-full hover:bg-secondary/20 hover:text-red-500 transition-colors">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex flex-col">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-foreground">{files[0]?.name}</h4>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                      {isAnalyzing ? "Loading preview…" : `${numPages} page${numPages !== 1 ? "s" : ""} — PDF Preview`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto no-scrollbar py-8 px-4 flex flex-col items-center gap-6" ref={viewerContainerRef}>
+                  {isAnalyzing || !pdfDoc ? (
+                    <div className="flex flex-col items-center justify-center h-64 space-y-4 opacity-50">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Loading document…</span>
+                    </div>
+                  ) : (
+                    // Each page is an independent component with its own lifecycle
+                    Array.from({ length: numPages }, (_, i) => (
+                      <PdfPageCanvas
+                        key={i}
+                        pdfDoc={pdfDoc}
+                        pageNumber={i + 1}
+                        containerWidth={containerWidth}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={(e) => {
-                  const newFiles = Array.from(e.target.files || []);
-                  if (newFiles.length > 0) setFiles(prev => [...prev, ...newFiles]);
-                }}
-                accept=".pdf"
-                multiple
-                className="hidden"
-              />
-            </div>
+              {/* RIGHT: Settings */}
+              <div className="flex-1 bg-background flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-border bg-secondary/5 flex items-center gap-2 shrink-0">
+                  <ScanSearch className="h-4 w-4 text-red-600" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-foreground">Document Intel</span>
+                </div>
 
-            <ScrollArea className="flex-1">
-              <div className="p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {files.map((file, idx) => (
-                    <FileCard key={idx} file={file} index={idx} />
-                  ))}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="aspect-[3/4] border-2 border-dashed border-border hover:border-red-500/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-red-600 hover:bg-red-500/5 transition-all"
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+
+                    <div className="space-y-4">
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-2">Analysis Summary</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 bg-secondary/30 rounded-xl border flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">File Size</span>
+                          <span className="text-sm font-black">{files[0] ? formatSize(files[0].size) : "—"}</span>
+                        </div>
+                        <div className="p-4 bg-secondary/30 rounded-xl border flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Pages</span>
+                          <span className="text-sm font-black">{numPages === 0 ? "—" : numPages}</span>
+                        </div>
+                      </div>
+
+                      {isScanned !== null && (
+                        <div className={cn("p-5 rounded-2xl border-2 flex items-start gap-4 relative overflow-hidden", isScanned ? "border-amber-500/50 bg-amber-500/5" : "border-emerald-500/50 bg-emerald-500/5")}>
+                          <div className={cn("absolute inset-0 opacity-10 blur-xl", isScanned ? "bg-amber-500" : "bg-emerald-500")} />
+                          <div className={cn("h-10 w-10 shrink-0 rounded-xl flex items-center justify-center relative z-10", isScanned ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600")}>
+                            {isScanned ? <Languages className="h-5 w-5" /> : <FileBox className="h-5 w-5" />}
+                          </div>
+                          <div className="flex-1 relative z-10">
+                            <h4 className={cn("text-xs font-black uppercase tracking-widest", isScanned ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
+                              {isScanned ? "Scanned PDF Detected" : "Text-Based PDF Detected"}
+                            </h4>
+                            <p className="text-[10px] font-medium leading-relaxed mt-1 text-muted-foreground">
+                              {isScanned
+                                ? "No embedded text found. OCR mode is auto-selected to extract text from images."
+                                : "Vector text layer found. Exact Layout mode preserves formatting precisely."}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-2">Extraction Mode</h3>
+                      <div className="space-y-3">
+                        {[
+                          { value: "exact" as const, label: "Exact Layout", desc: "Best for text-based PDFs. Preserves formatting, headings, and tables.", icon: <Type className="h-4 w-4" />, disabled: isScanned === true },
+                          { value: "text" as const, label: "Text Machine (OCR)", desc: "Applies AI-based OCR. Best for scanned or image-based PDFs.", icon: <Languages className="h-4 w-4" />, disabled: false },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setConversionMode(opt.value)}
+                            disabled={opt.disabled ?? false}
+                            className={cn(
+                              "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left",
+                              conversionMode === opt.value ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30",
+                              opt.disabled && "opacity-40 cursor-not-allowed"
+                            )}
+                          >
+                            <div className={cn("h-11 w-11 shrink-0 rounded-2xl flex items-center justify-center", conversionMode === opt.value ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
+                              {opt.icon}
+                            </div>
+                            <div className="flex-1">
+                              <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === opt.value ? "text-red-600" : "text-foreground")}>{opt.label}</p>
+                              <p className="text-[9px] font-bold text-muted-foreground mt-1 leading-tight normal-case">{opt.desc}</p>
+                            </div>
+                            {conversionMode === opt.value && <CheckCircle2 className="h-5 w-5 text-red-500 shrink-0" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t border-border bg-card shrink-0">
+                  <Button
+                    size="lg"
+                    onClick={convert}
+                    disabled={processing || isAnalyzing || numPages === 0}
+                    className="w-full h-14 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-red-600/20 transition-all gap-2 active:scale-[0.98]"
                   >
-                    <Plus className="h-5 w-5" />
-                    Add More
-                  </button>
+                    Generate Word File <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
               </div>
-            </ScrollArea>
-          </div>
-
-          {/* Right Panel: Settings Sidebar - 30% Width */}
-          <div className="flex-1 lg:w-[30%] bg-secondary/10 flex flex-col overflow-hidden relative">
-            <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
-              <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-bold uppercase tracking-tighter text-foreground font-heading">PDF to Word</h2>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Conversion Modes</Label>
-                  </div>
-
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => setConversionMode('exact')}
-                      className={cn(
-                        "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
-                        conversionMode === 'exact' ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
-                      )}
-                    >
-                      <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === 'exact' ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
-                        <Type className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === 'exact' ? "text-red-600" : "text-foreground")}>Exact Layout Conversion</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 leading-tight">Convert the PDF to Word while preserving the original layout, formatting, images, and structure as closely as possible.</p>
-                      </div>
-                      {conversionMode === 'exact' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                    </button>
-
-                    <button
-                      onClick={() => setConversionMode('text')}
-                      className={cn(
-                        "w-full flex items-center gap-4 p-5 rounded-3xl border-2 transition-all text-left group",
-                        conversionMode === 'text' ? "border-red-500 bg-red-500/5" : "border-border bg-card hover:border-red-500/30"
-                      )}
-                    >
-                      <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", conversionMode === 'text' ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "bg-secondary text-muted-foreground")}>
-                        <Languages className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <p className={cn("text-xs font-black uppercase tracking-widest", conversionMode === 'text' ? "text-red-600" : "text-foreground")}>Text Only (OCR)</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1 leading-tight">Extract only the text from the document and convert it into editable Word text using OCR.</p>
-                      </div>
-                      {conversionMode === 'text' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8 border-t border-border bg-card/80 backdrop-blur-md shrink-0">
-              <Button
-                onClick={() => convert()}
-                disabled={processing}
-                className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Convert to Word
-                <ArrowRight className="h-6 w-6" />
-              </Button>
-            </div>
-          </div>
+            </>
+          )}
         </div>
-      ) : (
-        <FileUpload
-          accept=".pdf"
-          onFilesChange={setFiles}
-          files={files}
-          label="Drop PDF here"
-          maxSize={300}
-        />
       )}
 
-      <AlertDialog open={showOcrModal} onOpenChange={setShowOcrModal}>
-        <AlertDialogContent className="max-w-md rounded-3xl p-8">
-          <AlertDialogHeader>
-            <div className="h-12 w-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600 mb-4 mx-auto">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <AlertDialogTitle className="text-xl font-bold uppercase tracking-tighter text-center">
-              You are trying to convert a scanned PDF
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center pt-4 space-y-4">
-              <p className="text-sm font-bold text-foreground">
-                To extract content from scanned documents, OCR is required.
-                Premium users can convert scanned PDFs to editable Word files using OCR.
-              </p>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider italic">
-                Otherwise, the content of your document will be converted as an image inside a non-editable Word file.
-              </p>
-              <p className="text-sm font-bold uppercase tracking-widest pt-4">
-                Do you want to apply OCR?
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-8">
-            <Button
-              variant="outline"
-              className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-              onClick={() => {
-                setShowOcrModal(false);
-                convert(); // Continue without OCR
-              }}
-            >
-              Continue without OCR
-            </Button>
-            <AlertDialogAction asChild>
-              <Button
-                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20"
-                onClick={() => {
-                  setConversionMode("text");
-                  convert(true); // Apply OCR
-                }}
-              >
-                Apply OCR
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <ToolSeoSection
-        toolName="PDF to Word Converter"
-        category="convert"
-        intro="MagicDocx PDF to Word converter lets you transform any PDF document into a fully editable Microsoft Word file in seconds. Whether you need to extract text for editing, reuse content from a report, or update an old document, our tool handles standard PDFs and scanned PDFs with OCR support. Download your converted DOCX file instantly | no email, no sign-up, no software required."
-        steps={[
-          "Upload your PDF file by dragging and dropping or clicking the upload zone.",
-          "Choose a conversion mode: Exact Layout or OCR (for scanned PDFs).",
-          "Click \"Convert to WORD\" | the conversion runs in your browser.",
-          "Download your editable DOCX file immediately."
-        ]}
-        formats={["PDF", "DOC", "DOCX"]}
-        relatedTools={[
-          { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileText },
-          { name: "PDF to PPT", path: "/pdf-to-ppt", icon: FileText },
-          { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
-        ]}
-        schemaName="PDF to Word Converter Online"
-        schemaDescription="Free online PDF to Word converter. Convert PDF documents to editable DOCX files with layout preservation and OCR support."
-      />
-    </ToolLayout >
+      <div className="mt-5">
+        {files.length === 0 && (
+          <div className="mt-10 text-center">
+            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF File" multiple={false} maxSize={50} />
+          </div>
+        )}
+      </div>
+
+      {!files.length && !results.length && !processing && (
+        <ToolSeoSection
+          toolName="PDF to Word Converter Online"
+          category="convert"
+          intro="MagicDocx PDF to Word converter intelligently extracts and reconstructs your PDF into a fully editable Microsoft Word document. Text-based PDFs get exact layout preservation; scanned PDFs get Tesseract OCR treatment."
+          steps={[
+            "Upload your PDF file to the secure dropzone.",
+            "Document Intel auto-detects whether it's text-based or scanned.",
+            "Choose Exact Layout or OCR mode and click Generate.",
+            "Download your fully editable .docx file instantly."
+          ]}
+          formats={["PDF", "DOCX"]}
+          relatedTools={[
+            { name: "Sign PDF", path: "/sign-pdf", icon: FileText },
+            { name: "Unlock PDF", path: "/unlock-pdf", icon: FileText },
+            { name: "Protect PDF", path: "/protect-pdf", icon: FileText },
+          ]}
+          schemaName="PDF to Word Converter Online"
+          schemaDescription="Free online PDF to Word converter with layout preservation and OCR support."
+        />
+      )}
+    </ToolLayout>
   );
 };
 

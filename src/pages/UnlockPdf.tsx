@@ -1,247 +1,420 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
-import * as pdfjsLib from "pdfjs-dist";
-import { jsPDF } from "jspdf";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-import { Unlock, Loader2, Info, ShieldCheck } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
+import { unlockPdfDocument, analyzePdfProtection, PdfProtectionStatus } from "@/lib/unlockPdfEngine";
+import { Unlock, Loader2, ShieldCheck, FileText, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, AlertTriangle, Download } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { pdfjs, Document, Page } from "react-pdf";
+import { cn } from "@/lib/utils";
+import ResultView, { ProcessingResult } from "@/components/ResultView";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+
+// Setup PDF worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
+
+const formatSize = (bytes: number): string => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+};
 
 const UnlockPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
-  const [password, setPassword] = useState("");
   const { setDisableGlobalFeatures } = useGlobalUpload();
-
-  useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
-    return () => setDisableGlobalFeatures(false);
-  }, [files.length, setDisableGlobalFeatures]);
-
+  
+  // UI State
+  const [analyzing, setAnalyzing] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ProcessingResult[]>([]);
+  
+  // Protection Status
+  const [status, setStatus] = useState<PdfProtectionStatus | null>(null);
+  
+  // Password State
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const unlock = async () => {
-    if (files.length === 0) return;
-    setProcessing(true);
-    setProgress(10);
-    try {
-      const bytes = await files[0].arrayBuffer();
+  // Preview State
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
+
+  useEffect(() => {
+    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0 || analyzing);
+    return () => setDisableGlobalFeatures(false);
+  }, [files.length, processing, results.length, analyzing, setDisableGlobalFeatures]);
+
+  // Analyze file and set up preview
+  useEffect(() => {
+    if (files.length > 0) {
+      const file = files[0];
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setPreviewLoaded(false);
       
-      const pdf = await pdfjsLib.getDocument({ 
-        data: bytes,
-        password: password
-      }).promise;
-      
-      const numPages = pdf.numPages;
-      let pdfDoc: jsPDF | null = null;
-      
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const scale = 2.0; // High quality render scale
-        const viewport = page.getViewport({ scale });
-        
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d")!;
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({ canvasContext: context, viewport }).promise;
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-        const widthPt = viewport.width / scale;
-        const heightPt = viewport.height / scale;
-
-        if (!pdfDoc) {
-          pdfDoc = new jsPDF({
-            orientation: widthPt > heightPt ? "l" : "p",
-            unit: "pt",
-            format: [widthPt, heightPt]
-          });
-        } else {
-          pdfDoc.addPage([widthPt, heightPt], widthPt > heightPt ? "l" : "p");
+      const analyze = async () => {
+        setAnalyzing(true);
+        setStatus(null);
+        try {
+          const bytes = await file.arrayBuffer();
+          const result = await analyzePdfProtection(bytes);
+          setStatus(result.status);
+          if (result.status === "error") {
+            toast.error("Failed to analyze PDF structure.");
+          }
+        } catch (err) {
+          setStatus("error");
+          toast.error("Error reading file.");
+        } finally {
+          setAnalyzing(false);
         }
-        
-        pdfDoc.addImage(imgData, "JPEG", 0, 0, widthPt, heightPt);
-        setProgress(Math.round(10 + (i / numPages) * 80));
-      }
+      };
+      
+      analyze();
+      
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+      setNumPages(null);
+      setStatus(null);
+      setPassword("");
+    }
+  }, [files]);
 
-      if (!pdfDoc) throw new Error("No pages extracted");
+  const isValid = status === "needs_password" ? password.length > 0 : true;
 
-      const filename = files[0].name.replace(/\.pdf$/i, "_unlocked.pdf");
-      pdfDoc.save(filename);
+  const handleUnlock = async () => {
+    if (files.length === 0 || !isValid) return;
+    
+    // If it's already unlocked, just return it as is or "unlocked" copy
+    if (status === "unlocked") {
+       setResults([{
+         file: files[0],
+         url: URL.createObjectURL(files[0]),
+         filename: files[0].name.replace(/\.pdf$/i, "_unlocked.pdf")
+       }]);
+       toast.success("PDF is ready for download!");
+       return;
+    }
+
+    setProcessing(true);
+    setProgress(15);
+    
+    try {
+      const file = files[0];
+      const bytes = await file.arrayBuffer();
+      setProgress(40);
+
+      const unlockedBytes = await unlockPdfDocument(bytes, password);
+      
+      setProgress(85);
+      
+      const blob = new Blob([unlockedBytes as any], { type: "application/pdf" });
+      const filename = file.name.replace(/\.pdf$/i, "_unlocked.pdf");
+      const url = URL.createObjectURL(blob);
       
       setProgress(100);
-      toast.success("PDF unlocked and downloaded!");
+      
+      setResults([{
+        file: blob,
+        url,
+        filename
+      }]);
+      
+      toast.success("PDF unlocked successfully!");
+      setPassword("");
     } catch (err: any) {
-      console.error(err);
-      if (err.name === 'PasswordException') {
-        toast.error("Incorrect password.");
+      console.error("Unlock error:", err);
+      if (err.message === "INCORRECT_PASSWORD") {
+        toast.error("Incorrect password. Please try again.");
       } else {
-        toast.error("Failed to unlock PDF. The file may be corrupted.");
+        toast.error("Failed to unlock PDF. The file may use unsupported encryption.");
       }
     } finally {
+      if (progress !== 100) setProgress(0);
       setProcessing(false);
-      setProgress(0);
     }
   };
 
+  const resetState = () => {
+    setFiles([]);
+    setResults([]);
+    setStatus(null);
+    setPassword("");
+  };
+
   return (
-    <ToolLayout title="Unlock PDF" description="Remove restrictions from protected PDF files" category="protect" icon={<Unlock className="h-7 w-7" />}
-      metaTitle="Unlock PDF Online Free – Remove Password | MagicDocx" metaDescription="Remove the open password from your PDF online for free. Instantly unlock user-password protected PDFs. No sign-up required." toolId="unlock" hideHeader={files.length > 0}>
-      <div className="mt-5">
-        {files.length === 0 && (
-          <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a protected PDF" />
-        )}
-      </div>
-      {files.length > 0 && !processing && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-          <div className="flex-1 flex flex-row overflow-hidden relative">
+    <ToolLayout
+      title="Unlock PDF"
+      description="Remove passwords and permissions from your protected PDF files instantly"
+      category="protect"
+      icon={<Unlock className="h-7 w-7" />}
+      metaTitle="Unlock PDF Online Free – Remove Password | MagicDocx"
+      metaDescription="Remove the open password or permissions from your PDF online for free. Instantly unlock protected PDFs. No sign-up required."
+      toolId="unlock"
+      hideHeader={files.length > 0 || results.length > 0 || processing || analyzing}
+      className="unlock-pdf-page"
+    >
+      <style>{`
+        .unlock-pdf-page h1, 
+        .unlock-pdf-page h2, 
+        .unlock-pdf-page h3,
+        .unlock-pdf-page span,
+        .unlock-pdf-page button,
+        .unlock-pdf-page p,
+        .unlock-pdf-page div {
+          font-family: 'Inter', sans-serif !important;
+        }
+      `}</style>
 
-            {/* LEFT SIDE: Decryption Info */}
-            <div className="w-80 border-r border-border bg-secondary/5 flex flex-col shrink-0">
-              <div className="p-4 border-b border-border bg-background/50 flex items-center gap-2">
-                <Unlock className="h-4 w-4 text-primary" />
-                <span className="text-xs font-black uppercase tracking-widest">Bypass Logic</span>
+      {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
+      {(files.length > 0 || processing || results.length > 0) && (
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
+          
+          {processing || analyzing ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
+              <div className="w-full max-w-md space-y-8 text-center">
+                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  {analyzing ? <ShieldAlert className="h-10 w-10 text-primary animate-pulse" /> : <Unlock className="h-10 w-10 text-primary animate-pulse" />}
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">
+                    {analyzing ? "Analyzing Protection" : "Removing Security Flags"}
+                  </h3>
+                  {!analyzing && (
+                    <>
+                      <Progress value={progress} className="h-2 rounded-full" />
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Unlocked</p>
+                    </>
+                  )}
+                </div>
               </div>
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h3 className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Detection Vector</h3>
-                    <div className="p-3 bg-secondary/20 border border-border rounded-xl space-y-1">
-                      <p className="text-[10px] font-black text-foreground uppercase">Encryption Detected</p>
-                      <p className="text-[9px] text-muted-foreground uppercase leading-tight font-bold tracking-tight">The engine will attempt to neutralize standard security flags.</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Neutralization Strategy</h3>
-                    <div className="space-y-2">
-                      {[
-                        "Standard restriction bypass",
-                        "Serialization cleaning",
-                        "Metadata preservation",
-                        "Acrobat flag reset"
-                      ].map((strategy, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-1 h-1 bg-primary rounded-full" />
-                          <p className="text-[10px] font-bold text-foreground uppercase tracking-tight">{strategy}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-border">
-                    <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Info className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Protocol Info</span>
+            </div>
+          ) : results.length > 0 ? (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <ResultView results={results} onReset={resetState} hideShare={true} />
+            </div>
+          ) : (
+            <>
+              {/* LEFT SIDE: Preview (70%) */}
+              <div className="w-full lg:w-[70%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
+                <div className="p-4 border-b border-border bg-background/50 flex flex-col">
+                   <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
-                        Light encryption and user-defined restrictions are typically bypassed. Strong AES-256 may require a key.
-                      </p>
-                    </div>
-                  </div>
+                      <div className="flex-1 truncate">
+                        <h4 className="text-sm font-bold uppercase tracking-tight text-foreground truncate">{files[0].name}</h4>
+                        <div className="flex gap-3 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">
+                          <span>{formatSize(files[0].size)}</span>
+                          {numPages && <span>{numPages} Pages</span>}
+                        </div>
+                      </div>
+                   </div>
                 </div>
-              </ScrollArea>
-            </div>
-
-            {/* CENTER: Document Viewer Mockup */}
-            <div className="flex-1 bg-secondary/10 flex flex-col items-center justify-center p-8 overflow-y-auto">
-              <div className="w-full max-w-xl bg-background shadow-2xl rounded-2xl border border-border p-12 text-center relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-0" />
-
-                <div className="relative z-10 space-y-6">
-                  <div className="mx-auto w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center border-4 border-border">
-                    <Unlock className="h-10 w-10 text-muted-foreground" />
+                
+                <ScrollArea className="flex-1 p-6 relative">
+                  <div className="mx-auto w-full max-w-2xl min-h-[400px] flex items-center justify-center">
+                     {status === "needs_password" ? (
+                       <div className="w-[400px] h-[550px] bg-background border border-border shadow-2xl rounded-sm flex flex-col items-center justify-center space-y-4 p-8 text-center text-muted-foreground">
+                         <div className="h-20 w-20 rounded-full bg-secondary/30 flex items-center justify-center mb-4">
+                           <Lock className="h-10 w-10 opacity-50" />
+                         </div>
+                         <h3 className="font-bold uppercase tracking-widest text-sm">Preview Unavailable</h3>
+                         <p className="text-xs max-w-[200px]">This document is encrypted with an open password. Preview cannot be rendered until unlocked.</p>
+                       </div>
+                     ) : previewUrl ? (
+                       <div className="relative inline-block isolate group shadow-2xl rounded-sm overflow-hidden border border-border">
+                          {!previewLoaded && (
+                            <div className="absolute inset-0 bg-secondary/30 animate-pulse flex items-center justify-center z-10 w-[400px] h-[550px]">
+                              <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                            </div>
+                          )}
+                          <Document 
+                             file={previewUrl} 
+                             onLoadSuccess={(pdf) => setNumPages(pdf.numPages)}
+                             className={cn("transition-opacity duration-300", previewLoaded ? "opacity-100" : "opacity-0")}
+                             error={
+                              <div className="w-[400px] h-[550px] bg-background border border-border flex flex-col items-center justify-center space-y-4 p-8 text-center">
+                                <AlertTriangle className="h-10 w-10 text-amber-500 opacity-50" />
+                                <p className="text-xs font-bold uppercase tracking-widest">Error loading preview</p>
+                              </div>
+                             }
+                          >
+                            <Page 
+                              pageNumber={1} 
+                              renderTextLayer={false} 
+                              renderAnnotationLayer={false}
+                              width={400}
+                              onLoadSuccess={() => setPreviewLoaded(true)}
+                              className="bg-white"
+                            />
+                          </Document>
+                       </div>
+                     ) : null}
                   </div>
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-black uppercase tracking-tighter">{files[0].name}</h2>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic tracking-wider">Awaiting Restriction Bypass</p>
-                  </div>
+                </ScrollArea>
+              </div>
+
+              {/* RIGHT SIDE: Settings (30%) */}
+              <div className="flex-1 bg-background flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-border bg-secondary/5 flex items-center gap-2 shrink-0">
+                   <Lock className="h-4 w-4 text-primary" />
+                   <span className="text-[11px] font-black uppercase tracking-widest text-foreground">Security Status</span>
                 </div>
-              </div>
-            </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                     
+                     {status === "unlocked" && (
+                        <div className="space-y-5 animate-in slide-in-from-bottom-2">
+                           <div className="mx-auto w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center border-4 border-green-500/20 mb-6">
+                              <CheckCircle2 className="h-8 w-8 text-green-500" />
+                           </div>
+                           <h3 className="text-sm font-black uppercase tracking-wider text-center border-b border-border pb-4">Already Unlocked</h3>
+                           <p className="text-xs text-muted-foreground font-semibold text-center leading-relaxed">
+                             This PDF is not protected by any passwords or restrictions. You can download it directly.
+                           </p>
+                        </div>
+                     )}
 
-            {/* RIGHT SIDE: Unlock Center */}
-            <div className="w-96 border-l border-border bg-background flex flex-col shrink-0">
-              <div className="p-4 border-b border-border bg-secondary/5 flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Unlock Center</span>
-                <Button variant="ghost" size="sm" onClick={() => setFiles([])} className="h-7 text-[10px] font-black uppercase tracking-widest hover:bg-destructive/5 hover:text-destructive">
-                  Cancel
-                </Button>
-              </div>
+                     {status === "has_restrictions" && (
+                        <div className="space-y-5 animate-in slide-in-from-bottom-2">
+                           <div className="mx-auto w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center border-4 border-blue-500/20 mb-6">
+                              <Unlock className="h-8 w-8 text-blue-500" />
+                           </div>
+                           <h3 className="text-sm font-black uppercase tracking-wider text-center border-b border-border pb-4">Restrictions Detected</h3>
+                           <p className="text-xs text-muted-foreground font-semibold text-center leading-relaxed">
+                             This PDF has restricted permissions (e.g. preventing printing or copying). MagicDocx can unlock this instantly without a password.
+                           </p>
+                        </div>
+                     )}
 
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-8">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                      Owner Password (If Required)
-                    </label>
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Optional"
-                      className="h-12 rounded-xl bg-secondary/5 border-border font-black text-sm tracking-widest"
-                    />
-                    <p className="text-[9px] text-muted-foreground uppercase font-bold text-center">Most restrictions can be bypassed without this</p>
+                     {status === "needs_password" && (
+                        <div className="space-y-5 animate-in slide-in-from-bottom-2">
+                           <div className="mx-auto w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center border-4 border-amber-500/20 mb-6">
+                              <Lock className="h-8 w-8 text-amber-500" />
+                           </div>
+                           <h3 className="text-sm font-black uppercase tracking-wider text-center border-b border-border pb-4 text-amber-600">Password Required</h3>
+                           
+                           <div className="space-y-4 pt-2">
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Enter Open Password</Label>
+                                <div className="relative">
+                                  <Input 
+                                    type={showPassword ? "text" : "password"} 
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    placeholder="Enter file password..." 
+                                    className="h-12 bg-secondary/30 pr-10 focus-visible:ring-primary font-black"
+                                    autoComplete="off"
+                                  />
+                                  <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </button>
+                                </div>
+                              </div>
+                           </div>
+
+                           <div className="p-3 bg-red-500/5 rounded-xl border border-red-500/10 space-y-2 mt-4">
+                              <p className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2">
+                                <ShieldAlert className="h-3.5 w-3.5" />
+                                Secure Process
+                              </p>
+                              <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
+                                MagicDocx cannot bypass an unknown open password. You must provide the correct password to unlock this file. Wait times may apply for AES-256.
+                              </p>
+                           </div>
+                        </div>
+                     )}
+                     
+                     {status === "error" && (
+                        <div className="space-y-5">
+                           <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border-4 border-red-500/20 mb-6">
+                              <AlertTriangle className="h-8 w-8 text-red-500" />
+                           </div>
+                           <h3 className="text-sm font-black uppercase tracking-wider text-center border-b border-border pb-4 text-red-600">Analysis Failed</h3>
+                           <p className="text-xs text-muted-foreground font-semibold text-center leading-relaxed">
+                             This file appears to be corrupted or uses an unsupported format.
+                           </p>
+                        </div>
+                     )}
+
                   </div>
-
-                  <div className="p-4 bg-green-500/5 rounded-2xl border border-green-500/10 space-y-3">
-                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center gap-2">
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      Neutralization Ready
-                    </p>
-                    <p className="text-[9px] text-muted-foreground uppercase font-bold leading-relaxed">
-                      This operation will generate a new PDF instance without security flags. The original integrity is maintained.
-                    </p>
+                </ScrollArea>
+                
+                {/* Fixed Footer */}
+                {status !== "error" && status !== null && (
+                  <div className="p-4 border-t border-border bg-card shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                    <Button 
+                      size="lg" 
+                      onClick={handleUnlock} 
+                      disabled={!isValid || processing} 
+                      className={cn(
+                        "w-full h-14 rounded-xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl transition-all",
+                        status === "unlocked" && "bg-green-600 hover:bg-green-700 shadow-green-600/20"
+                      )}
+                    >
+                      {status === "unlocked" ? (
+                        <><Download className="h-4 w-4 mr-2" /> Download Anyway</>
+                      ) : (
+                        <><Unlock className="h-4 w-4 mr-2" /> Unlock & Download</>
+                      )}
+                    </Button>
                   </div>
-                </div>
-              </ScrollArea>
-
-              <div className="p-6 border-t border-border bg-background">
-                <Button
-                  size="lg"
-                  onClick={unlock}
-                  disabled={processing}
-                  className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-3"
-                >
-                  {processing ? <><Loader2 className="h-4 w-4 animate-spin" /> Unlocking...</> : <>Unlock Protected PDF <ShieldCheck className="h-4 w-4" /></>}
-                </Button>
-                {processing && <Progress value={progress} className="mt-4 h-1 rounded-full" />}
+                )}
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
-      {!files.length && (
+
+      {/* ── BEFORE UPLOAD: SEO AND DRAG-DROP AREA ─────────────────────── */}
+      <div className="mt-5">
+        {files.length === 0 && !processing && results.length === 0 && !analyzing && (
+          <div className="mt-10 text-center">
+            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF to unlock" multiple={false} />
+          </div>
+        )}
+      </div>
+
+      {!files.length && !processing && results.length === 0 && !analyzing && (
         <ToolSeoSection
           toolName="Unlock PDF Online"
           category="edit"
-          intro="MagicDocx Unlock PDF removes the open password (user password) from any password-protected PDF document. Enter the correct password, and MagicDocx will generate an unlocked version of your PDF that can be opened without any password in the future. The entire process happens locally in your browser | no files are sent to any server. Note: MagicDocx cannot bypass or crack an unknown password."
+          intro="MagicDocx Unlock PDF removes passwords and permissions from your protected PDF documents. If your file only has printing or editing restrictions, we'll unlock it instantly without a password! If it requires an open password, precisely enter it to generate a permanently unlocked version. All decryption is performed completely client-side in your browser."
           steps={[
-            "Upload your password-protected PDF using the file upload area.",
-            "Enter the correct password in the password field.",
-            "Click 'Unlock PDF' to remove the password protection.",
-            "Your unlocked PDF will download automatically."
+            "Upload your password-protected PDF utilizing the secure drop zone.",
+            "Our smart engine will instantly detect the protection type.",
+            "If an open password is required, enter it in the password field.",
+            "Click 'Unlock & Download' to generate and save your unrestricted document."
           ]}
-          formats={["PDF (password-protected)"]}
+          formats={["PDF"]}
           relatedTools={[
-            { name: "Protect PDF", path: "/protect-pdf", icon: Unlock },
-            { name: "Redact PDF", path: "/redact-pdf", icon: Unlock },
-            { name: "Edit PDF", path: "/edit-pdf", icon: Unlock },
-            { name: "Compress PDF", path: "/compress-pdf", icon: Unlock },
+            { name: "Protect PDF", path: "/protect-pdf", icon: Lock },
+            { name: "Merge PDF", path: "/merge-pdf", icon: Lock },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Lock },
           ]}
-          schemaName="Unlock PDF Online"
-          schemaDescription="Free online PDF password remover. Enter the correct password to unlock and download an unrestricted version of your PDF."
+          schemaName="Unlock PDF Tool"
+          schemaDescription="Instantly remove PDF passwords and restrictions online via smart client-side decryption."
         />
       )}
     </ToolLayout>

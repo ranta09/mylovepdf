@@ -30,13 +30,40 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
     };
 
     const handleDownloadSingle = (result: ProcessingResult) => {
-        const a = document.createElement("a");
-        a.href = result.url;
-        a.download = result.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast.success(`Downloaded ${result.filename}`);
+        try {
+            // Validate blob before attempting download
+            const fileSize = result.file?.size ?? 0;
+            console.log(`[Download] Initiating download: ${result.filename}, size=${fileSize} bytes, url=${result.url?.substring(0, 60)}`);
+
+            if (fileSize === 0) {
+                toast.error("File could not be downloaded — it appears to be empty. Please try converting again.");
+                return;
+            }
+
+            if (!result.url) {
+                toast.error("Download link is missing. Please try converting again.");
+                return;
+            }
+
+            // Create a fresh Object URL from the blob to guarantee it's still valid
+            const freshUrl = URL.createObjectURL(result.file);
+            const a = document.createElement("a");
+            a.href = freshUrl;
+            a.download = result.filename;
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Revoke after a short delay so the browser can initiate the download
+            setTimeout(() => URL.revokeObjectURL(freshUrl), 2000);
+
+            console.log(`[Download] Triggered: ${result.filename}`);
+            toast.success(`Downloaded ${result.filename}`);
+        } catch (err: any) {
+            console.error("[Download] Failed:", err);
+            toast.error("Download failed. Please try again.");
+        }
     };
 
     const handleDownloadAll = async () => {
