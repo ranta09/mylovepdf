@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import HeroUpload from "@/components/HeroUpload";
 
-import { tools, aiTools } from "@/lib/tools";
+import { tools, aiTools, categoryColors, type ToolCategory } from "@/lib/tools";
 import { motion } from "framer-motion";
 import {
   Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus,
@@ -66,6 +66,7 @@ const Index = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(
     categoryMeta.map(c => c.id) // All expanded by default
   );
+  const [activeCategory, setActiveCategory] = useState<string>(categoryMeta[0].id);
 
   const toggleCategory = (id: string) => {
     setExpandedCategories(prev =>
@@ -166,150 +167,81 @@ const Index = () => {
                 <div className="mb-10">
                   <HeroUpload />
                 </div>
-
-                {/* Trust Badges */}
-                <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-4 md:gap-8 mt-10 opacity-80">
-                  {[
-                    { label: "35+ Free Tools", icon: <Zap className="h-4 w-4" /> },
-                    { label: "100% Secure", icon: <Shield className="h-4 w-4" /> },
-                    { label: "No Sign-up Required", icon: <CheckCircle className="h-4 w-4" /> },
-                    { label: "Browser-based Processing", icon: <Globe className="h-4 w-4" /> },
-                  ].map((badge, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 + i * 0.08 }}
-                      className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <span className="text-primary/70">{badge.icon}</span>
-                      {badge.label}
-                    </motion.div>
-                  ))}
-                </div>
               </motion.div>
             </div>
           </section>
 
 
 
-          <section id="search-tools" className="scroll-mt-24 border-t border-border bg-secondary/40 py-10 transition-all duration-300">
-            <div className="container">
-              <div className="mx-auto max-w-4xl">
-                <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          {/* ─── TOOLS ─── */}
+          <section className="container max-w-[1600px] w-[95%] py-14">
+            <div className="flex flex-col gap-8">
+              {/* Tab Bar & Search */}
+              <div className="flex flex-col md:flex-row w-full items-center justify-between gap-4 rounded-3xl bg-card border border-border p-2 shadow-sm">
+                {/* Tabs */}
+                <div className="flex w-full md:w-auto items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {categoryMeta.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setActiveCategory(cat.id);
+                        setSearch(""); 
+                      }}
+                      className={cn(
+                        "whitespace-nowrap rounded-2xl px-5 py-2.5 text-sm font-semibold transition-all duration-300",
+                        activeCategory === cat.id && !search
+                          ? cn("shadow-md", categoryColors[cat.id as ToolCategory]) 
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      {t[cat.labelKey]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search Component inside the tab bar */}
+                <div className="relative w-full md:w-64 pr-1">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder={search ? t.searchPlaceholder : "Search for any tool (e.g. merge, compress, chat, translate...)"}
+                    placeholder={search ? t.searchPlaceholder : "Search tools..."}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="h-14 pl-12 pr-4 rounded-2xl border-border bg-card shadow-lg text-base focus-visible:ring-primary/20 transition-all"
-                    aria-label="Search PDF tools"
+                    className="h-10 pl-10 pr-8 rounded-xl border-none bg-secondary/40 focus-visible:ring-primary/20"
                   />
                   {search && (
                     <button
                       onClick={() => setSearch("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 flex items-center justify-center"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
+              </div>
 
-                {/* Popular Tags */}
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 px-1">
-                  <span className="text-xs font-medium text-muted-foreground mr-1">Popular:</span>
-                  {[
-                    { label: "Merge PDF", query: "merge" },
-                    { label: "Compress", query: "compress" },
-                    { label: "PDF to Word", query: "word" },
-                    { label: "AI Summarizer", query: "summarizer" },
-                    { label: "Chat with PDF", query: "chat" },
-                    { label: "Scan OCR", query: "ocr" }
-                  ].map((tag) => (
-                    <button
-                      key={tag.query}
-                      onClick={() => setSearch(tag.query)}
-                      className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
-                    >
-                      {tag.label}
-                    </button>
-                  ))}
-                </div>
+              {/* Tool Grid */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {search ? (
+                  filtered.length === 0 ? (
+                    <div className="col-span-full py-16 text-center">
+                      <p className="text-lg text-muted-foreground">{tt("noToolsFound", { query: search })}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">{t.trySearching}</p>
+                    </div>
+                  ) : (
+                    filtered.map((tool, i) => (
+                      <ToolCard key={tool.id} tool={tool} index={i} />
+                    ))
+                  )
+                ) : (
+                  allTools
+                    .filter(categoryMeta.find(c => c.id === activeCategory)?.filter || (() => true))
+                    .map((tool, i) => (
+                      <ToolCard key={tool.id} tool={tool} index={i} />
+                    ))
+                )}
               </div>
             </div>
-          </section>
-
-          {/* ─── TOOLS ─── */}
-          <section className="container max-w-[1600px] w-[95%] py-14">
-            {search ? (
-              filtered.length === 0 ? (
-                <div className="py-16 text-center">
-                  <p className="text-lg text-muted-foreground">{tt("noToolsFound", { query: search })}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">{t.trySearching}</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-                  {filtered.map((tool, i) => <ToolCard key={tool.id} tool={tool} index={i} />)}
-                </div>
-              )
-            ) : (
-              <div className="space-y-14">
-                {categoryMeta.map(cat => {
-                  const catTools = allTools.filter(cat.filter);
-                  if (catTools.length === 0) return null;
-                  const Icon = cat.icon;
-                  return (
-                    <div key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-24 group">
-                      <motion.button
-                        onClick={() => toggleCategory(cat.id)}
-                        initial={{ opacity: 0, y: 14 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="mb-6 flex w-full items-center justify-between group/header cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 group-hover/header:bg-primary group-hover/header:text-white transition-all duration-300">
-                            <Icon className="h-5 w-5 text-primary group-hover/header:text-white" />
-                          </div>
-                          <div className="text-left">
-                            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl flex items-center gap-2">
-                              {t[cat.labelKey]}
-                              {cat.id === "ai" && (
-                                <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">NEW</span>
-                              )}
-                            </h2>
-                            <p className="text-sm text-muted-foreground">{catTools.length} {t.tools}</p>
-                          </div>
-                        </div>
-                        <div className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-all duration-300 group-hover/header:border-primary group-hover/header:text-primary",
-                          expandedCategories.includes(cat.id) ? "rotate-180" : ""
-                        )}>
-                          <ChevronDown className="h-4 w-4" />
-                        </div>
-                      </motion.button>
-
-                      <AnimatePresence>
-                        {expandedCategories.includes(cat.id) && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="overflow-hidden"
-                          >
-                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 pb-4">
-                              {catTools.map((tool, i) => <ToolCard key={tool.id} tool={tool} index={i} />)}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </section>
 
           {/* ─── HOW IT WORKS (Removed per design) ─── */}

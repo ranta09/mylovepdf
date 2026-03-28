@@ -163,10 +163,10 @@ const FileUpload = ({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "relative flex min-h-[300px] w-full cursor-pointer flex-col items-center justify-center rounded-[2rem] p-10 text-center transition-all duration-300",
+          "relative flex min-h-[300px] w-full cursor-pointer flex-col items-center justify-center rounded-xl p-10 text-center transition-all duration-300 border-2 border-dashed",
           dragging
-            ? "bg-primary/10 scale-[1.01] shadow-card-hover"
-            : "bg-transparent hover:bg-primary/5 shadow-sm"
+            ? "bg-primary/10 border-primary scale-[1.01] shadow-card-hover"
+            : "bg-transparent border-primary/40 hover:border-primary hover:bg-primary/5 shadow-sm"
         )}
       >
         {/* Icon */}
@@ -174,32 +174,36 @@ const FileUpload = ({
           {justAdded && files.length > 0 ? (
             <motion.div key="success" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 18 }}
-              className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-green-500/10 text-green-500">
+              className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/10 text-green-500">
               <CheckCircle className="h-10 w-10" />
             </motion.div>
           ) : (
             <motion.div key="upload" initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className={cn(
-                "mb-6 flex h-20 w-20 items-center justify-center rounded-2xl transition-colors duration-300",
-                dragging ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
-              )}>
+              className="mb-4 flex items-center justify-center transition-colors duration-300">
               <motion.div animate={dragging ? { y: [0, -4, 0] } : {}} transition={{ duration: 0.6, repeat: Infinity }}>
-                <Upload className="h-10 w-10 text-primary" />
+                <Upload className="h-12 w-12 text-primary" strokeWidth={2.5} />
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <p className="font-display text-2xl font-bold text-foreground mb-2">
-          {dragging ? "Release to upload" : "Upload your Files"}
-        </p>
-        <p className="text-sm text-muted-foreground mb-4">
-          {files.length > 0 ? (
-            <>Click this tile to <span className="font-semibold text-primary">browse for more files</span>.</>
-          ) : (
-            <><span className="font-semibold text-primary">Paste or drop anywhere</span> on this page, or <span className="font-semibold text-primary">click this tile</span> to browse.</>
+        <p className="font-display text-xl font-medium text-foreground mb-4">
+          {dragging ? "Release to upload" : (
+            <>Drop your files here or <span className="font-bold text-primary">browse.</span></>
           )}
         </p>
+
+        <Button 
+          variant="default" 
+          size="lg" 
+          className="rounded-md font-semibold px-8 mb-4 hover:scale-105 transition-transform"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (inputRef.current) inputRef.current.click();
+          }}
+        >
+          {label}
+        </Button>
 
         {/* Formats Display categorized and collapsible */}
         <FileFormatsDisplay acceptedExtensions={acceptedExtensions} />
