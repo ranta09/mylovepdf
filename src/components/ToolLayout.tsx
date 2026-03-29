@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 
 import { useGlobalUpload } from "./GlobalUploadContext";
 import { tools, aiTools } from "@/lib/tools";
+import { toolSchemas } from "@/lib/toolSchemas";
 
 const allTools = [...tools, ...aiTools];
 
@@ -63,6 +64,12 @@ const ToolLayout = ({
   // Auto-derive canonical from current path if not explicitly provided
   const resolvedCanonical = canonicalUrl ?? location.pathname;
 
+  // Auto-lookup JSON-LD schemas for this route
+  const pageSchemas = toolSchemas[location.pathname];
+  const resolvedJsonLd = pageSchemas
+    ? [pageSchemas.softwareApplication, pageSchemas.howTo]
+    : undefined;
+
   return (
     <>
       <SEOHead
@@ -70,6 +77,7 @@ const ToolLayout = ({
         description={metaDescription || description}
         canonicalUrl={resolvedCanonical}
         ogImage={ogImage}
+        jsonLd={resolvedJsonLd}
       />
 
       <div

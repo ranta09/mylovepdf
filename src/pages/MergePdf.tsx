@@ -35,6 +35,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import ProcessingView from "@/components/ProcessingView";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ const MergePdf = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // UI States
   const [previewZoom, setPreviewZoom] = useState(0.8);
@@ -211,6 +213,8 @@ const MergePdf = () => {
     }
 
     setProcessing(true);
+    setError(null);
+    setProcessing(true);
     setProgress(0);
 
     try {
@@ -268,10 +272,11 @@ const MergePdf = () => {
 
       toast.success("PDFs merged successfully!");
     } catch (err) {
-      console.error("Merge failed", err);
-      toast.error("Failed to merge PDFs. Please try again.");
-    } finally {
-      setProcessing(false);
+      let errorMessage = "An unknown error occurred.";
+      if (err instanceof Error) errorMessage = err.message;
+      else if (typeof err === "string") errorMessage = err;
+      setError(errorMessage || "Failed to merge PDFs. Please try again.");
+      toast.error("Failed to merge PDFs.");
     }
   };
 
@@ -563,34 +568,21 @@ const MergePdf = () => {
             <FileUpload accept=".pdf" multiple={true} files={files.map(f => f.file)} onFilesChange={(newFiles) => handleFilesChange(newFiles)} label="Select PDF files to merge" />
           </div>
         ) : processing ? (
-          <div className="mt-12 mx-auto max-w-xl w-full border border-border bg-background p-10 text-center animate-in fade-in zoom-in-95 duration-500">
-            <div className="mb-6 relative flex justify-center items-center h-24">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full border-4 border-primary/20"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full border-4 border-primary border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }}></div>
-              </div>
-              <Merge className="h-7 w-7 text-primary absolute animate-pulse" />
-            </div>
-
-            <h3 className="text-xl font-bold mb-1">Merging your PDFs...</h3>
-            <p className="text-sm text-muted-foreground mb-8">Building your combined document</p>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground">
-                <span>Merge Progress</span>
-                <span className="text-primary">{progress}%</span>
-              </div>
-              <div className="h-3 w-full bg-secondary rounded-full overflow-hidden p-0.5 border border-border/50 shadow-inner">
-                <motion.div
-                  className="h-full bg-primary rounded-full shadow-glow"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ type: "spring", stiffness: 50 }}
-                />
-              </div>
-            </div>
+          <div className="mt-8 flex justify-center w-full">
+            <ProcessingView 
+                files={files.map(f => f.file)} 
+                processing={true} 
+                progress={progress} 
+                onProcess={() => {}} 
+                buttonText="" 
+                processingText="Merging your PDFs..." 
+                estimateText="Building your combined document" 
+                error={error}
+                onRetry={() => {
+                   setError(null);
+                   setProcessing(false);
+                }}
+            />
           </div>
         ) : results ? (
           <div className="mt-8 mx-auto max-w-2xl w-full text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -8,8 +8,16 @@ import { tools, aiTools, categoryColors, type ToolCategory } from "@/lib/tools";
 import { motion } from "framer-motion";
 import {
   Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus,
-  Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X, Loader2, ChevronDown
+  Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X, Loader2, ChevronDown, Trash2, UserX
 } from "lucide-react";
+
+const trustBadges = [
+  { icon: Lock, title: "SSL Encrypted", desc: "Bank-level security", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { icon: Trash2, title: "Auto-Deleted", desc: "Files gone in 60 min", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { icon: UserX, title: "No Signup", desc: "Start using instantly", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { icon: Zap, title: "Lightning Fast", desc: "Processes in seconds", color: "text-blue-500", bg: "bg-blue-500/10" },
+  { icon: Globe, title: "Trusted Globally", desc: "Used by 50,000+ people", color: "text-indigo-500", bg: "bg-indigo-500/10" },
+];
 import { Helmet } from "react-helmet-async";
 import SEOHead from "@/components/SEOHead";
 import { AnimatePresence } from "framer-motion";
@@ -21,16 +29,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-
-const categoryMeta = [
-  { id: "ai", labelKey: "catAi" as const, icon: Wand2, filter: (t: any) => t.category === "ai" },
-  { id: "convert", labelKey: "catConvert" as const, icon: FileText, filter: (t: any) => t.category === "convert" || t.category === "image" },
-  { id: "edit", labelKey: "catEdit" as const, icon: Edit3, filter: (t: any) => t.category === "edit" },
-  { id: "merge", labelKey: "catMerge" as const, icon: Merge, filter: (t: any) => t.category === "merge" },
-  { id: "split", labelKey: "catSplit" as const, icon: Scissors, filter: (t: any) => t.category === "split" },
-  { id: "compress", labelKey: "catCompress" as const, icon: Minimize2, filter: (t: any) => t.category === "compress" },
-  { id: "protect", labelKey: "catProtect" as const, icon: Lock, filter: (t: any) => t.category === "protect" },
-];
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -64,16 +62,6 @@ const Index = () => {
   const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const { t, tt } = useLanguage();
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(
-    categoryMeta.map(c => c.id) // All expanded by default
-  );
-  const [activeCategory, setActiveCategory] = useState<string>(categoryMeta[0].id);
-
-  const toggleCategory = (id: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-  };
 
   useEffect(() => {
     const lastTool = sessionStorage.getItem("lastVisitedTool");
@@ -141,76 +129,95 @@ const Index = () => {
         <script type="application/ld+json">{JSON.stringify(sitelinksJsonLd)}</script>
       </Helmet>
 
-      <div className="relative flex min-h-screen flex-col bg-background">
-        <Navbar />
-        <main className="flex-1">
+      <div className="relative flex min-h-screen flex-col bg-background selection:bg-primary/30">
+        {/* Subtle Background Gradients - Keeping it premium but clean */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px]" />
+          <div className="absolute top-[20%] -right-[5%] w-[30%] h-[50%] rounded-full bg-indigo-500/5 blur-[100px]" />
+          <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[40%] rounded-full bg-violet-500/5 blur-[120px]" />
+        </div>
+        
+        <div className="relative z-50">
+          <Navbar />
+        </div>
+        <main className="flex-1 relative z-10">
 
           {/* ─── HERO ─── */}
-          <section className="relative overflow-hidden py-16 md:py-24">
-            {/* Subtle gradient blobs */}
-            <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full opacity-30 blur-3xl"
-              style={{ background: "radial-gradient(ellipse at center, hsl(217 91% 72%) 0%, transparent 70%)" }} />
+          <section className="relative pt-20 pb-28 md:pt-32 md:pb-40 -mt-[1px]">
+            {/* The NeuralBackground shows through seamlessly, providing the theme-based color and magical cursor effects */}
 
-            <div className="container max-w-[1600px] w-[95%] relative z-10 text-center">
-              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <div className="container max-w-[1200px] w-[95%] relative z-10 text-center">
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
                 {/* Headline */}
-                <h2 className="font-display mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-foreground md:text-6xl md:leading-tight mb-4">
-                  Drop your file anywhere to start
-                </h2>
-                <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                  We'll detect the file and suggest the right tool <span className="text-primary font-semibold">instantly</span>.
+                <h1 className="font-display mx-auto max-w-5xl text-4xl font-extrabold tracking-tight text-foreground md:text-7xl md:leading-[1.15] mb-6 drop-shadow-sm">
+                  Convert, Compress & Edit PDFs Free — <span className="text-primary tracking-tight">No Signup</span>
+                </h1>
+                
+                {/* Subtitle */}
+                <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto font-medium">
+                  100% free. Files deleted after 1 hour. No account needed.
                 </p>
 
                 {/* Large Upload Zone */}
-                <div className="mb-10">
+                <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                   className="mx-auto max-w-4xl bg-card/80 dark:bg-background/80 backdrop-blur-2xl rounded-3xl p-2 md:p-3 shadow-2xl ring-1 ring-border overflow-hidden"
+                >
                   <HeroUpload />
-                </div>
+                </motion.div>
               </motion.div>
             </div>
           </section>
 
-
+          {/* ─── TRUST BADGES ─── */}
+          <section className="border-b border-border/50 bg-secondary/10 relative z-20">
+            <div className="container max-w-[1400px] w-[95%] mx-auto py-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {trustBadges.map((badge, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.1, duration: 0.5 }}
+                    className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-4 group"
+                  >
+                    <div className={`p-3 shrink-0 rounded-2xl ${badge.bg} ${badge.color} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-sm`}>
+                      <badge.icon className="w-5 h-5" strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm md:text-base text-foreground mb-0.5">{badge.title}</h4>
+                      <p className="text-xs text-muted-foreground">{badge.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
 
           {/* ─── TOOLS ─── */}
-          <section className="container max-w-[1600px] w-[95%] py-14">
-            <div className="flex flex-col gap-8">
-              {/* Tab Bar & Search */}
-              <div className="flex flex-col md:flex-row w-full items-center justify-between gap-4 rounded-3xl bg-card border border-border p-2 shadow-sm">
-                {/* Tabs */}
-                <div className="flex w-full md:w-auto items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {categoryMeta.map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setActiveCategory(cat.id);
-                        setSearch(""); 
-                      }}
-                      className={cn(
-                        "whitespace-nowrap rounded-2xl px-5 py-2.5 text-sm font-semibold transition-all duration-300",
-                        activeCategory === cat.id && !search
-                          ? cn("shadow-md", categoryColors[cat.id as ToolCategory]) 
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                      )}
-                    >
-                      {t[cat.labelKey]}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Search Component inside the tab bar */}
-                <div className="relative w-full md:w-64 pr-1">
-                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <section className="container max-w-[1600px] w-[95%] py-16">
+            <div className="flex flex-col gap-12">
+              {/* Search */}
+              <div className="flex w-full items-center justify-center">
+                <div className="relative w-full max-w-2xl">
+                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder={search ? t.searchPlaceholder : "Search tools..."}
+                    placeholder={search ? t.searchPlaceholder : "Search for a tool..."}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="h-10 pl-10 pr-8 rounded-xl border-none bg-secondary/40 focus-visible:ring-primary/20"
+                    className="h-14 pl-12 pr-12 rounded-2xl border border-border bg-card shadow-sm text-base focus-visible:ring-primary/20"
                   />
                   {search && (
                     <button
                       onClick={() => setSearch("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 flex items-center justify-center"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 flex items-center justify-center bg-secondary rounded-full"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -218,25 +225,41 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Tool Grid */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {/* Tool Grid(s) */}
+              <div className="flex flex-col gap-16">
                 {search ? (
                   filtered.length === 0 ? (
-                    <div className="col-span-full py-16 text-center">
+                    <div className="py-16 text-center">
                       <p className="text-lg text-muted-foreground">{tt("noToolsFound", { query: search })}</p>
                       <p className="mt-2 text-sm text-muted-foreground">{t.trySearching}</p>
                     </div>
                   ) : (
-                    filtered.map((tool, i) => (
-                      <ToolCard key={tool.id} tool={tool} index={i} />
-                    ))
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
+                      {filtered.map((tool, i) => (
+                        <ToolCard key={tool.id} tool={tool} index={i} />
+                      ))}
+                    </div>
                   )
                 ) : (
-                  allTools
-                    .filter(categoryMeta.find(c => c.id === activeCategory)?.filter || (() => true))
-                    .map((tool, i) => (
-                      <ToolCard key={tool.id} tool={tool} index={i} />
-                    ))
+                  [
+                    { id: "convert", label: "Convert", filter: (t: any) => t.category === "convert" || t.category === "image" },
+                    { id: "optimize", label: "Optimize & Edit", filter: (t: any) => t.category === "compress" || t.category === "edit" || t.category === "ai" },
+                    { id: "organize", label: "Organize", filter: (t: any) => t.category === "merge" || t.category === "split" },
+                    { id: "security", label: "Security", filter: (t: any) => t.category === "protect" },
+                  ].map((group, groupIdx) => {
+                    const groupTools = allTools.filter(group.filter);
+                    if (groupTools.length === 0) return null;
+                    return (
+                      <div key={group.id} className="flex flex-col gap-6">
+                        <h2 className="text-2xl font-bold text-foreground border-b border-border/50 pb-3">{group.label}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
+                          {groupTools.map((tool, i) => (
+                            <ToolCard key={tool.id} tool={tool} index={i} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>

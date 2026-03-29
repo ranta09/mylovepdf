@@ -14,6 +14,8 @@ interface SEOHeadProps {
   ogImage?: string;
   /** Page type for OG protocol (default: "website") */
   ogType?: string;
+  /** Optional JSON-LD structured data objects to inject as <script> tags */
+  jsonLd?: object[];
 }
 
 const SEOHead = ({
@@ -22,6 +24,7 @@ const SEOHead = ({
   canonicalUrl,
   ogImage = DEFAULT_OG_IMAGE,
   ogType = "website",
+  jsonLd,
 }: SEOHeadProps) => {
   const canonical = canonicalUrl
     ? canonicalUrl.startsWith("http")
@@ -49,6 +52,11 @@ const SEOHead = ({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+      {jsonLd && jsonLd.map((schema, i) => (
+        <script key={i} type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      ))}
     </Helmet>
   );
 };

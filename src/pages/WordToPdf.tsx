@@ -7,6 +7,7 @@ import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import ProcessingView from "@/components/ProcessingView";
+import BatchProcessingView from "@/components/BatchProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -66,71 +67,11 @@ const WordToPdf = () => {
     setFiles(prev => [...prev, ...validFiles]);
   };
 
-  const convert = useCallback(async () => {
+  const initiateConversion = () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(0);
     setResults([]);
-
-    try {
-      const options: WordConversionOptions = {
-        pageOrientation: orientation,
-        pageSize,
-        mergeFiles
-      };
-
-      const convertedBlobs: Blob[] = [];
-      const individualResults: ProcessingResult[] = [];
-
-      for (let i = 0; i < files.length; i++) {
-        const item = files[i];
-        
-        // Progress update
-        setProgress(Math.round((i / files.length) * 90) + 5);
-
-        try {
-          const pdfBlob = await convertWordToPdf(item.file, options);
-          convertedBlobs.push(pdfBlob);
-          
-          individualResults.push({
-            file: pdfBlob,
-            url: URL.createObjectURL(pdfBlob),
-            filename: item.file.name.replace(/\.[^/.]+$/, "") + ".pdf"
-          });
-        } catch (err) {
-          console.error(`Failed to convert ${item.file.name}:`, err);
-          toast.error(`Conversion failed for ${item.file.name}. Please try another Word document.`);
-        }
-      }
-
-      if (mergeFiles && convertedBlobs.length > 1) {
-        setProgress(95);
-        const mergedBlob = await mergePdfBlobs(convertedBlobs);
-        const mergedResult: ProcessingResult = {
-          file: mergedBlob,
-          url: URL.createObjectURL(mergedBlob),
-          filename: "merged_documents.pdf"
-        };
-        setResults([mergedResult, ...individualResults]);
-      } else {
-        setResults(individualResults);
-        if (individualResults.length === 1) {
-          const a = document.createElement("a");
-          a.href = individualResults[0].url;
-          a.download = individualResults[0].filename;
-          a.click();
-        }
-      }
-
-      toast.success(mergeFiles ? "Documents merged and converted!" : "Conversion complete!");
-    } catch (error) {
-      console.error("Conversion error:", error);
-      toast.error("Conversion failed. Please try another Word document.");
-    } finally {
-      setProcessing(false);
-      setProgress(0);
-    }
-  }, [files, orientation, pageSize, mergeFiles]);
+  };
 
   return (
     <ToolLayout
@@ -161,20 +102,51 @@ const WordToPdf = () => {
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
 
           {processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
-                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                  <Settings className="h-10 w-10 text-primary animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold uppercase tracking-tighter">Rasterizing Document Flow</h3>
-                  <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
-                </div>
-              </div>
-            </div>
+             <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md overflow-y-auto p-6">
+                <BatchProcessingView
+                    files={files.map(f => f.file)}
+                    title="Converting Documents..."
+                    hideZip={mergeFiles}
+                    onReset={() => {
+                        setProcessing(false);
+                        setFiles([]);
+                        setResults([]);
+                    }}
+                    processItem={async (file, onProgress) => {
+                        const options: WordConversionOptions = {
+                            pageOrientation: orientation,
+                            pageSize,
+                            mergeFiles
+                        };
+                        onProgress(50);
+                        const pdfBlob = await convertWordToPdf(file, options);
+                        return { blob: pdfBlob, filename: file.name.replace(/\.[^/.]+$/, ".pdf") };
+                    }}
+                    onComplete={async (resultsData) => {
+                        if (mergeFiles && resultsData.length > 1) {
+                            toast.info("Merging documents...");
+                            try {
+                               const mergedBlob = await mergePdfBlobs(resultsData.map(r => r.blob));
+                               setProcessing(false);
+                               setResults([{
+                                   file: mergedBlob,
+                                   url: URL.createObjectURL(mergedBlob),
+                                   filename: "merged_documents.pdf"
+                               }]);
+                            } catch (e) {
+                               toast.error("Failed to merge documents.");
+                            }
+                        } else if (mergeFiles) {
+                           setProcessing(false);
+                           setResults([{
+                                   file: resultsData[0].blob,
+                                   url: URL.createObjectURL(resultsData[0].blob),
+                                   filename: resultsData[0].filename
+                           }]);
+                        }
+                    }}
+                />
+             </div>
           ) : results.length > 0 ? (
             <div className="flex-1 overflow-hidden flex flex-col">
               <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
@@ -290,7 +262,7 @@ const WordToPdf = () => {
                   <div className="max-w-xl mx-auto lg:mx-0 w-full">
                     <Button 
                       size="lg" 
-                      onClick={convert} 
+                      onClick={initiateConversion} 
                       className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
                     >
                       Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />

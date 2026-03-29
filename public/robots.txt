@@ -1,12 +1,13 @@
+# Allow all crawlers
 User-agent: *
 Allow: /
 
-# Sitemap
-Sitemap: https://mylovepdf.lovable.app/sitemap.xml
-
-# Crawl-delay
-Crawl-delay: 1
-
-# Disallow admin/API paths
+# Disallow internal/API paths
 Disallow: /api/
 Disallow: /_supabase/
+
+# Crawl-delay (seconds)
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://magicdocx.com/sitemap.xml

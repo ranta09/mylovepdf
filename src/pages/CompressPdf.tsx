@@ -8,6 +8,7 @@ import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
 import ProcessingView from "@/components/ProcessingView";
+import BatchProcessingView from "@/components/BatchProcessingView";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -51,10 +52,6 @@ const CompressPdf = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [processing, setProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentFileIndex, setCurrentFileIndex] = useState(0);
-  const [results, setResults] = useState<ProcessedFile[]>([]);
-  const [zipUrl, setZipUrl] = useState<string | null>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
@@ -66,9 +63,8 @@ const CompressPdf = () => {
   useEffect(() => {
     return () => {
       fileDataList.forEach(fd => URL.revokeObjectURL(fd.previewUrl));
-      results.forEach(r => URL.revokeObjectURL(r.compressedUrl));
     };
-  }, [fileDataList, results]);
+  }, [fileDataList]);
 
   const loadFilePreviews = async (newFiles: File[]) => {
     const newData: FileData[] = [];
@@ -98,9 +94,6 @@ const CompressPdf = () => {
 
   const handleFilesChange = (newFiles: File[]) => {
     setFiles(newFiles);
-    setResults([]);
-    setCurrentFileIndex(0);
-    setProgress(0);
     if (newFiles.length > 0) {
       loadFilePreviews(newFiles);
     } else {
@@ -254,96 +247,12 @@ const CompressPdf = () => {
     return { blob, originalSize: file.size, compressedSize: blob.size };
   };
 
-  const startCompression = async () => {
-    if (files.length === 0 || processing) return;
 
-    setProcessing(true);
-    setProgress(0);
-    setResults([]);
-    setZipUrl(null);
-    const newResults: ProcessedFile[] = [];
-    const zip = files.length > 1 ? new JSZip() : null;
-
-    const targets = {
-      recommended: { dpi: 150, quality: 0.75 },
-      high: { dpi: 96, quality: 0.60 },
-      low: { dpi: 200, quality: 0.85 },
-      custom: { dpi: 120, quality: 0.70 },
-    };
-
-    let config = targets[mode === "custom" ? "custom" : mode];
-
-    if (mode === "custom" && customTargetKB) {
-      const targetSize = parseFloat(customTargetKB) * 1024;
-      const totalSize = files.reduce((acc, f) => acc + f.size, 0);
-      const ratio = targetSize / totalSize;
-      if (ratio < 0.1) config = { dpi: 72, quality: 0.40 };
-      else if (ratio < 0.25) config = { dpi: 72, quality: 0.50 };
-      else if (ratio < 0.5) config = { dpi: 96, quality: 0.60 };
-      else if (ratio < 0.8) config = { dpi: 150, quality: 0.75 };
-      else config = { dpi: 200, quality: 0.85 };
-    }
-
-    for (let i = 0; i < files.length; i++) {
-      setCurrentFileIndex(i);
-      const file = files[i];
-
-      try {
-        const result = await compressSinglePdf(
-          file,
-          config.dpi,
-          config.quality,
-          (p) => setProgress(Math.round(((i + p / 100) / files.length) * 100))
-        );
-
-        const url = URL.createObjectURL(result.blob);
-
-        newResults.push({
-          originalFile: file,
-          compressedBlob: result.blob,
-          compressedUrl: url,
-          originalSize: result.originalSize,
-          compressedSize: result.compressedSize,
-        });
-
-        if (zip) {
-          zip.file(file.name.replace(/\.pdf$/i, "_compressed.pdf"), result.blob);
-        } else {
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = file.name.replace(/\.pdf$/i, "_compressed.pdf");
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
-      } catch (err) {
-        console.error("Compression failed for", file.name, err);
-        toast.error(`Failed to compress ${file.name}`);
-      }
-    }
-
-    if (zip && newResults.length > 0) {
-      const content = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(content);
-      setZipUrl(url);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "MagicDOCX_Compressed_PDFs.zip";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    setProgress(100);
-    setResults(newResults);
-    setProcessing(false);
-    if (newResults.length > 0) toast.success("Compression complete!");
-  };
 
   return (
     <ToolLayout title="Compress PDF Online" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />} metaTitle="Compress PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Compress PDF files to reduce size online for free. Choose strong, recommended, or professional compression. Fast, secure, and no installation needed." toolId="compress" hideHeader={files.length > 0}>
       <div className="mt-2 text-left">
-        {files.length === 0 && !processing && results.length === 0 && (
+        {files.length === 0 && !processing && (
           <div className="mt-10 text-center">
             <FileUpload
               accept=".pdf"
@@ -353,8 +262,7 @@ const CompressPdf = () => {
             />
           </div>
         )}
-
-        {files.length > 0 && !processing && results.length === 0 && (
+        {files.length > 0 && !processing && (
           <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden">
             {/* LEFT SIDE: Thumbnails Grid (Small Window Preview) */}
             <div className="w-full lg:w-[60%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
@@ -484,7 +392,7 @@ const CompressPdf = () => {
                   </div>
 
                   <Button
-                    onClick={startCompression}
+                    onClick={() => { if(files.length > 0) setProcessing(true); }}
                     size="lg"
                     className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
                   >
@@ -496,107 +404,40 @@ const CompressPdf = () => {
             </div>
           </div>
         )}
-
         {/* ── Processing View ─────────────────────────────────────────────── */}
         {processing && (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-50 bg-background/95 backdrop-blur-md flex items-center justify-center p-6">
-            <div className="w-full max-w-xl space-y-8 text-center bg-card border border-border p-12 rounded-3xl shadow-2xl">
-              <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
-                <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                <Settings className="h-10 w-10 text-primary animate-pulse" />
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold uppercase tracking-tighter">Compressing Document Architecture</h3>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{files.length > 1 ? `Optimizing File ${currentFileIndex + 1} of ${files.length}` : "Generating Neural Preview..."}</p>
-              </div>
-
-              <div className="space-y-2">
-                <Progress value={progress} className="h-2 rounded-full" />
-                <p className="text-[11px] font-bold text-primary uppercase tracking-widest">{progress}% Complete</p>
-              </div>
-
-              <div className="pt-4 border-t border-border mt-8 space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
-                {files.map((f, i) => (
-                  <div key={i} className="flex justify-between items-center text-[10px] font-medium uppercase tracking-widest">
-                    <span className="flex items-center gap-2 max-w-[70%] truncate">
-                      {i < currentFileIndex ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : i === currentFileIndex ? <Loader2 className="h-3 w-3 text-primary animate-spin" /> : <div className="h-3 w-3 rounded-full border border-border" />}
-                      <span className={cn(i === currentFileIndex ? "text-foreground" : "text-muted-foreground")}>{f.name}</span>
-                    </span>
-                    <span className="text-muted-foreground">{formatSize(f.size)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── RESULTS PHASE ─────────────────────────────────────────────── */}
-        {results.length > 0 && !processing && (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-50 bg-background flex items-center justify-center p-6">
-            <div className="w-full max-w-2xl bg-card border border-primary/20 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
-              <div className="bg-primary/5 border-b border-primary/10 p-12 text-center space-y-6">
-                <div className="mx-auto w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center border-4 border-green-500/30">
-                  <CheckCircle2 className="h-10 w-10 text-green-500" />
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-3xl font-bold uppercase tracking-tighter leading-none">Architectural Optimization Complete</h2>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Documents have been successfully compressed</p>
-                </div>
-
-                <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border grid grid-cols-3 gap-6 divide-x divide-border shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Input size</p>
-                    <p className="text-md font-medium text-muted-foreground/60 line-through tracking-tighter">{formatSize(totalOriginalSize)}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Optimized Weight</p>
-                    <p className="text-2xl font-bold text-primary tracking-tighter">{formatSize(results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Neutral Savings</p>
-                    <div className="flex flex-col items-center">
-                      <p className="text-md font-medium text-foreground tracking-tighter">{formatSize(totalOriginalSize - results.reduce((acc, r) => acc + r.compressedSize, 0))}</p>
-                      <span className="bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-1">
-                        {Math.round((1 - (results.reduce((acc, r) => acc + r.compressedSize, 0) / (totalOriginalSize || 1))) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-8 space-y-3">
-                <Button
-                  size="lg"
-                  className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/30 transition-all hover:scale-[1.01]"
-                  onClick={() => {
-                    if (zipUrl) {
-                      const a = document.createElement('a');
-                      a.href = zipUrl;
-                      a.download = "MagicDOCX_Compressed_PDFs.zip";
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    } else {
-                      results.forEach(r => {
-                        const a = document.createElement('a');
-                        a.href = r.compressedUrl;
-                        a.download = r.originalFile.name.replace(/\.pdf$/i, "_compressed.pdf");
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                      });
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md overflow-y-auto p-6">
+            <BatchProcessingView
+                files={files}
+                title="Compressing Documents..."
+                onReset={() => {
+                   setProcessing(false);
+                   setFiles([]);
+                   setFileDataList([]);
+                }}
+                processItem={async (file, onProgress) => {
+                    const targets = {
+                      recommended: { dpi: 150, quality: 0.75 },
+                      high: { dpi: 96, quality: 0.60 },
+                      low: { dpi: 200, quality: 0.85 },
+                      custom: { dpi: 120, quality: 0.70 },
+                    };
+                    let config = targets[mode === "custom" ? "custom" : mode];
+                    if (mode === "custom" && customTargetKB) {
+                      const targetSize = parseFloat(customTargetKB) * 1024;
+                      const totalSize = files.reduce((acc, f) => acc + f.size, 0);
+                      const ratio = targetSize / totalSize;
+                      if (ratio < 0.1) config = { dpi: 72, quality: 0.40 };
+                      else if (ratio < 0.25) config = { dpi: 72, quality: 0.50 };
+                      else if (ratio < 0.5) config = { dpi: 96, quality: 0.60 };
+                      else if (ratio < 0.8) config = { dpi: 150, quality: 0.75 };
+                      else config = { dpi: 200, quality: 0.85 };
                     }
-                  }}
-                >
-                  <Download className="h-5 w-5 mr-3" /> Download {results.length > 1 ? 'ZIP Archive' : 'Optimized PDF'}
-                </Button>
-                <Button variant="ghost" className="w-full h-12 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground" onClick={() => { setResults([]); setFiles([]); }}>
-                  <RefreshCw className="h-4 w-4 mr-2" /> Start New Compression
-                </Button>
-              </div>
-            </div>
+                    
+                    const result = await compressSinglePdf(file, config.dpi, config.quality, onProgress);
+                    return { blob: result.blob, filename: file.name.replace(/\.pdf$/i, "_compressed.pdf") };
+                }}
+            />
           </div>
         )}
       </div>

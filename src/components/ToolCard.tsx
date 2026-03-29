@@ -3,6 +3,7 @@ import { type PdfTool, categoryColors } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
 
 const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
   const Icon = tool.icon;
@@ -12,31 +13,41 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.035, duration: 0.45, ease: "easeOut" }}
-      whileHover={tool.available ? { y: -4, scale: 1.02 } : undefined}
+      whileHover={tool.available ? { y: -8, boxShadow: "var(--shadow-card-hover)" } : undefined}
       className={cn(
-        "group relative flex aspect-square flex-col items-center justify-center gap-4 rounded-3xl bg-card p-4 transition-all duration-300 border border-transparent hover:border-border shadow-sm hover:shadow-md text-center",
+        "group relative flex flex-col justify-between h-full rounded-2xl bg-card p-5 xl:p-6 transition-all duration-300 border border-border shadow-sm text-left overflow-hidden isolate",
         !tool.available && "opacity-55 cursor-default"
       )}
     >
-      {/* Icon */}
-      <motion.div
-        className={cn(
-          "flex h-16 w-16 items-center justify-center rounded-2xl transition-all shadow-sm",
-          tool.bgClass || categoryColors[tool.category]
-        )}
-        whileHover={tool.available ? {
-          scale: 1.1,
-          rotate: [0, -8, 8, -4, 0],
-        } : undefined}
-        transition={{ duration: 0.4 }}
-      >
-        <Icon className="h-8 w-8" strokeWidth={2} />
-      </motion.div>
+      <div className="flex flex-col gap-3 z-10">
+        {/* Icon */}
+        <div
+          className={cn(
+            "flex h-12 w-12 items-center justify-center rounded-xl shrink-0 shadow-sm",
+            tool.bgClass || categoryColors[tool.category]
+          )}
+        >
+          <Icon className="h-6 w-6" strokeWidth={2} />
+        </div>
 
-      {/* Text */}
-      <div className="w-full px-2">
-        <h3 className="font-display text-sm font-bold text-foreground leading-tight line-clamp-2">{tool.name}</h3>
+        {/* Text */}
+        <div>
+          <h3 className="font-display text-lg font-bold text-foreground mb-1.5">{tool.name}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{tool.description}</p>
+        </div>
       </div>
+
+      {/* CTA Button */}
+      {tool.available && (
+        <div className="mt-5 flex items-center text-sm font-bold text-primary opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 z-10">
+          Use Tool <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </div>
+      )}
+
+      {/* Subtle Background Glow on Hover */}
+      {tool.available && (
+         <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-10 pointer-events-none" style={{ background: "var(--primary)" }} />
+      )}
 
       {/* Badges */}
       {!tool.available && (
@@ -52,8 +63,8 @@ const ToolCard = ({ tool, index }: { tool: PdfTool; index: number }) => {
     </motion.div>
   );
 
-  if (!tool.available) return <div data-tool-path={tool.path}>{content}</div>;
-  return <Link to={tool.path} data-tool-path={tool.path}>{content}</Link>;
+  if (!tool.available) return <div data-tool-path={tool.path} className="h-full">{content}</div>;
+  return <Link to={tool.path} data-tool-path={tool.path} className="h-full block">{content}</Link>;
 };
 
 export default ToolCard;

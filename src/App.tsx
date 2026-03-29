@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "./lib/i18n/LanguageContext";
+import { ThemeProvider } from "./components/ThemeProvider";
 import Index from "./pages/Index";
 import MergePdf from "./pages/MergePdf";
 import SplitPdf from "./pages/SplitPdf";
@@ -72,8 +73,9 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
-    <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="system" storageKey="magicdocx-ui-theme">
+      <LanguageProvider>
+        <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <GlobalUploadProvider>
             <Toaster />
@@ -145,6 +147,7 @@ const App = () => (
         </TooltipProvider>
       </QueryClientProvider>
     </LanguageProvider>
+    </ThemeProvider>
   </HelmetProvider>
 );
 

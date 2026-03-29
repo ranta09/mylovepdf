@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import BatchProcessingView from "@/components/BatchProcessingView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -51,7 +52,6 @@ const WatermarkPdf = () => {
 
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<{ url: string; size: number; pages: number } | null>(null);
 
   // Watermark Settings State
   const [mode, setMode] = useState<WatermarkMode>("text");
@@ -175,98 +175,6 @@ const WatermarkPdf = () => {
   const applyWatermark = async () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(0);
-    try {
-      const bytes = await files[0].arrayBuffer();
-      const doc = await PDFDocument.load(bytes);
-      const pages = doc.getPages();
-      const targetPages = parsePageRange(pages.length);
-
-      let image;
-      if (mode === "image" && imageFile) {
-        const imgBytes = await imageFile.arrayBuffer();
-        image = imageFile.type === "image/png" ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
-      }
-
-      for (let i = 0; i < targetPages.length; i++) {
-        const pageIdx = targetPages[i];
-        const page = pages[pageIdx];
-        const { width, height } = page.getSize();
-
-        setProgress(Math.round((i / targetPages.length) * 100));
-
-        const r = parseInt(textColor.slice(1, 3), 16) / 255;
-        const g = parseInt(textColor.slice(3, 5), 16) / 255;
-        const b = parseInt(textColor.slice(5, 7), 16) / 255;
-
-        const draw = (x: number, y: number) => {
-          if (mode === "text") {
-            // Simplified drawText for this walkthrough, using StandardFonts
-            page.drawText(text, {
-              x, y, size: fontSize,
-              color: rgb(r, g, b), opacity,
-              rotate: degrees(-rotation),
-            });
-          }
-        };
-
-        if (isTiled) {
-          // Simplistic tiling for final PDF
-          for (let x = 0; x < width; x += 200) {
-            for (let y = 0; y < height; y += 100) {
-              draw(x, y);
-            }
-          }
-        } else {
-          const marginW = width * 0.1;
-          const marginH = height * 0.1;
-          let x = width / 2;
-          let y = height / 2;
-
-          switch (position) {
-            case "top-left": x = marginW; y = height - marginH; break;
-            case "top-center": x = width / 2; y = height - marginH; break;
-            case "top-right": x = width - marginW; y = height - marginH; break;
-            case "center": x = width / 2; y = height / 2; break;
-            case "bottom-left": x = marginW; y = marginH; break;
-            case "bottom-center": x = width / 2; y = marginH; break;
-            case "bottom-right": x = width - marginW; y = marginH; break;
-          }
-
-          if (mode === "text") {
-            draw(x, y);
-          } else if (image) {
-            const imgWidth = image.width * imageScale;
-            const imgHeight = image.height * imageScale;
-            page.drawImage(image, {
-              x: x - imgWidth / 2,
-              y: y - imgHeight / 2,
-              width: imgWidth,
-              height: imgHeight,
-              opacity,
-              rotate: degrees(-rotation),
-            });
-          }
-        }
-      }
-
-      const pdfBytes = await doc.save();
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      setResults({ url, size: blob.size, pages: pages.length });
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `watermarked_${files[0].name}`;
-      a.click();
-      toast.success("Watermark successfully added!");
-    } catch (err) {
-      console.error("Processing failed:", err);
-      toast.error("Failed to add watermark");
-    } finally {
-      setProcessing(false);
-      setProgress(0);
-    }
   };
 
   return (
@@ -276,10 +184,10 @@ const WatermarkPdf = () => {
       toolId="watermark" hideHeader={files.length > 0}>
 
       <div className="mt-5">
-        {!files.length && <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to watermark" />}
+        {!files.length && <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select PDFs to watermark" multiple={true} />}
       </div>
 
-      {files.length > 0 && !results && (
+      {files.length > 0 && !processing && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-30 bg-background flex flex-col lg:flex-row overflow-hidden select-none">
 
           {/* LEFT PANEL: Thumbnails */}
@@ -527,58 +435,98 @@ const WatermarkPdf = () => {
         </div>
       )}
 
-      {results && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex items-center justify-center p-6 animate-in fade-in duration-500">
-          <div className="w-full max-w-2xl bg-card border border-primary/20 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="bg-primary/5 border-b border-primary/10 p-12 text-center space-y-6">
-              <div className="mx-auto w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center border-4 border-green-500/30">
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Watermark Successfully Added</h2>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Document optimized and stamped</p>
-              </div>
+      {processing && (
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md overflow-y-auto p-6">
+            <BatchProcessingView
+                files={files}
+                title="Stamping Documents..."
+                onReset={() => {
+                   setProcessing(false);
+                   setFiles([]);
+                   setPreviews([]);
+                }}
+                processItem={async (file, onProgress) => {
+                    const bytes = await file.arrayBuffer();
+                    const doc = await PDFDocument.load(bytes);
+                    const pages = doc.getPages();
+                    const targetPages = parsePageRange(pages.length);
 
-              <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border grid grid-cols-3 gap-6 divide-x divide-border shadow-sm">
-                <div className="space-y-1"><p className="text-[9px] font-black text-muted-foreground uppercase">Total Pages</p><p className="text-2xl font-black text-foreground">{results.pages}</p></div>
-                <div className="space-y-1"><p className="text-[9px] font-black text-primary uppercase">Type</p><p className="text-2xl font-black text-primary uppercase">{mode}</p></div>
-                <div className="space-y-1"><p className="text-[9px] font-black text-muted-foreground uppercase">Size</p><p className="text-2xl font-black text-foreground">{(results.size / (1024 * 1024)).toFixed(2)}MB</p></div>
-              </div>
-            </div>
+                    let image;
+                    if (mode === "image" && imageFile) {
+                        const imgBytes = await imageFile.arrayBuffer();
+                        image = imageFile.type === "image/png" ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
+                    }
 
-            <div className="p-8 space-y-3">
-              <Button size="lg" className="w-full h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30" onClick={() => { const a = document.createElement('a'); a.href = results.url; a.download = "magicdocx_watermarked.pdf"; a.click(); }}>
-                <Download className="h-5 w-5 mr-3" /> Download PDF Now
-              </Button>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="ghost" className="h-12 text-[10px] font-black uppercase" onClick={() => setResults(null)}>
-                  <Droplets className="h-4 w-4 mr-2" /> Add Another
-                </Button>
-                <Button variant="ghost" className="h-12 text-[10px] font-black uppercase" onClick={() => { setResults(null); setFiles([]); setPreviews([]); }}>
-                  <RefreshCw className="h-4 w-4 mr-2" /> Start Fresh
-                </Button>
-              </div>
-            </div>
+                    for (let i = 0; i < targetPages.length; i++) {
+                        const pageIdx = targetPages[i];
+                        const page = pages[pageIdx];
+                        const { width, height } = page.getSize();
+
+                        onProgress(Math.round((i / targetPages.length) * 100));
+
+                        const r = parseInt(textColor.slice(1, 3), 16) / 255;
+                        const g = parseInt(textColor.slice(3, 5), 16) / 255;
+                        const b = parseInt(textColor.slice(5, 7), 16) / 255;
+
+                        const draw = (x: number, y: number) => {
+                            if (mode === "text") {
+                                page.drawText(text || "WATERMARK", {
+                                    x, y, size: fontSize,
+                                    color: rgb(r, g, b), opacity,
+                                    rotate: degrees(-rotation),
+                                });
+                            }
+                        };
+
+                        if (isTiled) {
+                            for (let x = 0; x < width; x += 200) {
+                                for (let y = 0; y < height; y += 100) {
+                                    draw(x, y);
+                                }
+                            }
+                        } else {
+                            const marginW = width * 0.1;
+                            const marginH = height * 0.1;
+                            let x = width / 2;
+                            let y = height / 2;
+
+                            switch (position) {
+                                case "top-left": x = marginW; y = height - marginH; break;
+                                case "top-center": x = width / 2; y = height - marginH; break;
+                                case "top-right": x = width - marginW; y = height - marginH; break;
+                                case "center": x = width / 2; y = height / 2; break;
+                                case "bottom-left": x = marginW; y = marginH; break;
+                                case "bottom-center": x = width / 2; y = marginH; break;
+                                case "bottom-right": x = width - marginW; y = marginH; break;
+                            }
+
+                            if (mode === "text") {
+                                draw(x, y);
+                            } else if (image) {
+                                const imgWidth = image.width * imageScale;
+                                const imgHeight = image.height * imageScale;
+                                page.drawImage(image, {
+                                    x: x - imgWidth / 2,
+                                    y: y - imgHeight / 2,
+                                    width: imgWidth,
+                                    height: imgHeight,
+                                    opacity,
+                                    rotate: degrees(-rotation),
+                                });
+                            }
+                        }
+                    }
+
+                    const pdfBytes = await doc.save();
+                    const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+                    
+                    return { blob: blob, filename: file.name.replace(/\.pdf$/i, "_watermarked.pdf") };
+                }}
+            />
           </div>
-        </div>
       )}
 
-      {processing && !previews.length && (
-        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-xl flex items-center justify-center">
-          <div className="w-full max-w-sm p-8 text-center space-y-6">
-            <div className="relative mx-auto w-24 h-24">
-              <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-              <Droplets className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-black uppercase tracking-tighter">Preparing PDF Editor</h3>
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] animate-pulse">Initializing engine...</p>
-            </div>
-            <Progress value={progress} className="h-1.5" />
-          </div>
-        </div>
-      )}
+
       {!files.length && (
         <ToolSeoSection
           toolName="Add Watermark to PDF"

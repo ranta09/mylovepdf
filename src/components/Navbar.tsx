@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, LayoutGrid, ChevronDown } from "lucide-react";
+import { Menu, X, LayoutGrid, ChevronDown, Sun, Moon } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -7,6 +7,7 @@ import { tools, aiTools, categoryTextColors, categoryColors } from "@/lib/tools"
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { useTheme } from "@/components/ThemeProvider";
 
 const allTools = [...aiTools, ...tools];
 const byId = (id: string) => allTools.find(t => t.id === id)!;
@@ -58,6 +59,7 @@ const megaColumns: MenuColumn[] = [
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [megaOpen, setMegaOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -148,12 +150,24 @@ const Navbar = () => {
           >
             Contact Us
           </Link>
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex items-center justify-center rounded-xl p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </button>
         </div>
 
-        {/* Mobile toggle */}
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        {/* Mobile toggles */}
+        <div className="flex md:hidden items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
 
       {/* Desktop Mega Menu */}

@@ -342,7 +342,7 @@ const HtmlToPdf = () => {
     >
       {/* Processing State */}
       {processing && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-50 bg-background flex items-center justify-center">
+        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex items-center justify-center">
           <div className="w-full max-w-md space-y-6 text-center p-8">
             <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border-4 border-primary/20" />

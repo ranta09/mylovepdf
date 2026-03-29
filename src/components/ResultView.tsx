@@ -149,10 +149,18 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
             <div className="w-full max-w-2xl bg-card border border-border shadow-elevated rounded-2xl overflow-hidden">
 
                 {/* Header */}
-                <div className="bg-primary/5 p-6 border-b border-border/50 text-center">
-                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15 text-green-500 ring-8 ring-green-500/5">
-                        <Check className="h-7 w-7" />
-                    </div>
+                <div className="bg-primary/5 p-8 border-b border-border/50 text-center relative overflow-hidden">
+                    {/* Subtle background glow effect over the success header */}
+                    <div className="absolute inset-0 bg-green-500/10 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] blur-xl pointer-events-none" />
+                    
+                    <motion.div 
+                        initial={{ scale: 0, rotate: -45 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+                        className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/15 text-green-500 ring-8 ring-green-500/10 shadow-[0_0_30px_rgba(34,197,94,0.3)] relative z-10"
+                    >
+                        <Check className="h-10 w-10" strokeWidth={3.5} />
+                    </motion.div>
                     <h2 className="text-xl font-bold text-foreground">Processing Complete!</h2>
                     <p className="text-sm text-muted-foreground mt-1">
                         Successfully processed {results.length} file{results.length !== 1 ? "s" : ""}
@@ -197,11 +205,11 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
                     <div className="flex gap-2 w-full md:w-auto">
                         <Button
                             size="lg"
-                            className="w-full md:w-auto rounded-xl flex-1 shadow-md shadow-primary/20"
+                            className="w-full md:w-auto rounded-xl flex-1 shadow-xl shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-lg font-bold hover:scale-[1.02] transition-transform"
                             onClick={handleDownloadAll}
                             disabled={zipping}
                         >
-                            {zipping ? "Zipping..." : results.length > 1 ? "Download All" : "Download File"}
+                            {zipping ? "Zipping..." : results.length > 1 ? "Download All Files" : "Download File"}
                         </Button>
 
                         {!hideShare && (

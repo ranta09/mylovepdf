@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import ResultView, { ProcessingResult } from "@/components/ResultView";
+import BatchProcessingView from "@/components/BatchProcessingView";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -179,8 +179,6 @@ function friendlyConversionError(err: any): string {
 const PdfToWord = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [results, setResults] = useState<ProcessingResult[]>([]);
-  const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Analyzing structure...");
 
   const [conversionMode, setConversionMode] = useState<"exact" | "text">("exact");
@@ -197,12 +195,12 @@ const PdfToWord = () => {
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing);
     return () => {
       setDisableGlobalFeatures(false);
       globalMemoryManager.cleanup();
     };
-  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, setDisableGlobalFeatures]);
 
   // Track container width for proper page scaling
   useEffect(() => {
@@ -266,58 +264,14 @@ const PdfToWord = () => {
     }
   };
 
-  const convert = async () => {
+  const initiateConversion = () => {
     if (files.length === 0 || numPages === 0) return;
-
-    const file = files[0];
-    const validation = await validatePdfFile(file);
-    if (!validation.valid) {
-      toast.error(validation.error, { duration: 5000 });
-      return;
-    }
-
     setProcessing(true);
-    setProgress(0);
-    setStatusText("Starting Word reconstruction...");
-
-    try {
-      const pagesToConvert = Array.from({ length: numPages }, (_, i) => i + 1);
-
-      console.log(`[PDF to Word] Starting conversion: ${pagesToConvert.length} pages, mode=${conversionMode}`);
-
-      const blob = await convertPdfToWord(
-        file,
-        { mode: conversionMode, pages: pagesToConvert, useOcr: conversionMode === "text", ocrLang: ocrLanguage },
-        (p, s) => { setProgress(p); setStatusText(s); }
-      );
-
-      console.log(`[PDF to Word] Blob generated: ${blob.size} bytes, type=${blob.type}`);
-
-      if (!blob || blob.size === 0) {
-        throw new Error("Generated file is empty — possible conversion failure.");
-      }
-
-      const outName = sanitizeFilename(file.name.replace(/\.[^/.]+$/, "") + ".docx");
-      const url = URL.createObjectURL(blob);
-      globalMemoryManager.registerObjectUrl(url);
-
-      setResults([{ file: blob, url, filename: outName }]);
-      toast.success("Word document generated successfully!", { duration: 3000 });
-
-    } catch (error: any) {
-      const userMessage = friendlyConversionError(error);
-      toast.error(userMessage, { duration: 7000 });
-    } finally {
-      setProcessing(false);
-      setProgress(100);
-    }
   };
 
   const resetAll = () => {
     globalMemoryManager.cleanup();
     setFiles([]);
-    setResults([]);
-    setProgress(0);
     setPdfDoc(null);
     setNumPages(0);
     setIsScanned(null);
@@ -333,7 +287,7 @@ const PdfToWord = () => {
       metaTitle="PDF to Word Converter Online Free – Fast & Secure | MagicDocx"
       metaDescription="Convert PDF to Word (DOCX) online for free. Extract text and preserve layout. Fast, accurate, and secure PDF to Word conversion | no sign-up needed."
       toolId="pdf-to-word"
-      hideHeader={files.length > 0 || processing || results.length > 0}
+      hideHeader={files.length > 0 || processing}
       className="pdf-to-word-page font-sans text-foreground"
     >
       <style>{`
@@ -341,28 +295,38 @@ const PdfToWord = () => {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {(files.length > 0 || processing || results.length > 0) && (
+      {(files.length > 0 || processing) && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
 
           {processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/5 p-8">
-              <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-4 border-red-500/10" />
-                  <div className="absolute inset-0 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
-                  <FileText className="h-10 w-10 text-red-600 animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold uppercase tracking-tighter">{statusText}</h3>
-                  <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Complete</p>
-                </div>
-              </div>
-            </div>
-          ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <ResultView results={results} onReset={resetAll} hideShare={true} />
-            </div>
+             <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md overflow-y-auto p-6">
+                <BatchProcessingView
+                    files={files}
+                    title="Converting to Word..."
+                    onReset={resetAll}
+                    processItem={async (file, onProgress) => {
+                        const validation = await validatePdfFile(file);
+                        if (!validation.valid) throw new Error(validation.error);
+                        
+                        // We only have page-count for files[0] loaded in the preview right now.
+                        // Wait, convertPdfToWord without pages array converts all pages by default!
+                        const pdfArrayBuffer = await file.arrayBuffer();
+                        const pdfRef = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+                        const totalPages = pdfRef.numPages;
+                        const pagesToConvert = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+                        const blob = await convertPdfToWord(
+                            file,
+                            { mode: conversionMode, pages: pagesToConvert, useOcr: conversionMode === "text", ocrLang: ocrLanguage },
+                            (p) => onProgress(p)
+                        );
+                        if (!blob || blob.size === 0) throw new Error("Generated file is empty");
+                        
+                        const outName = sanitizeFilename(file.name.replace(/\.[^/.]+$/, "") + ".docx");
+                        return { blob, filename: outName };
+                    }}
+                />
+             </div>
           ) : (
             <>
               {/* LEFT: PDF Viewer */}
@@ -478,7 +442,7 @@ const PdfToWord = () => {
                 <div className="p-4 border-t border-border bg-card shrink-0">
                   <Button
                     size="lg"
-                    onClick={convert}
+                    onClick={initiateConversion}
                     disabled={processing || isAnalyzing || numPages === 0}
                     className="w-full h-14 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-red-600/20 transition-all gap-2 active:scale-[0.98]"
                   >
@@ -494,12 +458,12 @@ const PdfToWord = () => {
       <div className="mt-5">
         {files.length === 0 && (
           <div className="mt-10 text-center">
-            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF File" multiple={false} maxSize={50} />
+            <FileUpload accept=".pdf" files={[]} onFilesChange={setFiles} label="Select PDF Files" multiple={true} maxSize={50} />
           </div>
         )}
       </div>
 
-      {!files.length && !results.length && !processing && (
+      {!files.length && !processing && (
         <ToolSeoSection
           toolName="PDF to Word Converter Online"
           category="convert"
