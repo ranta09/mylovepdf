@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import { type ToolCategory, categoryColors } from "@/lib/tools";
 import { cn } from "@/lib/utils";
-import { Helmet } from "react-helmet-async";
+import SEOHead from "./SEOHead";
 import { ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
+
 
 import { useGlobalUpload } from "./GlobalUploadContext";
 import { tools, aiTools } from "@/lib/tools";
@@ -20,6 +21,8 @@ interface ToolLayoutProps {
   children: ReactNode;
   metaTitle?: string;
   metaDescription?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
   hideHeader?: boolean;
   toolId?: string;
   className?: string;
@@ -33,6 +36,8 @@ const ToolLayout = ({
   children,
   metaTitle,
   metaDescription,
+  canonicalUrl,
+  ogImage,
   hideHeader,
   toolId,
   className,
@@ -55,12 +60,17 @@ const ToolLayout = ({
   }
   const showBack = location.pathname !== "/";
 
+  // Auto-derive canonical from current path if not explicitly provided
+  const resolvedCanonical = canonicalUrl ?? location.pathname;
+
   return (
     <>
-      <Helmet>
-        <title>{metaTitle || `${title} - MagicDOCX`}</title>
-        <meta name="description" content={metaDescription || description} />
-      </Helmet>
+      <SEOHead
+        title={metaTitle || `${title} — MagicDOCX`}
+        description={metaDescription || description}
+        canonicalUrl={resolvedCanonical}
+        ogImage={ogImage}
+      />
 
       <div
         className={cn("flex min-h-screen flex-col bg-background", className)}

@@ -11,6 +11,7 @@ import {
   Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X, Loader2, ChevronDown
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import SEOHead from "@/components/SEOHead";
 import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,16 +130,13 @@ const Index = () => {
 
   return (
     <>
+      <SEOHead
+        title="MagicDOCX — Free PDF & DOCX Tools Online | No Signup Required"
+        description="35+ free PDF tools: merge, split, compress, convert, edit, protect, sign. Plus AI summarizer, quiz generator, chat with PDF, ATS checker & translator. No sign-up."
+        canonicalUrl="/"
+      />
       <Helmet>
-        <title>MagicDOCX | Free Online PDF Tools | Merge, Split, Compress, Convert & AI</title>
-        <meta name="description" content="Every tool you need to work with PDFs - completely free. Merge, split, compress, convert, edit, protect PDFs. Plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker & translator. No sign-up required." />
         <meta name="keywords" content="PDF tools, merge PDF, split PDF, compress PDF, PDF to Word, PDF to JPG, edit PDF, AI PDF summarizer, PDF quiz generator, chat with PDF, ATS resume checker, translate PDF, free PDF tools, online PDF editor, convert PDF" />
-        <link rel="canonical" href="https://mylovepdf.lovable.app" />
-        <meta property="og:title" content="MagicDOCX | Free Online PDF & AI Document Tools" />
-        <meta property="og:description" content="35+ free PDF tools: merge, split, compress, convert, edit, protect. Plus AI summarizer, quiz generator, chat & ATS checker. No sign-up." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://mylovepdf.lovable.app" />
-        <meta name="twitter:card" content="summary_large_image" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(sitelinksJsonLd)}</script>
       </Helmet>
