@@ -3,9 +3,8 @@ import ToolSeoSection from "@/components/ToolSeoSection";
 import { Image, FileBox, CheckCircle2, ArrowRight, RotateCw, RotateCcw, ShieldCheck, Settings, Layout, FileText, Layers, Upload, Trash2, RefreshCw, Plus, ArrowLeft } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
 import ToolLayout from "@/components/ToolLayout";
+import { saveAs } from "file-saver";
 import FileUpload from "@/components/FileUpload";
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
@@ -301,7 +300,7 @@ const PdfToJpg = () => {
                           className="aspect-[3/4] rounded-xl border-2 border-border bg-background shadow-md overflow-hidden transition-all duration-300 relative"
                           style={{ transform: `rotate(${page.rotation}deg)` }}
                         >
-                          <img src={page.thumbnail} alt={`Page ${page.originalIndex}`} className="w-full h-full object-cover pointer-events-none" />
+                          <img src={page.thumbnail} alt={`Page ${page.originalIndex}`} className="w-full h-full object-cover pointer-events-none" loading="lazy" decoding="async" />
                         </div>
                         
                         {/* Page Overlay Tools */}

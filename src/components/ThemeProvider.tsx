@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { trackEvent } from "@/lib/plausible";
 
 export type Theme = "dark" | "light" | "system";
 
@@ -14,7 +15,7 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-  theme: "system",
+  theme: "light",
   setTheme: () => null,
 };
 
@@ -22,7 +23,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "light",
   storageKey = "magicdocx-ui-theme",
   ...props
 }: ThemeProviderProps) {
@@ -53,6 +54,7 @@ export function ThemeProvider({
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
+      trackEvent("dark_mode_toggled", { theme });
     },
   };
 

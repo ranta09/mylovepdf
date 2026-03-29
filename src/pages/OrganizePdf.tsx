@@ -599,7 +599,7 @@ const OrganizePdf = () => {
                                       className="w-full h-full p-2 flex items-center justify-center bg-white/50 transition-transform duration-500"
                                       style={{ transform: `rotate(${page.rotation}deg)` }}
                                     >
-                                      <img src={page.thumbnail} alt={`P${index + 1}`} className="max-w-[85%] max-h-[85%] object-contain" />
+                                      <img src={page.thumbnail} alt={`P${index + 1}`} className="max-w-[85%] max-h-[85%] object-contain" loading="lazy" decoding="async" />
                                     </div>
 
                                     {/* Page Badge */}

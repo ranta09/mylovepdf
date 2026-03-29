@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, RefreshCw, Share2, Mail, Link as LinkIcon, Check, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import JSZip from "jszip";
+import { trackEvent } from "@/lib/plausible";
+import { triggerSubscriptionToast } from "./SubscriptionToast";
 
 export interface ProcessingResult {
     file: File | Blob;
@@ -22,6 +23,15 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
     const [zipping, setZipping] = useState(false);
     const [copied, setCopied] = useState(false);
     const [showShare, setShowShare] = useState(false);
+
+    useEffect(() => {
+        if (results && results.length > 0) {
+            trackEvent("conversion_success", { 
+                tool_name: window.location.pathname.replace(/^\//, '') || 'home',
+                file_count: results.length
+            });
+        }
+    }, [results]);
 
     const formatSize = (bytes: number) => {
         if (bytes < 1024) return bytes + " B";
@@ -56,8 +66,12 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
             document.body.removeChild(a);
 
             // Revoke after a short delay so the browser can initiate the download
-            setTimeout(() => URL.revokeObjectURL(freshUrl), 2000);
+            setTimeout(() => {
+                URL.revokeObjectURL(freshUrl);
+                triggerSubscriptionToast(window.location.pathname.replace(/^\//, '') || 'home');
+            }, 2000);
 
+            trackEvent("download_clicked", { tool_name: window.location.pathname.replace(/^\//, '') || 'home', format: 'single' });
             console.log(`[Download] Triggered: ${result.filename}`);
             toast.success(`Downloaded ${result.filename}`);
         } catch (err: any) {
@@ -74,6 +88,7 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
 
         setZipping(true);
         try {
+            const { default: JSZip } = await import("jszip");
             const zip = new JSZip();
             results.forEach((r) => {
                 zip.file(r.filename, r.file);
@@ -87,10 +102,14 @@ const ResultView = ({ results, onReset, hideShare = false, hideIndividualDownloa
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            trackEvent("download_clicked", { tool_name: window.location.pathname.replace(/^\//, '') || 'home', format: 'zip' });
             toast.success("Downloaded all files as ZIP");
 
             // Cleanup
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+                triggerSubscriptionToast(window.location.pathname.replace(/^\//, '') || 'home');
+            }, 1000);
         } catch (e) {
             toast.error("Failed to create ZIP file");
         } finally {

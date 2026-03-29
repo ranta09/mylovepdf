@@ -21,10 +21,10 @@ import {
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
+import BatchProcessingView, { BatchProcessingResult } from "@/components/BatchProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -51,7 +51,6 @@ const formatSize = (bytes: number): string => {
 const PptToPdf = () => {
   const [files, setFiles] = useState<FileWithMetadata[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const { setDisableGlobalFeatures } = useGlobalUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,71 +86,27 @@ const PptToPdf = () => {
     setFiles(prev => [...prev, ...validFiles]);
   };
 
-  const convert = useCallback(async () => {
+  // processItem for BatchProcessingView
+  const processItem = useCallback(async (file: File, onProgress: (p: number) => void): Promise<BatchProcessingResult> => {
+    const options: PptConversionOptions = {
+      pageOrientation: orientation,
+      pageSize,
+      scaling
+    };
+    onProgress(30);
+    const pdfBlob = await convertPptToPdf(file, options);
+    onProgress(100);
+    return {
+      blob: pdfBlob,
+      filename: file.name.replace(/\.[^/.]+$/, "") + ".pdf"
+    };
+  }, [orientation, pageSize, scaling]);
+
+  const initiateConvert = () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(0);
     setResults([]);
-
-    try {
-      const convertedBlobs: Blob[] = [];
-      const individualResults: ProcessingResult[] = [];
-
-      for (let i = 0; i < files.length; i++) {
-        const item = files[i];
-        
-        // Progress update
-        setProgress(Math.round((i / files.length) * 90) + 5);
-
-        try {
-          const options: PptConversionOptions = {
-            pageOrientation: orientation,
-            pageSize,
-            scaling
-          };
-
-          const pdfBlob = await convertPptToPdf(item.file, options);
-          convertedBlobs.push(pdfBlob);
-          
-          individualResults.push({
-            file: pdfBlob,
-            url: URL.createObjectURL(pdfBlob),
-            filename: item.file.name.replace(/\.[^/.]+$/, "") + ".pdf"
-          });
-        } catch (err) {
-          console.error(`Failed to convert ${item.file.name}:`, err);
-          toast.error(`Conversion failed for ${item.file.name}. Please try another PowerPoint file.`);
-        }
-      }
-
-      if (mergeFiles && convertedBlobs.length > 1) {
-        setProgress(95);
-        const mergedBlob = await mergePptPdfs(convertedBlobs);
-        const mergedResult: ProcessingResult = {
-          file: mergedBlob,
-          url: URL.createObjectURL(mergedBlob),
-          filename: "merged_presentation.pdf"
-        };
-        setResults([mergedResult, ...individualResults]);
-      } else {
-        setResults(individualResults);
-        if (individualResults.length === 1) {
-          const a = document.createElement("a");
-          a.href = individualResults[0].url;
-          a.download = individualResults[0].filename;
-          a.click();
-        }
-      }
-
-      toast.success(mergeFiles ? "Presentations merged and converted!" : "Conversion complete!");
-    } catch (error) {
-      console.error("Conversion error:", error);
-      toast.error("Conversion failed. Please try another PowerPoint document.");
-    } finally {
-      setProcessing(false);
-      setProgress(0);
-    }
-  }, [files, orientation, pageSize, scaling, mergeFiles]);
+  };
 
   return (
     <ToolLayout
@@ -182,19 +137,30 @@ const PptToPdf = () => {
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
 
           {processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
-                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                  <Settings className="h-10 w-10 text-primary animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold uppercase tracking-tighter text-red-600">Synthesizing Slide Layers</h3>
-                  <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Vectorized</p>
-                </div>
-              </div>
+            <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
+              <BatchProcessingView
+                files={files.map(f => f.file)}
+                title="Converting Presentations..."
+                hideZip={mergeFiles}
+                processItem={processItem}
+                onReset={() => { setProcessing(false); setFiles([]); setResults([]); }}
+                onComplete={async (batchResults) => {
+                  if (mergeFiles && batchResults.length > 1) {
+                    toast.info("Merging presentations...");
+                    try {
+                      const mergedBlob = await mergePptPdfs(batchResults.map(r => r.blob));
+                      setProcessing(false);
+                      setResults([{
+                        file: mergedBlob,
+                        url: URL.createObjectURL(mergedBlob),
+                        filename: "merged_presentation.pdf"
+                      }]);
+                    } catch (e) {
+                      toast.error("Failed to merge presentations.");
+                    }
+                  }
+                }}
+              />
             </div>
           ) : results.length > 0 ? (
             <div className="flex-1 overflow-hidden flex flex-col">
@@ -343,7 +309,7 @@ const PptToPdf = () => {
                   <div className="max-w-xl mx-auto lg:mx-0 w-full">
                     <Button 
                       size="lg" 
-                      onClick={convert} 
+                      onClick={initiateConvert} 
                       className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-red-500/20 hover:shadow-red-500/40 bg-red-600 hover:bg-red-700 transition-all gap-4 group"
                     >
                       Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />

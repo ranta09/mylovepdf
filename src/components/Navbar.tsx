@@ -20,7 +20,6 @@ const megaColumns: MenuColumn[] = [
   {
     sections: [
       { label: "Compress & Split", toolIds: ["compress", "split"] },
-      { label: "AI Tools", toolIds: ["ai-summarizer", "ai-quiz", "ai-chat", "ai-ats", "ai-translate"] },
     ],
   },
   {

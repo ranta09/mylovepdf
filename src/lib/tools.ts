@@ -7,7 +7,7 @@ import {
     Globe, FileCheck, GitCompare, ScanLine
 } from "lucide-react";
 
-export type ToolCategory = "pdf" | "image" | "convert" | "edit" | "ai" | "merge" | "split" | "compress" | "protect";
+export type ToolCategory = "pdf" | "image" | "convert" | "edit" | "merge" | "split" | "compress" | "protect";
 
 export interface PdfTool {
     id: string;
@@ -53,38 +53,13 @@ export const tools: PdfTool[] = [
     { id: "compare-pdf", name: "Compare PDF", description: "Compare two PDFs side by side and spot differences", icon: GitCompare, path: "/compare-pdf", category: "edit", available: true },
 ];
 
-export const aiTools: PdfTool[] = [
-    {
-        id: "ai-summarizer", name: "PDF Summarizer", description: "Instantly create concise summaries of long PDF documents.",
-        icon: BrainCircuit,
-        path: "/pdf-summarizer", category: "ai", available: true
-    },
-    {
-        id: "ai-quiz", name: "Quiz Generator", description: "Generate multiple-choice or short-answer quizzes from any PDF.",
-        icon: LayoutGrid,
-        path: "/quiz-generator", category: "ai", available: true
-    },
-    {
-        id: "ai-chat", name: "Chat with PDF", description: "Interact with your PDF using an AI assistant.",
-        icon: MessageSquare,
-        path: "/chat-with-pdf", category: "ai", available: true
-    },
-    {
-        id: "ai-ats", name: "ATS Resume Checker", description: "Check your resume against ATS systems and get a score.",
-        icon: ScanSearch,
-        path: "/ats-checker", category: "ai", available: true
-    },
-    {
-        id: "ai-translate", name: "Translate PDF", description: "Translate PDF documents to over 100 languages.",
-        icon: Languages,
-        path: "/translate-pdf", category: "ai", available: true
-    },
-];
+export const aiTools: PdfTool[] = [];
+
 
 export const categoryColors: Record<ToolCategory, string> = {
     pdf: "bg-tool-pdf text-white",
     image: "bg-tool-image text-white",
-    ai: "bg-tool-ai text-white",
+
     convert: "bg-tool-convert text-white",
     edit: "bg-tool-edit text-white",
     merge: "bg-tool-merge text-white",
@@ -96,7 +71,7 @@ export const categoryColors: Record<ToolCategory, string> = {
 export const categoryTextColors: Record<ToolCategory, string> = {
     pdf: "text-tool-pdf",
     image: "text-tool-image",
-    ai: "text-tool-ai",
+
     convert: "text-tool-convert",
     edit: "text-tool-edit",
     merge: "text-tool-merge",

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import BatchProcessingView, { BatchProcessingResult } from "@/components/BatchProcessingView";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { 
   ScanLine, 
@@ -28,10 +29,8 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { runOcrOnCanvas, analyzePdfDocument, preprocessCanvas } from "@/lib/ocrEngine";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";
-import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { Label } from "@/components/ui/label";
@@ -52,16 +51,8 @@ const LANGUAGES = [
 const OcrPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<ProcessingResult[]>([]);
   const { setDisableGlobalFeatures } = useGlobalUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [analysisResults, setAnalysisResults] = useState<{
-    totalCount: number;
-    scannedCount: number;
-    hasText: boolean;
-  } | null>(null);
   
   // Settings
   const [selectedLanguage, setSelectedLanguage] = useState("eng");
@@ -69,16 +60,13 @@ const OcrPdf = () => {
 
   const resetTool = useCallback(() => {
     setFiles([]);
-    setResults([]);
-    setAnalysisResults(null);
-    setProgress(0);
     setProcessing(false);
   }, []);
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, setDisableGlobalFeatures]);
 
   const handleFilesChange = async (newFiles: File[]) => {
     if (newFiles.length === 0) return;
@@ -89,126 +77,101 @@ const OcrPdf = () => {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleProcess = async () => {
+  // processItem for BatchProcessingView — captures the current language/outputFormat
+  const processItem = useCallback(async (file: File, onProgress: (p: number) => void): Promise<BatchProcessingResult> => {
+    const bytes = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    
+    const outDoc = await PDFDocument.create();
+    const font = await outDoc.embedFont(StandardFonts.Helvetica);
+    const paragraphs: string[] = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const origViewport = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: 2 }); 
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) continue;
+
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      await page.render({ canvasContext: context, viewport }).promise;
+      preprocessCanvas(canvas);
+
+      const result = await runOcrOnCanvas(canvas, selectedLanguage);
+      const outPage = outDoc.addPage([origViewport.width, origViewport.height]);
+
+      const pngBytes = await canvas.toDataURL("image/png");
+      const pngImg = await outDoc.embedPng(pngBytes);
+      outPage.drawImage(pngImg, {
+        x: 0,
+        y: 0,
+        width: origViewport.width,
+        height: origViewport.height,
+      });
+
+      paragraphs.push(result.paragraphs.map(p => p.text).join('\n'));
+
+      let yPos = origViewport.height - 20;
+      for (const p of result.paragraphs) {
+        const scaleX = origViewport.width / viewport.width;
+        const scaleY = origViewport.height / viewport.height;
+
+        const text = p.text.trim();
+        if (text) {
+          outPage.drawText(text, {
+            x: p.bbox.x0 * scaleX,
+            y: origViewport.height - (p.bbox.y1 * scaleY),
+            size: 10,
+            font: font,
+            color: rgb(0, 0, 0),
+            opacity: 0,
+          });
+          yPos -= 12;
+        }
+      }
+      
+      onProgress(Math.round((i / pdf.numPages) * 100));
+    }
+
+    let resultBlob: Blob;
+    let extension: string;
+
+    if (outputFormat === "pdf") {
+      const pdfBytes = await outDoc.save();
+      resultBlob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      extension = "-ocr.pdf";
+    } else if (outputFormat === "docx") {
+      const doc = new Document({
+        sections: [{
+          children: paragraphs.flatMap(p => 
+            p.split('\n').filter(l => l.trim()).map(line => 
+              new Paragraph({ children: [new TextRun(line)] })
+            )
+          )
+        }]
+      });
+      const docxBlob = await Packer.toBlob(doc);
+      resultBlob = docxBlob;
+      extension = "-ocr.docx";
+    } else {
+      const combinedText = paragraphs.join('\n\n');
+      resultBlob = new Blob([combinedText], { type: "text/plain" });
+      extension = "-ocr.txt";
+    }
+
+    return {
+      blob: resultBlob,
+      filename: file.name.replace(/\.[^/.]+$/, "") + extension
+    };
+  }, [selectedLanguage, outputFormat]);
+
+  const handleProcess = () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(0);
-    setResults([]);
-
-    const allResults: ProcessingResult[] = [];
-
-    try {
-      for (let fIdx = 0; fIdx < files.length; fIdx++) {
-        const file = files[fIdx];
-        const bytes = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-        
-        const outDoc = await PDFDocument.create();
-        const font = await outDoc.embedFont(StandardFonts.Helvetica);
-        const paragraphs: string[] = [];
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const origViewport = page.getViewport({ scale: 1 });
-          const viewport = page.getViewport({ scale: 2 }); 
-
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-          if (!context) continue;
-
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
-          await page.render({ canvasContext: context, viewport }).promise;
-          preprocessCanvas(canvas);
-
-          const result = await runOcrOnCanvas(canvas, selectedLanguage);
-          const outPage = outDoc.addPage([origViewport.width, origViewport.height]);
-
-          const pngBytes = await canvas.toDataURL("image/png");
-          const pngImg = await outDoc.embedPng(pngBytes);
-          outPage.drawImage(pngImg, {
-            x: 0,
-            y: 0,
-            width: origViewport.width,
-            height: origViewport.height,
-          });
-
-          paragraphs.push(result.paragraphs.map(p => p.text).join('\n'));
-
-          let yPos = origViewport.height - 20;
-          for (const p of result.paragraphs) {
-            const scaleX = origViewport.width / viewport.width;
-            const scaleY = origViewport.height / viewport.height;
-
-            const text = p.text.trim();
-            if (text) {
-              outPage.drawText(text, {
-                x: p.bbox.x0 * scaleX,
-                y: origViewport.height - (p.bbox.y1 * scaleY),
-                size: 10,
-                font: font,
-                color: rgb(0, 0, 0),
-                opacity: 0,
-              });
-              yPos -= 12;
-            }
-          }
-          
-          const totalProcess = files.length * pdf.numPages;
-          const currentProcess = (fIdx * pdf.numPages) + i;
-          setProgress(Math.round((currentProcess / totalProcess) * 100));
-        }
-
-        let resultBlob: Blob;
-        let extension: string;
-
-        if (outputFormat === "pdf") {
-          const pdfBytes = await outDoc.save();
-          resultBlob = new Blob([pdfBytes as any], { type: "application/pdf" });
-          extension = "-ocr.pdf";
-        } else if (outputFormat === "docx") {
-          const doc = new Document({
-            sections: [{
-              children: paragraphs.flatMap(p => 
-                p.split('\n').filter(l => l.trim()).map(line => 
-                  new Paragraph({ children: [new TextRun(line)] })
-                )
-              )
-            }]
-          });
-          const docxBlob = await Packer.toBlob(doc);
-          resultBlob = docxBlob;
-          extension = "-ocr.docx";
-        } else {
-          const combinedText = paragraphs.join('\n\n');
-          resultBlob = new Blob([combinedText], { type: "text/plain" });
-          extension = "-ocr.txt";
-        }
-
-        allResults.push({
-          file: resultBlob,
-          url: URL.createObjectURL(resultBlob),
-          filename: file.name.replace(/\.[^/.]+$/, "") + extension
-        });
-      }
-
-      setResults(allResults);
-      toast.success(`OCR complete for ${files.length} document(s)!`);
-      
-      if (allResults.length === 1) {
-        const a = document.createElement("a");
-        a.href = allResults[0].url;
-        a.download = allResults[0].filename;
-        a.click();
-      }
-    } catch (error) {
-      console.error("OCR Error:", error);
-      toast.error("OCR synthesis failed. Please try again.");
-    } finally {
-      setProcessing(false);
-      setProgress(0);
-    }
   };
 
   return (
@@ -220,7 +183,7 @@ const OcrPdf = () => {
       metaTitle="OCR PDF | Make Scanned PDFs Searchable Online Free"
       metaDescription="Convert scanned PDF documents into searchable, selectable text using AI-powered OCR technology. Support for multi-language and professional DOCX/PDF export."
       toolId="ocr-pdf"
-      hideHeader={files.length > 0 || processing || results.length > 0}
+      hideHeader={files.length > 0 || processing}
       className="ocr-pdf-page"
     >
       <style>{`
@@ -236,27 +199,20 @@ const OcrPdf = () => {
       `}</style>
 
       {/* ── CONVERSION WORKSPACE ─────────────────────────────────────────── */}
-      {(files.length > 0 || processing || results.length > 0) && (
+      {(files.length > 0 || processing) && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden font-sans">
           
           {processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/10 p-8">
-              <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-4 border-green-500/10" />
-                  <div className="absolute inset-0 rounded-full border-4 border-green-600 border-t-transparent animate-spin" />
-                  <ScanLine className="h-10 w-10 text-green-600 animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold uppercase tracking-tighter text-green-600">Neural Analysis Pipeline</h3>
-                  <Progress value={progress} className="h-2 rounded-full bg-green-100 [&>div]:bg-green-600" />
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{progress}% Recognized</p>
-                </div>
-              </div>
-            </div>
-          ) : results.length > 0 ? (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <ResultView results={results} onReset={resetTool} />
+            <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
+              <BatchProcessingView
+                files={files}
+                title="Running OCR Analysis..."
+                processItem={processItem}
+                onReset={() => {
+                  setProcessing(false);
+                  setFiles([]);
+                }}
+              />
             </div>
           ) : (
             <>
@@ -372,7 +328,7 @@ const OcrPdf = () => {
                     <Button 
                       size="lg" 
                       onClick={handleProcess} 
-                      disabled={processing || analyzing}
+                      disabled={processing}
                       className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-green-500/20 hover:shadow-green-500/40 bg-green-600 hover:bg-green-700 transition-all gap-4 group"
                     >
                       {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}
@@ -386,7 +342,7 @@ const OcrPdf = () => {
       )}
 
       {/* Landing State: Upload Area */}
-      {files.length === 0 && !processing && results.length === 0 && (
+      {files.length === 0 && !processing && (
         <div className="mt-8 text-center uppercase">
           <FileUpload 
             accept=".pdf" 

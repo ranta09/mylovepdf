@@ -3,7 +3,6 @@ import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import { Minimize2, Settings, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, AlertCircle, Loader2, Layout, Zap, X, RotateCw, RefreshCw, Plus, ShieldCheck, Merge, Scissors, FileText, LayoutGrid } from "lucide-react";
-import JSZip from "jszip";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
 import FileUpload from "@/components/FileUpload";

@@ -15,7 +15,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import JSZip from "jszip";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 // Set worker path for pdfjs
@@ -242,6 +241,7 @@ const SplitPdf = () => {
 
       // If multiple files, create a ZIP
       if (newResults.length > 1) {
+        const { default: JSZip } = await import("jszip");
         const zip = new JSZip();
         newResults.forEach(res => {
           zip.file(res.filename, res.blob);
@@ -486,7 +486,7 @@ const SplitPdf = () => {
                                 : "border-background bg-background hover:border-primary/40 hover:shadow-md"
                             )}>
                               {thumb ? (
-                                <img src={thumb.dataUrl} alt={`Page ${idx + 1}`} className="w-full h-full object-contain" />
+                                <img src={thumb.dataUrl} alt={`Page ${idx + 1}`} className="w-full h-full object-contain" loading="lazy" decoding="async" />
                               ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/30 scale-110">
                                   <FileText className="h-8 w-8 text-muted-foreground/20 mb-2" />

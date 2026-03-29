@@ -491,7 +491,7 @@ const DeletePages = () => {
                               </div>
 
                               <div className="w-full h-full p-2 flex items-center justify-center bg-white/50">
-                                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[85%] max-h-[85%] object-contain" />
+                                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[85%] max-h-[85%] object-contain" loading="lazy" decoding="async" />
                               </div>
 
                               <div className="absolute bottom-0 left-0 right-0 py-2 bg-secondary/90 backdrop-blur-sm border-t border-border flex items-center justify-center gap-1.5 font-black uppercase tracking-widest text-[10px]">

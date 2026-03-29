@@ -8,6 +8,7 @@ import { useGlobalUpload } from "./GlobalUploadContext";
 import { detectFileType } from "@/lib/fileDetection";
 import FilePreviewList from "./FilePreviewList";
 import FileFormatsDisplay from "./FileFormatsDisplay";
+import { trackEvent } from "@/lib/plausible";
 
 interface FileUploadProps {
   accept?: string;
@@ -68,6 +69,11 @@ const FileUpload = ({
 
       console.log("=== TOOL UPLOAD SUCCESS ===");
       console.log(`Added ${filesToAdd.length} valid files to tool state.`);
+
+      trackEvent("file_uploaded", { 
+        tool_name: window.location.pathname.replace(/^\//, '') || 'home',
+        file_count: filesToAdd.length
+      });
 
       onFilesChange(multiple ? [...files, ...filesToAdd] : filesToAdd);
       setJustAdded(true);

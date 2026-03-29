@@ -1,15 +1,11 @@
 import { useState } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import ToolLayout from "@/components/ToolLayout";
+import BatchProcessingView, { BatchProcessingResult } from "@/components/BatchProcessingView";
 import { FileCheck, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, Archive, FileText, Upload } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
 import FileUpload from "@/components/FileUpload";
-import ProcessingView from "@/components/ProcessingView";
-import ResultView, { ProcessingResult } from "@/components/ResultView";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PDFDocument } from "pdf-lib";
 import { cn } from "@/lib/utils";
@@ -18,8 +14,6 @@ import { useEffect, useRef } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import * as pdfjsLib from "pdfjs-dist";
 import { Plus } from "lucide-react";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
@@ -39,20 +33,17 @@ const PdfToPdfa = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileDataList, setFileDataList] = useState<FileData[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("Awaiting Execution");
-  const [results, setResults] = useState<ProcessingResult[]>([]);
   const [compliance, setCompliance] = useState("pdfa-2b");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0 || processing || results.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || processing);
     return () => setDisableGlobalFeatures(false);
-  }, [files.length, processing, results.length, setDisableGlobalFeatures]);
+  }, [files.length, processing, setDisableGlobalFeatures]);
 
   useEffect(() => {
-    if (files.length > 0 && results.length === 0 && !processing) {
+    if (files.length > 0 && !processing) {
       loadFilePreviews(files);
     } else if (files.length === 0) {
       setFileDataList([]);
@@ -97,74 +88,37 @@ const PdfToPdfa = () => {
     setFileDataList(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleConvert = async () => {
+  const processItem = async (file: File, onProgress: (p: number) => void): Promise<BatchProcessingResult> => {
+    onProgress(10);
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    
+    onProgress(40);
+    // Set PDF/A compliant metadata
+    const title = file.name.replace(".pdf", "");
+    pdfDoc.setTitle(title);
+    pdfDoc.setAuthor("MagicDOCX User");
+    pdfDoc.setSubject(`PDF/A ${compliance.toUpperCase()} Compliant Document`);
+    pdfDoc.setProducer("MagicDOCX | PDF/A Converter");
+    pdfDoc.setCreator("MagicDOCX");
+    pdfDoc.setCreationDate(new Date());
+    pdfDoc.setModificationDate(new Date());
+
+    onProgress(70);
+    // Re-serialize the document with object streams for optimization
+    const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+    onProgress(95);
+    
+    const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
+    const filename = file.name.replace(".pdf", `_${compliance}.pdf`);
+    
+    onProgress(100);
+    return { blob, filename };
+  };
+
+  const initiateConvert = () => {
     if (files.length === 0) return;
     setProcessing(true);
-    setProgress(0);
-    setStatusText("Initializing conversion...");
-    
-    try {
-      const resultsList: ProcessingResult[] = [];
-      const zip = new JSZip();
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setStatusText(`Processing ${file.name}...`);
-        setProgress(Math.round((i / files.length) * 100));
-        
-        const arrayBuffer = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer);
-        
-        // Set PDF/A compliant metadata
-        const title = file.name.replace(".pdf", "");
-        pdfDoc.setTitle(title);
-        pdfDoc.setAuthor("MagicDOCX User");
-        pdfDoc.setSubject(`PDF/A ${compliance.toUpperCase()} Compliant Document`);
-        pdfDoc.setProducer("MagicDOCX | PDF/A Converter");
-        pdfDoc.setCreator("MagicDOCX");
-        pdfDoc.setCreationDate(new Date());
-        pdfDoc.setModificationDate(new Date());
-
-        // Re-serialize the document with object streams for optimization
-        const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-        
-        const blob = new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const filename = file.name.replace(".pdf", `_${compliance}.pdf`);
-        
-        resultsList.push({
-          file: blob,
-          url,
-          filename,
-        });
-        
-        if (files.length > 1) {
-          zip.file(filename, blob);
-        }
-      }
-
-      setResults(resultsList);
-      
-      if (files.length > 1) {
-        setStatusText("Creating ZIP archive...");
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        saveAs(zipBlob, "magicdocx_pdfa_bundle.zip");
-        toast.success(`Success! All files converted and zipped.`);
-      } else {
-        const result = resultsList[0];
-        saveAs(result.file, result.filename);
-        toast.success(`PDF/A (${compliance.toUpperCase()}) file generated!`);
-      }
-      
-      setProgress(100);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to convert PDF to PDF/A.");
-    } finally {
-      setProcessing(false);
-      setProgress(0);
-      setStatusText("Awaiting Execution");
-    }
   };
 
   return (
@@ -176,31 +130,19 @@ const PdfToPdfa = () => {
       metaTitle="PDF to PDF/A Converter Online Free – Fast & Secure | MagicDocx"
       metaDescription="Convert PDF to PDF/A for ISO-standardized long-term archiving online for free. Supports PDF/A-1b and PDF/A-2b compliance. No sign-up needed."
       toolId="pdf-to-pdfa"
-      hideHeader={files.length > 0 || results.length > 0 || processing}
+      hideHeader={files.length > 0 || processing}
     >
       {/* ── ARCHIVAL WORKSPACE ─────────────────────────────────────────── */}
-      {(files.length > 0 || processing || results.length > 0) && (
+      {(files.length > 0 || processing) && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-          {results.length > 0 ? (
-            <ResultView results={results} onReset={() => { setFiles([]); setResults([]); }} />
-          ) : processing ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/5 p-8">
-              <div className="w-full max-w-md space-y-8 text-center">
-                <div className="relative flex justify-center items-center h-32">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-emerald-500/10" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-                  </div>
-                  <Archive className="h-8 w-8 text-emerald-500 animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-black uppercase tracking-tighter">{statusText}</h3>
-                  <Progress value={progress} className="h-2 rounded-full" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{progress}% Processed</p>
-                </div>
-              </div>
+          {processing ? (
+            <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
+              <BatchProcessingView
+                files={files}
+                title="Converting to PDF/A..."
+                processItem={processItem}
+                onReset={() => { setFiles([]); setFileDataList([]); setProcessing(false); }}
+              />
             </div>
           ) : (
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden font-display">
@@ -211,7 +153,7 @@ const PdfToPdfa = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => { setFiles([]); setResults([]); }}
+                      onClick={() => { setFiles([]); setFileDataList([]); }}
                       className="h-8 w-8 p-0 rounded-full hover:bg-secondary/20 font-black italic"
                     >
                       <ArrowRight className="h-4 w-4 rotate-180" />
@@ -306,7 +248,7 @@ const PdfToPdfa = () => {
                       </div>
 
                       <Button
-                        onClick={handleConvert}
+                        onClick={initiateConvert}
                         disabled={processing}
                         className="w-full h-16 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-base shadow-2xl shadow-red-500/20 transition-all gap-4 transform hover:scale-[1.02] active:scale-[0.98]"
                       >

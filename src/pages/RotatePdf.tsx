@@ -482,7 +482,7 @@ const RotatePdf = () => {
                               className="w-full h-full flex items-center justify-center p-3 transition-transform duration-500 ease-out"
                               style={{ transform: `rotate(${page.rotation}deg)` }}
                             >
-                              <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[90%] max-h-[90%] object-contain" />
+                              <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[90%] max-h-[90%] object-contain" loading="lazy" decoding="async" />
                             </div>
 
                             {/* Page Number Overlay */}

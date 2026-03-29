@@ -49,7 +49,7 @@ const ThumbnailPreview = ({ file }: { file: File }) => {
     if (isImage && previewUrl) {
         return (
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary/50 border border-border/50">
-                <img src={previewUrl} alt={file.name} className="h-full w-full object-cover" />
+                <img src={previewUrl} alt={file.name} className="h-full w-full object-cover" loading="lazy" decoding="async" width={48} height={48} />
             </div>
         );
     }

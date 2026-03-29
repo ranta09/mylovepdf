@@ -340,7 +340,7 @@ const MergePdf = () => {
           {previewPages.length > 0 ? previewPages.map((page, idx) => (
             <div key={idx} className="relative group max-w-full">
               <div className="bg-white border rounded shadow-sm transition-all duration-300" style={{ transform: `rotate(${page.rotation || 0}deg)` }}>
-                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="w-full h-auto max-w-[500px]" />
+                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="w-full h-auto max-w-[500px]" loading="lazy" decoding="async" />
               </div>
               <div className="mt-4 text-center">
                 <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground bg-white px-2 py-1 border rounded shadow-sm">
@@ -407,7 +407,7 @@ const MergePdf = () => {
                           <GripVertical className="h-5 w-5" />
                         </div>
                         <div className="w-12 h-16 bg-secondary/50 rounded-lg border border-border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                          <img src={file.thumbnails[0]} alt="file" className="w-full h-full object-contain p-1" />
+                          <img src={file.thumbnails[0]} alt="file" className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-black truncate text-foreground group-hover:text-primary transition-colors">{file.name}</p>
@@ -453,7 +453,7 @@ const MergePdf = () => {
                             </button>
                           </div>
                           <div className="aspect-[3/4] p-2 flex items-center justify-center bg-secondary/20" style={{ transform: `rotate(${page.rotation}deg)` }}>
-                            <img src={page.thumbnail} alt={`p${idx}`} className="w-full h-full object-contain shadow-sm" />
+                            <img src={page.thumbnail} alt={`p${idx}`} className="w-full h-full object-contain shadow-sm" loading="lazy" decoding="async" />
                           </div>
                           <div className="p-2 bg-secondary/30 flex justify-center">
                             <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">{idx + 1}</span>

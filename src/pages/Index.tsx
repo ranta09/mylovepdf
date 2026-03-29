@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
@@ -137,9 +138,7 @@ const Index = () => {
           <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[40%] rounded-full bg-violet-500/5 blur-[120px]" />
         </div>
         
-        <div className="relative z-50">
-          <Navbar />
-        </div>
+        <Navbar />
         <main className="flex-1 relative z-10">
 
           {/* ─── HERO ─── */}
@@ -177,8 +176,8 @@ const Index = () => {
 
           {/* ─── TRUST BADGES ─── */}
           <section className="border-b border-border/50 bg-secondary/10 relative z-20">
-            <div className="container max-w-[1400px] w-[95%] mx-auto py-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="container max-w-[1400px] w-[95%] mx-auto pt-8 pb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
                 {trustBadges.map((badge, i) => (
                   <motion.div
                     key={i}
@@ -196,6 +195,13 @@ const Index = () => {
                     </div>
                   </motion.div>
                 ))}
+              </div>
+              
+              <div className="text-center">
+                 <Link to="/privacy" className="inline-flex items-center text-xs font-semibold text-muted-foreground/70 hover:text-primary transition-colors">
+                   <Shield className="mr-1.5 h-3.5 w-3.5" />
+                   We never read or store your files. Read our strict Privacy Policy.
+                 </Link>
               </div>
             </div>
           </section>
@@ -243,7 +249,7 @@ const Index = () => {
                 ) : (
                   [
                     { id: "convert", label: "Convert", filter: (t: any) => t.category === "convert" || t.category === "image" },
-                    { id: "optimize", label: "Optimize & Edit", filter: (t: any) => t.category === "compress" || t.category === "edit" || t.category === "ai" },
+                    { id: "optimize", label: "Optimize & Edit", filter: (t: any) => t.category === "compress" || t.category === "edit" },
                     { id: "organize", label: "Organize", filter: (t: any) => t.category === "merge" || t.category === "split" },
                     { id: "security", label: "Security", filter: (t: any) => t.category === "protect" },
                   ].map((group, groupIdx) => {

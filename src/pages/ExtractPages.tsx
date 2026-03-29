@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import JSZip from "jszip";
 import {
   FileDown,
   Loader2,
@@ -243,6 +242,7 @@ const ExtractPages = () => {
         a.click();
       } else {
         // ZIP Mode
+        const { default: JSZip } = await import("jszip");
         const zip = new JSZip();
         for (let i = 0; i < selectedPages.length; i++) {
           const pData = selectedPages[i];
@@ -497,7 +497,7 @@ const ExtractPages = () => {
                                 className="w-full h-full p-2 flex items-center justify-center bg-white/50 transition-transform duration-500"
                                 style={{ transform: `rotate(${page.rotation}deg)` }}
                               >
-                                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[85%] max-h-[85%] object-contain" />
+                                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[85%] max-h-[85%] object-contain" loading="lazy" decoding="async" />
                               </div>
 
                               <div className="absolute bottom-0 left-0 right-0 py-2 bg-secondary/90 backdrop-blur-sm border-t border-border flex items-center justify-center gap-1.5">
