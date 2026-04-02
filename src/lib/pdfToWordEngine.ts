@@ -47,7 +47,7 @@ function mapAlignment(align: string): any {
   }
 }
 
-function mapHeadingLevel(type: BlockType): HeadingLevel | undefined {
+function mapHeadingLevel(type: BlockType): (typeof HeadingLevel)[keyof typeof HeadingLevel] | undefined {
   switch (type) {
     case "h1":    return HeadingLevel.HEADING_1;
     case "h2":    return HeadingLevel.HEADING_2;
