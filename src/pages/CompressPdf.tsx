@@ -14,7 +14,13 @@ import {
   Sparkles,
   Merge,
   Scissors,
-  FileText
+  FileText,
+  Plus,
+  ChevronRight,
+  Hash,
+  RotateCcw,
+  Droplets,
+  Lock,
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import ToolUploadScreen from "@/components/ToolUploadScreen";
@@ -29,64 +35,12 @@ import { useGlobalUpload } from "@/components/GlobalUploadContext";
 // Set worker path for pdfjs
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-// --- DB Utility for Persistent Results ---
-const DB_NAME = "MagicDocxDB";
-const STORE_NAME = "CompressSessions";
-
-const saveSession = async (results: any[]) => {
-  try {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME);
-    request.onsuccess = () => {
-      const db = request.result;
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      tx.objectStore(STORE_NAME).put(results, "last-result");
-    };
-  } catch (e) { console.error("DB Save Fail", e); }
-};
-
-const loadSession = (): Promise<any[] | null> => {
-  return new Promise((resolve) => {
-    try {
-      const request = indexedDB.open(DB_NAME, 1);
-      request.onupgradeneeded = () => {
-        if (!request.result.objectStoreNames.contains(STORE_NAME)) {
-          request.result.createObjectStore(STORE_NAME);
-        }
-      };
-      request.onsuccess = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-           resolve(null); return;
-        }
-        const tx = db.transaction(STORE_NAME, "readonly");
-        const get = tx.objectStore(STORE_NAME).get("last-result");
-        get.onsuccess = () => resolve(get.result || null);
-        get.onerror = () => resolve(null);
-      };
-      request.onerror = () => resolve(null);
-    } catch (e) { resolve(null); }
-  });
-};
-
-const clearSession = async () => {
-  const request = indexedDB.open(DB_NAME, 1);
-  request.onsuccess = () => {
-    const db = request.result;
-    if (db.objectStoreNames.contains(STORE_NAME)) {
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      tx.objectStore(STORE_NAME).delete("last-result");
-    }
-  };
-};
-
 type CompressMode = 'extreme' | 'recommended' | 'basic';
 
 interface FileData {
   file: File;
   previewUrl: string;
   pageCount: number;
-  rotation: number;
   id: string;
 }
 
@@ -98,22 +52,23 @@ interface ProcessedFile {
   blob: Blob;
 }
 
+// Savings ring component
 const SavingsRing = ({ percentage }: { percentage: number }) => (
-  <div className="relative w-32 h-32 flex items-center justify-center">
+  <div className="relative w-24 h-24 flex items-center justify-center">
     <svg className="w-full h-full transform -rotate-90">
-      <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-secondary" />
+      <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="7" fill="transparent" className="text-secondary" />
       <motion.circle
-        cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent"
+        cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="7" fill="transparent"
         className="text-primary"
-        strokeDasharray={364.4}
-        initial={{ strokeDashoffset: 364.4 }}
-        animate={{ strokeDashoffset: 364.4 - (364.4 * percentage) / 100 }}
+        strokeDasharray={263.9}
+        initial={{ strokeDashoffset: 263.9 }}
+        animate={{ strokeDashoffset: 263.9 - (263.9 * percentage) / 100 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
       />
     </svg>
     <div className="absolute inset-0 flex flex-col items-center justify-center">
-      <span className="text-3xl font-black text-foreground">{percentage}%</span>
-      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Smaller</span>
+      <span className="text-2xl font-black text-foreground">{percentage}%</span>
+      <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground">saved</span>
     </div>
   </div>
 );
@@ -126,11 +81,7 @@ const CompressPdf = () => {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessedFile[]>([]);
   const { setDisableGlobalFeatures, globalFiles, clearGlobalFiles } = useGlobalUpload();
-
-  // --- Session Hydration ---
-  useEffect(() => {
-    loadSession().then(saved => { if (saved) setResults(saved); });
-  }, []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDisableGlobalFeatures(files.length > 0 || results.length > 0);
@@ -144,15 +95,14 @@ const CompressPdf = () => {
         const arrayBuffer = await f.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 0.5 });
+        const viewport = page.getViewport({ scale: 0.4 });
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         canvas.width = viewport.width; canvas.height = viewport.height;
         await page.render({ canvasContext: ctx!, viewport }).promise;
-        list.push({ file: f, previewUrl: canvas.toDataURL(), pageCount: pdf.numPages, rotation: 0, id: Math.random().toString(36).slice(2) });
+        list.push({ file: f, previewUrl: canvas.toDataURL(), pageCount: pdf.numPages, id: Math.random().toString(36).slice(2) });
       } catch (e) {
-        console.error("Preview fail", e);
-        list.push({ file: f, previewUrl: "", pageCount: 0, rotation: 0, id: Math.random().toString(36).slice(2) });
+        list.push({ file: f, previewUrl: "", pageCount: 0, id: Math.random().toString(36).slice(2) });
       }
     }
     return list;
@@ -165,10 +115,16 @@ const CompressPdf = () => {
     const pd = await generatePreviews(pdfs);
     setFileDataList(pd);
     setResults([]);
-    clearSession();
   }, [generatePreviews]);
 
-  // --- Handoff Logic ---
+  const addMoreFiles = useCallback(async (newFiles: File[]) => {
+    const pdfs = newFiles.filter(f => f.name.toLowerCase().endsWith(".pdf"));
+    if (pdfs.length === 0) return;
+    setFiles(prev => [...prev, ...pdfs]);
+    const pd = await generatePreviews(pdfs);
+    setFileDataList(prev => [...prev, ...pd]);
+  }, [generatePreviews]);
+
   useEffect(() => {
     if (globalFiles.length > 0) {
       handleFilesChange(globalFiles);
@@ -181,7 +137,6 @@ const CompressPdf = () => {
     const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
     const out = await PDFDocument.create();
     
-    // Config based on mode
     const config = m === 'extreme' ? { dpi: 72, q: 0.4 } : m === 'recommended' ? { dpi: 120, q: 0.7 } : { dpi: 200, q: 0.85 };
     const scale = config.dpi / 72;
 
@@ -204,10 +159,15 @@ const CompressPdf = () => {
 
   const startProcessing = async () => {
     setProcessing(true);
+    setProgress(0);
     const newRes: ProcessedFile[] = [];
     try {
-      for (const fd of fileDataList) {
-        const compressed = await compressSinglePdf(fd.file, mode, (p) => setProgress(p));
+      for (let fi = 0; fi < fileDataList.length; fi++) {
+        const fd = fileDataList[fi];
+        const compressed = await compressSinglePdf(fd.file, mode, (p) => {
+          const fileProgress = Math.round(((fi + p / 100) / fileDataList.length) * 100);
+          setProgress(fileProgress);
+        });
         newRes.push({
           name: fd.file.name.replace(/\.pdf$/, "_compressed.pdf"),
           originalSize: fd.file.size,
@@ -217,9 +177,14 @@ const CompressPdf = () => {
         });
       }
       setResults(newRes);
-      saveSession(newRes);
       setFiles([]);
       toast.success("PDFs compressed successfully!");
+      // Auto-download
+      setTimeout(() => {
+        newRes.forEach(r => {
+          const a = document.createElement("a"); a.href = r.url; a.download = r.name; a.click();
+        });
+      }, 500);
     } catch (e) {
       toast.error("Compression failed. Please try again.");
     } finally {
@@ -227,11 +192,36 @@ const CompressPdf = () => {
     }
   };
 
-  const totalOriginalResults = results.reduce((acc, r) => acc + r.originalSize, 0);
+  const removeFile = (idx: number) => {
+    setFileDataList(prev => prev.filter((_, i) => i !== idx));
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const totalOriginal = results.reduce((acc, r) => acc + r.originalSize, 0);
   const totalCompressed = results.reduce((acc, r) => acc + r.compressedSize, 0);
-  const totalSaved = totalOriginalResults - totalCompressed;
-  const savingsPercent = totalOriginalResults > 0 ? Math.round((totalSaved / totalOriginalResults) * 100) : 0;
+  const totalSaved = totalOriginal - totalCompressed;
+  const savingsPercent = totalOriginal > 0 ? Math.round((totalSaved / totalOriginal) * 100) : 0;
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  };
+
+  // Dynamic estimate based on mode
+  const getEstimateRatio = () => mode === 'extreme' ? 0.15 : mode === 'recommended' ? 0.4 : 0.7;
   const totalInFlight = fileDataList.reduce((acc, f) => acc + f.file.size, 0);
+  const estimatedSize = totalInFlight * getEstimateRatio();
+  const estimatedSavings = totalInFlight > 0 ? Math.round(((totalInFlight - estimatedSize) / totalInFlight) * 100) : 0;
+
+  const relatedTools = [
+    { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+    { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+    { name: "Add Page Numbers", path: "/page-numbers", icon: Hash },
+    { name: "Watermark", path: "/watermark-pdf", icon: Droplets },
+    { name: "Rotate PDF", path: "/rotate-pdf", icon: RotateCcw },
+    { name: "Protect PDF", path: "/protect-pdf", icon: Lock },
+  ];
 
   return (
     <ToolLayout 
@@ -245,53 +235,91 @@ const CompressPdf = () => {
       hideHeader={files.length > 0 || results.length > 0}
     >
       <div className="mt-2 flex flex-col h-full">
-        {results.length > 0 ? (
-          <div className="mt-8 mx-auto max-w-2xl w-full space-y-8 pb-20">
-            <div className="bg-card border border-border/60 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl text-center">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-bl-full -z-0"></div>
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="mb-8">
-                  <SavingsRing percentage={savingsPercent} />
-                </div>
-                <h2 className="text-2xl font-black text-foreground uppercase tracking-tight mb-2">Great job!</h2>
-                <p className="text-muted-foreground font-medium mb-8">You've saved {(totalSaved / (1024 * 1024)).toFixed(2)} MB of space.</p>
-                
-                <div className="grid grid-cols-2 gap-4 w-full max-w-sm mb-10">
-                  <div className="bg-secondary/30 p-4 rounded-2xl border border-border/40">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Before</p>
-                    <p className="text-lg font-black text-muted-foreground line-through opacity-50">{(totalOriginalResults / (1024 * 1024)).toFixed(2)} MB</p>
-                  </div>
-                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20">
-                    <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">After</p>
-                    <p className="text-lg font-black text-foreground">{(totalCompressed / (1024 * 1024)).toFixed(2)} MB</p>
-                  </div>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full">
-                  <Button size="lg" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-[0.15em] shadow-glow" onClick={() => {
-                      results.forEach(r => {
-                          const a = document.createElement("a"); a.href = r.url; a.download = r.name; a.click();
-                      });
-                  }}>
-                    <Download className="mr-2 h-4 w-4" /> Download Files
-                  </Button>
-                  <Button size="lg" variant="outline" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-[0.15em] border-2" onClick={() => { clearSession(); setResults([]); setFileDataList([]); }}>
-                    <RotateCw className="mr-2 h-4 w-4" /> Start Over
-                  </Button>
-                </div>
+        {/* ── RESULTS VIEW ── */}
+        {results.length > 0 ? (
+          <div className="mt-4 mx-auto max-w-2xl w-full space-y-6 pb-20">
+            {/* Title */}
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+              <h2 className="text-2xl font-black text-foreground">PDFs have been compressed!</h2>
+            </motion.div>
+
+            {/* Download Button */}
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
+              <Button 
+                size="lg" 
+                className="w-full h-14 rounded-xl font-bold text-lg shadow-xl shadow-primary/25"
+                onClick={() => {
+                  results.forEach(r => {
+                    const a = document.createElement("a"); a.href = r.url; a.download = r.name; a.click();
+                  });
+                }}
+              >
+                <Download className="mr-2 h-5 w-5" />
+                Download compressed PDF{results.length > 1 ? 's' : ''}
+              </Button>
+            </motion.div>
+
+            {/* Savings Info */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="flex items-center justify-center gap-6 py-6"
+            >
+              <SavingsRing percentage={savingsPercent} />
+              <div className="text-left">
+                <p className="text-sm text-muted-foreground">
+                  Your PDF{results.length > 1 ? 's are' : ' is'} now <span className="font-bold text-foreground">{savingsPercent}%</span> smaller!
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formatSize(totalOriginal)} → {formatSize(totalCompressed)}
+                </p>
               </div>
+            </motion.div>
+
+            {/* Continue to... related tools */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className="bg-card border border-border rounded-xl p-5"
+            >
+              <h3 className="text-sm font-bold text-foreground mb-4">Continue to...</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {relatedTools.map(tool => (
+                  <a 
+                    key={tool.path}
+                    href={tool.path}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary/50 transition-colors group"
+                  >
+                    <tool.icon className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm text-foreground font-medium">{tool.name}</span>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Start Over */}
+            <div className="text-center pt-2">
+              <Button 
+                variant="ghost" 
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => { setResults([]); setFileDataList([]); setFiles([]); }}
+              >
+                <RotateCw className="mr-2 h-4 w-4" /> Compress more PDFs
+              </Button>
             </div>
           </div>
+
         ) : files.length === 0 ? (
+          /* ── UPLOAD SCREEN ── */
           <ToolUploadScreen
             title="Compress PDF"
-            description="Reduce file size while optimization quality"
+            description="Reduce file size while optimizing quality"
             buttonLabel="Select PDF files"
             accept=".pdf"
             multiple={true}
             onFilesSelected={handleFilesChange}
           />
+
         ) : processing ? (
+          /* ── PROCESSING ── */
           <div className="mt-12 flex justify-center">
             <ProcessingView 
               files={files} 
@@ -299,80 +327,152 @@ const CompressPdf = () => {
               progress={progress} 
               onProcess={() => {}} 
               buttonText="" 
-              processingText="Optimizing your document..." 
-              estimateText="Reducing file size without compromising quality" 
+              processingText="Compressing your PDF..." 
+              estimateText="Optimizing images and reducing file size" 
             />
           </div>
+
         ) : (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col xl:flex-row overflow-hidden">
-             <div className="w-full xl:w-[400px] border-r border-border bg-card flex flex-col py-6 px-4">
-                <div className="px-4 mb-6 flex justify-between items-center">
-                   <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">Original Files ({fileDataList.length})</h2>
-                   <Button variant="ghost" size="sm" className="h-7 text-[9px] font-black uppercase tracking-widest" onClick={() => setFileDataList([])}>Reset</Button>
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                   {fileDataList.map((fd, i) => (
-                       <div key={fd.id} className="group p-3 rounded-2xl border border-border/40 bg-background hover:border-primary/30 transition-all flex items-center gap-3">
-                           <div className="w-12 h-16 bg-secondary/30 rounded-lg border border-border flex items-center justify-center shrink-0 overflow-hidden text-muted-foreground/30">
-                               {fd.previewUrl ? <img src={fd.previewUrl} className="w-full h-full object-contain p-1" alt="preview" /> : <FileBox className="h-6 w-6" />}
-                           </div>
-                           <div className="flex-1 min-w-0 pr-4">
-                               <p className="text-[11px] font-black text-foreground truncate">{fd.file.name}</p>
-                               <p className="text-[9px] font-bold text-muted-foreground mt-0.5 tracking-wider uppercase">{(fd.file.size / (1024 * 1024)).toFixed(2)} MB • {fd.pageCount} Pages</p>
-                           </div>
-                           <button onClick={() => setFileDataList(prev => prev.filter((_, idx) => idx !== i))} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted-foreground hover:text-red-500 rounded-lg transition-all"><X className="h-3.5 w-3.5" /></button>
-                       </div>
-                   ))}
-                </div>
-                <div className="pt-4 mt-auto border-t border-border border-dashed">
-                   <Button variant="outline" className="w-full h-10 rounded-xl text-[10px] font-black uppercase tracking-widest border-2" onClick={() => {}}>Add more files</Button>
-                </div>
-             </div>
+          /* ── FILE PREVIEW + COMPRESSION LEVEL ── */
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden">
+            
+            {/* Left: File Thumbnails Area */}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+              
+              <div className="relative z-10 flex flex-wrap gap-6 justify-center items-center max-w-3xl">
+                {fileDataList.map((fd, i) => (
+                  <motion.div 
+                    key={fd.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="group relative bg-card border border-border rounded-xl shadow-sm w-[180px] overflow-hidden hover:shadow-md transition-shadow"
+                  >
+                    {/* Remove button */}
+                    <button 
+                      onClick={() => removeFile(i)}
+                      className="absolute top-2 right-2 z-10 p-1 rounded-full bg-background/80 border border-border opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-white hover:border-destructive transition-all"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
 
-             <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative overflow-hidden">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+                    {/* Thumbnail */}
+                    <div className="w-full h-[200px] bg-secondary/20 flex items-center justify-center p-3">
+                      {fd.previewUrl ? (
+                        <img src={fd.previewUrl} className="max-w-full max-h-full object-contain rounded shadow-sm" alt="preview" />
+                      ) : (
+                        <FileBox className="h-12 w-12 text-muted-foreground/30" />
+                      )}
+                    </div>
+
+                    {/* File info */}
+                    <div className="p-3 border-t border-border/50">
+                      <p className="text-xs font-semibold text-foreground truncate">{fd.file.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {formatSize(fd.file.size)} • {fd.pageCount} page{fd.pageCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* Add more button */}
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative w-[60px] h-[60px] rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 flex items-center justify-center hover:scale-110 transition-transform"
+                >
+                  {fileDataList.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-[10px] font-bold text-primary-foreground rounded-full flex items-center justify-center border-2 border-background">
+                      {fileDataList.length}
+                    </span>
+                  )}
+                  <Plus className="h-6 w-6" />
+                </motion.button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) addMoreFiles(Array.from(e.target.files));
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Right: Compression Level Sidebar */}
+            <div className="w-full lg:w-[340px] border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col">
+              <div className="p-6 flex-1">
+                <h2 className="text-lg font-bold text-foreground mb-6">Compression level</h2>
                 
-                <div className="max-w-md w-full space-y-10 relative z-10">
-                   <div className="text-center">
-                       <h1 className="text-2xl font-black text-foreground uppercase tracking-tight mb-2">Compression Settings</h1>
-                       <p className="text-sm text-muted-foreground font-medium">Select the best mode for your needs</p>
-                   </div>
-
-                   <div className="grid grid-cols-1 gap-2">
-                       {[
-                           { id: 'extreme', label: 'Extreme Compression', desc: 'Less quality, high compression', icon: Sparkles, color: 'text-orange-500' },
-                           { id: 'recommended', label: 'Recommended', desc: 'Good quality, good compression', icon: CheckCircle2, color: 'text-green-500' },
-                           { id: 'basic', label: 'Basic Compression', desc: 'High quality, less compression', icon: Minimize2, color: 'text-blue-500' }
-                       ].map(m => (
-                           <button 
-                             key={m.id} 
-                             onClick={() => setMode(m.id as CompressMode)}
-                             className={cn("w-full p-5 rounded-3xl border-2 transition-all duration-300 text-left flex items-center gap-4 group", mode === m.id ? "border-primary bg-primary/[0.03] shadow-glow" : "border-border bg-card hover:border-primary/20")}
-                           >
-                               <div className={cn("p-3 rounded-2xl transition-all duration-300", mode === m.id ? "bg-primary text-white" : "bg-background text-muted-foreground group-hover:text-primary") }>
-                                   <m.icon className="h-5 w-5" />
-                               </div>
-                               <div className="flex-1 min-w-0">
-                                   <p className={cn("text-sm font-black uppercase tracking-widest leading-none mb-1", mode === m.id ? "text-primary" : "text-foreground")}>{m.label}</p>
-                                   <p className="text-[10px] text-muted-foreground font-medium opacity-60 truncate">{m.desc}</p>
-                               </div>
-                               {mode === m.id && <motion.div layoutId="mode-check" className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white"><ArrowRight className="h-3 w-3" /></motion.div>}
-                           </button>
-                       ))}
-                   </div>
-
-                   <div className="pt-6 border-t border-border border-dashed">
-                       <div className="flex justify-between items-baseline mb-6">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estimate</span>
-                           <span className="text-2xl font-black text-foreground tracking-tighter">~{(totalInFlight / (1024 * 1024) * 0.4).toFixed(2)} MB <span className="text-xs text-primary font-black uppercase ml-1 animate-pulse">-60%</span></span>
-                       </div>
-                       <Button size="lg" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/25 group relative overflow-hidden" onClick={startProcessing}>
-                           <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                           Compress PDF
-                       </Button>
-                   </div>
+                <div className="space-y-1">
+                  {[
+                    { id: 'extreme' as CompressMode, label: 'EXTREME COMPRESSION', desc: 'Less quality, high compression', color: 'text-primary' },
+                    { id: 'recommended' as CompressMode, label: 'RECOMMENDED COMPRESSION', desc: 'Good quality, good compression', color: 'text-primary' },
+                    { id: 'basic' as CompressMode, label: 'LESS COMPRESSION', desc: 'High quality, less compression', color: 'text-primary' }
+                  ].map(m => (
+                    <button 
+                      key={m.id} 
+                      onClick={() => setMode(m.id)}
+                      className={cn(
+                        "w-full text-left px-4 py-4 rounded-lg border-l-4 transition-all",
+                        mode === m.id 
+                          ? "border-l-primary bg-primary/5" 
+                          : "border-l-transparent hover:bg-secondary/30"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className={cn("text-sm font-bold tracking-wide", mode === m.id ? "text-primary" : "text-foreground")}>
+                            {m.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
+                        </div>
+                        {mode === m.id && (
+                          <motion.div layoutId="compress-check" className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 ml-3">
+                            <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                          </motion.div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-             </div>
+
+                {/* Estimate */}
+                <div className="mt-6 p-4 bg-secondary/20 rounded-xl border border-border/50">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground mb-1">
+                    <span>Original</span>
+                    <span>{formatSize(totalInFlight)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">Estimated</span>
+                    <span className="font-bold text-foreground">~{formatSize(estimatedSize)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs mt-1">
+                    <span className="text-muted-foreground">Savings</span>
+                    <span className="font-bold text-primary">~{estimatedSavings}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Compress Button */}
+              <div className="p-6 border-t border-border">
+                <Button 
+                  size="lg" 
+                  className="w-full h-14 rounded-xl font-bold text-lg shadow-xl shadow-primary/25 group relative overflow-hidden" 
+                  onClick={startProcessing}
+                  disabled={fileDataList.length === 0}
+                >
+                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  Compress PDF
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>

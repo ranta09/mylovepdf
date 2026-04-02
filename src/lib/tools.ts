@@ -7,7 +7,7 @@ import {
     Globe, FileCheck, GitCompare, ScanLine
 } from "lucide-react";
 
-export type ToolCategory = "pdf" | "image" | "convert" | "edit" | "merge" | "split" | "compress" | "protect";
+export type ToolCategory = "pdf" | "image" | "convert" | "edit" | "merge" | "split" | "compress" | "protect" | "ai";
 
 export interface PdfTool {
     id: string;
@@ -65,6 +65,7 @@ export const categoryColors: Record<ToolCategory, string> = {
     split: "bg-tool-split text-white",
     compress: "bg-tool-compress text-white",
     protect: "bg-tool-protect text-white",
+    ai: "bg-indigo-600 text-white",
 };
 
 export const categoryTextColors: Record<ToolCategory, string> = {
@@ -77,4 +78,5 @@ export const categoryTextColors: Record<ToolCategory, string> = {
     split: "text-tool-split",
     compress: "text-tool-compress",
     protect: "text-tool-protect",
+    ai: "text-indigo-600",
 };
