@@ -211,8 +211,8 @@ function buildTable(table: TableBlock, pageWidth: number): Table {
       bottom: { style: BorderStyle.SINGLE, size: 4, color: "AAAAAA" },
       left:   { style: BorderStyle.SINGLE, size: 4, color: "AAAAAA" },
       right:  { style: BorderStyle.SINGLE, size: 4, color: "AAAAAA" },
-      insideH: { style: BorderStyle.SINGLE, size: 2, color: "CCCCCC" },
-      insideV: { style: BorderStyle.SINGLE, size: 2, color: "CCCCCC" },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: "CCCCCC" },
+      insideVertical: { style: BorderStyle.SINGLE, size: 2, color: "CCCCCC" },
     },
     rows: table.rows.map((row, rowIdx) =>
       new TableRow({

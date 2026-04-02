@@ -80,9 +80,9 @@ export const unlockPdfDocument = async (
   // Strategy 2: AES-128 / RC4 using pdf-lib
   try {
     const pdfDoc = await PDFDocument.load(fileBytes, {
-      password: pass,
+      ignoreEncryption: true,
       updateMetadata: false,
-    });
+    } as any);
 
     const pages = pdfDoc.getPages();
     const newPdfDoc = await PDFDocument.create();

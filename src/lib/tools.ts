@@ -7,7 +7,7 @@ import {
     Globe, FileCheck, GitCompare, ScanLine
 } from "lucide-react";
 
-export type ToolCategory = "pdf" | "image" | "convert" | "edit" | "merge" | "split" | "compress" | "protect";
+export type ToolCategory = "pdf" | "image" | "convert" | "edit" | "merge" | "split" | "compress" | "protect" | "ai";
 
 export interface PdfTool {
     id: string;
