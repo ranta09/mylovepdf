@@ -1,7 +1,23 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+const DID_YOU_KNOW_TIPS = [
+  "Use the 'Edit Text' tool to revise the content in your document",
+  "You can merge multiple PDFs into one with our Merge PDF tool",
+  "Our Compress PDF can reduce file sizes by up to 95%",
+  "You can convert PDFs to Word while keeping the original layout",
+  "Add watermarks to protect your documents from unauthorized use",
+  "Our OCR tool can extract text from scanned documents",
+  "You can add page numbers to your PDF in just a few clicks",
+  "Protect your PDF with a password using our Protect PDF tool",
+  "Split large PDFs into smaller files for easy sharing",
+  "Convert your PDFs to PowerPoint for editable presentations",
+  "Remove pages from a PDF without any software installation",
+  "Our tools process files locally — your data never leaves your browser",
+];
 
 interface ProcessingViewProps {
     files: File[];
@@ -28,6 +44,16 @@ const ProcessingView = ({
     error = null,
     onRetry
 }: ProcessingViewProps) => {
+    const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * DID_YOU_KNOW_TIPS.length));
+
+    useEffect(() => {
+        if (!processing) return;
+        const interval = setInterval(() => {
+            setTipIndex((prev) => (prev + 1) % DID_YOU_KNOW_TIPS.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [processing]);
+
     if (files.length === 0) return null;
 
     return (
@@ -71,40 +97,47 @@ const ProcessingView = ({
                 
                 /* During Processing */
                 (
-                    <div className="w-full max-w-md space-y-6 text-center bg-card border border-border/50 shadow-sm rounded-3xl p-8">
-                        {/* Animated Spinner Icon */}
-                        <div className="relative mx-auto w-16 h-16 flex items-center justify-center mb-2">
-                           <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
-                           <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" style={{ animationDuration: '1.2s' }} />
-                           <Loader2 className="h-6 w-6 text-primary absolute animate-pulse" />
-                        </div>
+                    <div className="w-full max-w-lg space-y-6 text-center bg-card border border-border/50 shadow-lg rounded-3xl p-8">
+                        <h3 className="text-xl font-bold text-foreground">
+                            Processing your document...
+                        </h3>
 
-                        <div>
-                            <h3 className="text-lg font-bold text-foreground mb-1">
-                                {processingText}
-                            </h3>
-                            {estimateText && (
-                                <p className="text-sm text-muted-foreground">{estimateText}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground">
-                                <span>Progress</span>
-                                <span className={cn("transition-colors", progress > 0 ? "text-primary" : "")}>{progress}%</span>
-                            </div>
-                            
-                            {/* Real Animated Custom Progress Bar */}
-                            <div className="h-4 w-full bg-secondary rounded-full overflow-hidden p-0.5 border border-border/50 shadow-inner">
+                        {/* Progress Bar */}
+                        <div className="space-y-3">
+                            <div className="h-3 w-full bg-secondary rounded-full overflow-hidden border border-border/30">
                                 <motion.div
-                                    className="h-full bg-primary rounded-full shadow-glow relative overflow-hidden"
+                                    className="h-full bg-primary rounded-full relative overflow-hidden"
                                     initial={{ width: "0%" }}
-                                    animate={{ width: `${Math.max(progress, 2)}%` }} // Minimum width for visibility
+                                    animate={{ width: `${Math.max(progress, 2)}%` }}
                                     transition={{ type: "spring", stiffness: 50, damping: 15 }}
                                 >
-                                    {/* Shimmer Effect */}
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
                                 </motion.div>
+                            </div>
+                            <p className="text-lg font-bold text-foreground">{progress}%</p>
+                        </div>
+
+                        {/* Did You Know Card */}
+                        <div className="bg-primary rounded-2xl p-5 text-left flex items-center gap-4">
+                            <div className="shrink-0 w-12 h-12 bg-primary-foreground/20 rounded-xl flex items-center justify-center">
+                                <Loader2 className="h-6 w-6 text-primary-foreground animate-spin" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <span className="inline-block bg-primary-foreground/20 text-primary-foreground text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mb-1.5">
+                                    Did you know?
+                                </span>
+                                <AnimatePresence mode="wait">
+                                    <motion.p
+                                        key={tipIndex}
+                                        initial={{ opacity: 0, y: 6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -6 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="text-sm font-semibold text-primary-foreground leading-relaxed"
+                                    >
+                                        {DID_YOU_KNOW_TIPS[tipIndex]}
+                                    </motion.p>
+                                </AnimatePresence>
                             </div>
                         </div>
                     </div>
