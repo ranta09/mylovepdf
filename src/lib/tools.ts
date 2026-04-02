@@ -65,6 +65,7 @@ export const categoryColors: Record<ToolCategory, string> = {
     split: "bg-tool-split text-white",
     compress: "bg-tool-compress text-white",
     protect: "bg-tool-protect text-white",
+    ai: "bg-indigo-600 text-white",
 };
 
 export const categoryTextColors: Record<ToolCategory, string> = {
