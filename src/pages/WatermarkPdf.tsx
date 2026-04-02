@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import BatchProcessingView from "@/components/BatchProcessingView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -183,9 +183,16 @@ const WatermarkPdf = () => {
       metaDescription="Add text or image watermarks to your PDF online for free. Customize position, opacity, rotation, and tiling. Apply to all pages or a custom range. No sign-up."
       toolId="watermark" hideHeader={files.length > 0}>
 
-      <div className="mt-5">
-        {!files.length && <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select PDFs to watermark" multiple={true} />}
-      </div>
+      {!files.length && (
+        <ToolUploadScreen
+          title="Add Watermark"
+          description="Stamp text or image watermarks on your PDF pages"
+          buttonLabel="Select PDF files"
+          accept=".pdf"
+          multiple={true}
+          onFilesSelected={setFiles}
+        />
+      )}
 
       {files.length > 0 && !processing && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-30 bg-background flex flex-col lg:flex-row overflow-hidden select-none">

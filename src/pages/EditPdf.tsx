@@ -3,7 +3,7 @@ import ToolSeoSection from "@/components/ToolSeoSection";
 import ToolLayout from "@/components/ToolLayout";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -600,8 +600,14 @@ const EditPdf = () => {
 
         {/* Upload state */}
         {!file && !loading && (
-          <FileUpload accept=".pdf" multiple={false} files={[]} onFilesChange={handleFiles}
-            label="Drop your PDF here to start editing" />
+          <ToolUploadScreen
+            title="Edit PDF Online"
+            description="Drop your PDF here to start editing"
+            buttonLabel="Select PDF file"
+            accept=".pdf"
+            multiple={false}
+            onFilesSelected={handleFiles}
+          />
         )}
 
         {loading && (

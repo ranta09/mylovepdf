@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
@@ -34,7 +34,7 @@ import {
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -98,7 +98,7 @@ const MergePdf = () => {
   // Generate unique IDs
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const handleFilesChange = async (newFiles: File[]) => {
+  const handleFilesChange = useCallback(async (newFiles: File[]) => {
     if (newFiles.length === 0) return;
 
     setLoadingThumbnails(true);
@@ -156,7 +156,7 @@ const MergePdf = () => {
     } finally {
       setLoadingThumbnails(false);
     }
-  };
+  }, [activeFileId]);
 
   const removeFile = (fileId: string) => {
     setFiles(files.filter(f => f.id !== fileId));
@@ -564,9 +564,14 @@ const MergePdf = () => {
 
       <div className="mt-2 flex flex-col h-full">
         {files.length === 0 ? (
-          <div className="mt-5">
-            <FileUpload accept=".pdf" multiple={true} files={files.map(f => f.file)} onFilesChange={(newFiles) => handleFilesChange(newFiles)} label="Select PDF files to merge" />
-          </div>
+          <ToolUploadScreen
+            title="Merge PDF files"
+            description="Combine multiple PDFs into one document"
+            buttonLabel="Select PDF files"
+            accept=".pdf"
+            multiple={true}
+            onFilesSelected={(newFiles) => handleFilesChange(newFiles)}
+          />
         ) : processing ? (
           <div className="mt-8 flex justify-center w-full">
             <ProcessingView 

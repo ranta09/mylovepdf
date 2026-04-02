@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -295,13 +295,16 @@ const TranslatePdf = () => {
         {results.length === 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
 
-            {/* Standard File Upload */}
-            <FileUpload
-              onFilesChange={handleFiles}
-              files={files}
-              accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.rtf,.odt"
-              label="Upload documents"
-            />
+            {files.length === 0 && (
+              <ToolUploadScreen
+                title="Translate PDF"
+                description="AI-powered document translation into 65+ languages"
+                buttonLabel="Upload documents"
+                accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.rtf,.odt"
+                multiple={true}
+                onFilesSelected={handleFiles}
+              />
+            )}
 
             {/* Document Info Card: shown after upload */}
             {fileMeta && (

@@ -4,7 +4,7 @@ import { FileSpreadsheet, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCh
 import { useEffect } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import BatchProcessingView, { BatchProcessingResult } from "@/components/BatchProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
@@ -341,13 +341,16 @@ const ExcelToPdf = () => {
         </div>
       )}
 
-      <div className="mt-5">
-        {files.length === 0 && !processing && results.length === 0 && (
-          <div className="mt-10 text-center">
-            <FileUpload accept=".xls,.xlsx" files={[]} onFilesChange={handleFilesChange} label="Select Excel files to convert" multiple />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && !processing && results.length === 0 && (
+        <ToolUploadScreen
+          title="Excel to PDF"
+          description="Convert Excel spreadsheets to professional PDF format"
+          buttonLabel="Select Excel files"
+          accept=".xls,.xlsx"
+          multiple={true}
+          onFilesSelected={handleFilesChange}
+        />
+      )}
       <ToolSeoSection
         toolName="Excel to PDF Converter"
         category="convert"

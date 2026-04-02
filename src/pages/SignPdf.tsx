@@ -4,7 +4,7 @@ import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { applySignaturesToPdf, PlacedElement, ElementType } from "@/lib/signPdfEngine";
 import { PenTool, Loader2, ShieldCheck, X, Type, Calendar, CheckSquare, Image as ImageIcon, Undo, Redo, ZoomIn, ZoomOut, CheckCircle2, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -670,9 +670,17 @@ const SignPdf = () => {
       
       {/* ── BEFORE UPLOAD: SEO AND DRAG-DROP AREA ─────────────────────── */}
       {!files.length && !processing && results.length === 0 && (
-        <div className="mt-10">
-          <FileUpload accept=".pdf" files={files} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF to sign" multiple={false} />
-          <ToolSeoSection
+        <ToolUploadScreen
+          title="Sign PDF"
+          description="Draw, type, or upload your signature to instantly sign documents"
+          buttonLabel="Select PDF to sign"
+          accept=".pdf"
+          multiple={false}
+          onFilesSelected={(f) => setFiles(f.slice(0, 1))}
+        />
+      )}
+      {!files.length && !processing && results.length === 0 && (
+        <ToolSeoSection
             toolName="Sign PDF Online"
             category="edit"
             intro="MagicDocx Sign PDF lets you add your handwritten or typed signature to any PDF document directly in your browser. Draw your signature using your mouse or finger on a canvas pad, type out a signature in a stylized script font, or upload an existing signature image. Drag the signature onto any position on any page, resize it, and download your signed PDF instantly. All signing is done client-side | no file is ever uploaded to any server."
@@ -692,7 +700,6 @@ const SignPdf = () => {
             schemaName="Sign PDF Online"
             schemaDescription="Free online PDF signing tool. Draw, type, or upload your signature and place it on any PDF page. 100% browser-based, no upload."
           />
-        </div>
       )}
     </ToolLayout>
   );

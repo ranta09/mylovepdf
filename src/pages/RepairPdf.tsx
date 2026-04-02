@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -219,9 +219,16 @@ const RepairPdf = () => {
     <ToolLayout title="Repair PDF" description="Advanced Structural Recovery" category="edit" icon={<Wrench className="h-7 w-7" />}
       metaTitle="Repair PDF Online Free – Fix Corrupted PDFs | MagicDocx" metaDescription="Repair corrupted or broken PDF files online for free. Advanced structural recovery with automatic diagnostics. No sign-up required." toolId="repair" hideHeader={files.length > 0}>
 
-      <div className="mt-5">
-        {!files.length && <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a corrupted PDF" />}
-      </div>
+      {!files.length && (
+        <ToolUploadScreen
+          title="Repair PDF"
+          description="Advanced structural recovery for corrupted PDF files"
+          buttonLabel="Select corrupted PDF"
+          accept=".pdf"
+          multiple={false}
+          onFilesSelected={setFiles}
+        />
+      )}
 
       {files.length > 0 && !results && (
         <div className="fixed top-16 inset-x-0 bottom-0 z-30 bg-background flex flex-col lg:flex-row overflow-hidden select-none">

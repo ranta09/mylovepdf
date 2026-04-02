@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -73,23 +73,23 @@ const JpgToPdf = () => {
     setPreviews(newPreviews);
   };
 
-  const handleFilesChange = (newFiles: File[]) => {
+  const handleFilesChange = useCallback((newFiles: File[]) => {
     const validFiles: File[] = [];
     const newPreviews: string[] = [];
     
     for (const file of newFiles) {
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (['jpg', 'jpeg'].includes(ext || '')) {
+      if (['jpg', 'jpeg', 'png', 'webp'].includes(ext || '')) {
         validFiles.push(file);
         newPreviews.push(URL.createObjectURL(file));
       } else {
-        toast.error(`Unsupported file: ${file.name}. This tool supports JPG and JPEG images only.`);
+        toast.error(`Unsupported file: ${file.name}. This tool supports image files only.`);
       }
     }
     
     setFiles(prev => [...prev, ...validFiles]);
     setPreviews(prev => [...prev, ...newPreviews]);
-  };
+  }, []);
 
   const moveFile = (from: number, to: number) => {
     if (to < 0 || to >= files.length) return;
@@ -396,15 +396,14 @@ const JpgToPdf = () => {
       )}
 
       {files.length === 0 && !processing && results.length === 0 && (
-        <div className="mt-8 text-center uppercase">
-          <FileUpload 
-            accept=".jpg,.jpeg" 
-            files={[]} 
-            onFilesChange={handleFilesChange} 
-            label="Select JPG or JPEG images to convert" 
-            multiple
-          />
-        </div>
+        <ToolUploadScreen
+          title="JPG to PDF"
+          description="Convert JPG images into a high-quality PDF document"
+          buttonLabel="Select JPG images"
+          accept=".jpg,.jpeg"
+          multiple={true}
+          onFilesSelected={handleFilesChange}
+        />
       )}
 
       <ToolSeoSection

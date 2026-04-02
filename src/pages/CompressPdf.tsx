@@ -1,464 +1,401 @@
-import { useState, useEffect, useRef } from "react";
-import ToolSeoSection from "@/components/ToolSeoSection";
-import { PDFDocument, degrees } from "pdf-lib";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Minimize2, Settings, FileBox, CheckCircle2, ArrowRight, Download, Share2, Upload, AlertCircle, Loader2, Layout, Zap, X, RotateCw, RefreshCw, Plus, ShieldCheck, Merge, Scissors, FileText, LayoutGrid } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
+import { 
+  Minimize2, 
+  CheckCircle2, 
+  Download, 
+  RotateCw, 
+  X, 
+  FileBox, 
+  Zap, 
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+  Merge,
+  Scissors,
+  FileText
+} from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
-import BatchProcessingView from "@/components/BatchProcessingView";
+import ToolSeoSection from "@/components/ToolSeoSection";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 
 // Set worker path for pdfjs
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-type CompressMode = 'recommended' | 'high' | 'low' | 'custom';
+// --- DB Utility for Persistent Results ---
+const DB_NAME = "MagicDocxDB";
+const STORE_NAME = "CompressSessions";
+
+const saveSession = async (results: any[]) => {
+  try {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME);
+    request.onsuccess = () => {
+      const db = request.result;
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).put(results, "last-result");
+    };
+  } catch (e) { console.error("DB Save Fail", e); }
+};
+
+const loadSession = (): Promise<any[] | null> => {
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains(STORE_NAME)) {
+          request.result.createObjectStore(STORE_NAME);
+        }
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+           resolve(null); return;
+        }
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const get = tx.objectStore(STORE_NAME).get("last-result");
+        get.onsuccess = () => resolve(get.result || null);
+        get.onerror = () => resolve(null);
+      };
+      request.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+};
+
+const clearSession = async () => {
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onsuccess = () => {
+    const db = request.result;
+    if (db.objectStoreNames.contains(STORE_NAME)) {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).delete("last-result");
+    }
+  };
+};
+
+type CompressMode = 'extreme' | 'recommended' | 'basic';
 
 interface FileData {
   file: File;
   previewUrl: string;
   pageCount: number;
   rotation: number;
+  id: string;
 }
 
 interface ProcessedFile {
-  originalFile: File;
-  compressedBlob: Blob;
-  compressedUrl: string;
+  name: string;
   originalSize: number;
   compressedSize: number;
+  url: string;
+  blob: Blob;
 }
 
-const formatSize = (bytes: number): string => {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
-};
+const SavingsRing = ({ percentage }: { percentage: number }) => (
+  <div className="relative w-32 h-32 flex items-center justify-center">
+    <svg className="w-full h-full transform -rotate-90">
+      <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-secondary" />
+      <motion.circle
+        cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent"
+        className="text-primary"
+        strokeDasharray={364.4}
+        initial={{ strokeDashoffset: 364.4 }}
+        animate={{ strokeDashoffset: 364.4 - (364.4 * percentage) / 100 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+      />
+    </svg>
+    <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <span className="text-3xl font-black text-foreground">{percentage}%</span>
+      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Smaller</span>
+    </div>
+  </div>
+);
 
 const CompressPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileDataList, setFileDataList] = useState<FileData[]>([]);
   const [mode, setMode] = useState<CompressMode>('recommended');
-  const [customTargetKB, setCustomTargetKB] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [processing, setProcessing] = useState(false);
-  const { setDisableGlobalFeatures } = useGlobalUpload();
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ProcessedFile[]>([]);
+  const { setDisableGlobalFeatures, globalFiles, clearGlobalFiles } = useGlobalUpload();
+
+  // --- Session Hydration ---
+  useEffect(() => {
+    loadSession().then(saved => { if (saved) setResults(saved); });
+  }, []);
 
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
+    setDisableGlobalFeatures(files.length > 0 || results.length > 0);
     return () => setDisableGlobalFeatures(false);
-  }, [files, setDisableGlobalFeatures]);
+  }, [files, results, setDisableGlobalFeatures]);
 
-  // Cleanup object URLs
-  useEffect(() => {
-    return () => {
-      fileDataList.forEach(fd => URL.revokeObjectURL(fd.previewUrl));
-    };
-  }, [fileDataList]);
-
-  const loadFilePreviews = async (newFiles: File[]) => {
-    const newData: FileData[] = [];
-    for (const file of newFiles) {
+  const generatePreviews = useCallback(async (pdfs: File[]) => {
+    const list: FileData[] = [];
+    for (const f of pdfs) {
       try {
-        const arrayBuffer = await file.arrayBuffer();
+        const arrayBuffer = await f.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-
+        const viewport = page.getViewport({ scale: 0.5 });
         const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        if (context) {
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          await page.render({ canvasContext: context, viewport }).promise;
-          const previewUrl = canvas.toDataURL("image/jpeg", 0.8);
-          newData.push({ file, previewUrl, pageCount: pdf.numPages, rotation: 0 });
-        }
-      } catch (err) {
-        console.error("Error generating preview:", err);
-        newData.push({ file, previewUrl: "", pageCount: 0, rotation: 0 }); // Fallback
+        const ctx = canvas.getContext("2d");
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        await page.render({ canvasContext: ctx!, viewport }).promise;
+        list.push({ file: f, previewUrl: canvas.toDataURL(), pageCount: pdf.numPages, rotation: 0, id: Math.random().toString(36).slice(2) });
+      } catch (e) {
+        console.error("Preview fail", e);
+        list.push({ file: f, previewUrl: "", pageCount: 0, rotation: 0, id: Math.random().toString(36).slice(2) });
       }
     }
-    setFileDataList(newData);
-  };
+    return list;
+  }, []);
 
-  const handleFilesChange = (newFiles: File[]) => {
-    setFiles(newFiles);
-    if (newFiles.length > 0) {
-      loadFilePreviews(newFiles);
-    } else {
-      setFileDataList([]);
-    }
-  };
+  const handleFilesChange = useCallback(async (newFiles: File[]) => {
+    const pdfs = newFiles.filter(f => f.name.toLowerCase().endsWith(".pdf"));
+    if (pdfs.length === 0) return;
+    setFiles(pdfs);
+    const pd = await generatePreviews(pdfs);
+    setFileDataList(pd);
+    setResults([]);
+    clearSession();
+  }, [generatePreviews]);
 
+  // --- Handoff Logic ---
   useEffect(() => {
-    setDisableGlobalFeatures(files.length > 0);
-  }, [files, setDisableGlobalFeatures]);
-
-  const handleAddFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = Array.from(e.target.files || []);
-    if (newFiles.length > 0) {
-      const mergedFiles = [...files, ...newFiles];
-      setFiles(mergedFiles);
-
-      // Load previews ONLY for the new files and append
-      const loadMorePreviews = async () => {
-        const newData: FileData[] = [];
-        for (const file of newFiles) {
-          try {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const page = await pdf.getPage(1);
-            const viewport = page.getViewport({ scale: 1.5 });
-
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-            if (context) {
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              await page.render({ canvasContext: context, viewport }).promise;
-              const previewUrl = canvas.toDataURL("image/jpeg", 0.8);
-              newData.push({ file, previewUrl, pageCount: pdf.numPages, rotation: 0 });
-            }
-          } catch (err) {
-            console.error("Error generating preview:", err);
-            newData.push({ file, previewUrl: "", pageCount: 0, rotation: 0 });
-          }
-        }
-        setFileDataList(prev => [...prev, ...newData]);
-      };
-      loadMorePreviews();
+    if (globalFiles.length > 0) {
+      handleFilesChange(globalFiles);
+      clearGlobalFiles();
     }
+  }, [globalFiles, handleFilesChange, clearGlobalFiles]);
+
+  const compressSinglePdf = async (file: File, m: CompressMode, onP: (p: number) => void) => {
+    const bytes = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const out = await PDFDocument.create();
+    
+    // Config based on mode
+    const config = m === 'extreme' ? { dpi: 72, q: 0.4 } : m === 'recommended' ? { dpi: 120, q: 0.7 } : { dpi: 200, q: 0.85 };
+    const scale = config.dpi / 72;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        onP(Math.round((i / pdf.numPages) * 90));
+        const page = await pdf.getPage(i);
+        const vp = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        canvas.width = vp.width; canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
+        const jpg = await new Promise<Blob>(r => canvas.toBlob(blob => r(blob!), "image/jpeg", config.q));
+        const img = await out.embedJpg(await jpg.arrayBuffer());
+        const origVp = page.getViewport({ scale: 1 });
+        const p = out.addPage([origVp.width, origVp.height]);
+        p.drawImage(img, { x: 0, y: 0, width: origVp.width, height: origVp.height });
+    }
+    const raw = await out.save({ useObjectStreams: true });
+    return new Blob([new Uint8Array(raw)], { type: "application/pdf" });
   };
 
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    setFileDataList(prev => {
-      const newList = prev.filter((_, i) => i !== index);
-      // Revoke the URL of the removed file to prevent leaks
-      if (prev[index]?.previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(prev[index].previewUrl);
+  const startProcessing = async () => {
+    setProcessing(true);
+    const newRes: ProcessedFile[] = [];
+    try {
+      for (const fd of fileDataList) {
+        const compressed = await compressSinglePdf(fd.file, mode, (p) => setProgress(p));
+        newRes.push({
+          name: fd.file.name.replace(/\.pdf$/, "_compressed.pdf"),
+          originalSize: fd.file.size,
+          compressedSize: compressed.size,
+          url: URL.createObjectURL(compressed),
+          blob: compressed
+        });
       }
-      return newList;
-    });
-  };
-
-  const rotateFile = (index: number) => {
-    setFileDataList(prev => prev.map((item, i) =>
-      i === index ? { ...item, rotation: (item.rotation + 90) % 360 } : item
-    ));
-  };
-
-  // Estimate compressed size based on page count and DPI/quality settings
-  const estimateCompressedSize = (): number => {
-    const totalPages = fileDataList.reduce((acc, fd) => acc + fd.pageCount, 0);
-    if (totalPages === 0) return 0;
-
-    const configs: Record<string, { dpi: number; quality: number }> = {
-      recommended: { dpi: 150, quality: 0.75 },
-      high: { dpi: 96, quality: 0.60 },
-      low: { dpi: 200, quality: 0.85 },
-      custom: { dpi: 120, quality: 0.70 },
-    };
-
-    let config = configs[mode] || configs.recommended;
-
-    if (mode === 'custom' && customTargetKB) {
-      const targetBytes = parseFloat(customTargetKB) * 1024;
-      if (targetBytes > 0) return targetBytes;
+      setResults(newRes);
+      saveSession(newRes);
+      setFiles([]);
+      toast.success("PDFs compressed successfully!");
+    } catch (e) {
+      toast.error("Compression failed. Please try again.");
+    } finally {
+      setProcessing(false);
     }
-
-    const widthPx = 8.27 * config.dpi;
-    const heightPx = 11.69 * config.dpi;
-    const totalPixels = widthPx * heightPx;
-    const bytesPerPage = totalPixels * config.quality * 0.15;
-    const pdfOverhead = totalPages * 5000 + 2000;
-
-    return Math.round(bytesPerPage * totalPages + pdfOverhead);
   };
 
-  const totalOriginalSize = files.reduce((acc, f) => acc + f.size, 0);
-  const estimatedSize = Math.min(totalOriginalSize, estimateCompressedSize());
-  const reductionPercentage = totalOriginalSize > 0
-    ? Math.round(((totalOriginalSize - estimatedSize) / totalOriginalSize) * 100)
-    : 0;
-
-  const compressSinglePdf = async (
-    file: File,
-    dpi: number,
-    quality: number,
-    onProgress: (p: number) => void
-  ): Promise<{ blob: Blob; originalSize: number; compressedSize: number }> => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const numPages = pdfDoc.numPages;
-    const outDoc = await PDFDocument.create();
-    const scale = dpi / 72;
-
-    for (let i = 1; i <= numPages; i++) {
-      onProgress(Math.round((i / numPages) * 90));
-
-      const page = await pdfDoc.getPage(i);
-      const viewport = page.getViewport({ scale });
-
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d")!;
-      await page.render({ canvasContext: ctx, viewport }).promise;
-
-      const jpegBlob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob(
-          (blob) => resolve(blob!),
-          "image/jpeg",
-          quality
-        );
-      });
-
-      const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
-      const jpegImage = await outDoc.embedJpg(jpegBytes);
-      const origViewport = page.getViewport({ scale: 1 });
-      const pdfPage = outDoc.addPage([origViewport.width, origViewport.height]);
-      pdfPage.drawImage(jpegImage, {
-        x: 0,
-        y: 0,
-        width: origViewport.width,
-        height: origViewport.height,
-      });
-    }
-
-    outDoc.setProducer("MagicDOCX");
-    outDoc.setCreator("MagicDOCX");
-    onProgress(95);
-
-    const compressedBytes = await outDoc.save({ useObjectStreams: true });
-    const blob = new Blob([compressedBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-
-    return { blob, originalSize: file.size, compressedSize: blob.size };
-  };
-
-
+  const totalOriginalResults = results.reduce((acc, r) => acc + r.originalSize, 0);
+  const totalCompressed = results.reduce((acc, r) => acc + r.compressedSize, 0);
+  const totalSaved = totalOriginalResults - totalCompressed;
+  const savingsPercent = totalOriginalResults > 0 ? Math.round((totalSaved / totalOriginalResults) * 100) : 0;
+  const totalInFlight = fileDataList.reduce((acc, f) => acc + f.file.size, 0);
 
   return (
-    <ToolLayout title="Compress PDF Online" description="Reduce PDF file size without losing quality" category="compress" icon={<Minimize2 className="h-7 w-7" />} metaTitle="Compress PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Compress PDF files to reduce size online for free. Choose strong, recommended, or professional compression. Fast, secure, and no installation needed." toolId="compress" hideHeader={files.length > 0}>
-      <div className="mt-2 text-left">
-        {files.length === 0 && !processing && (
-          <div className="mt-10 text-center">
-            <FileUpload
-              accept=".pdf"
-              files={files}
-              onFilesChange={handleFilesChange}
-              label="Select PDF files to compress"
-            />
-          </div>
-        )}
-        {files.length > 0 && !processing && (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col lg:flex-row overflow-hidden">
-            {/* LEFT SIDE: Thumbnails Grid (Small Window Preview) */}
-            <div className="w-full lg:w-[60%] border-b lg:border-b-0 lg:border-r border-border bg-secondary/5 flex flex-col h-[50vh] lg:h-full overflow-hidden shrink-0">
-              <div className="p-4 border-b border-border bg-background/50 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setFiles([]); setFileDataList([]); }}
-                    className="h-8 w-8 p-0 rounded-full hover:bg-secondary/20"
-                  >
-                    <ArrowRight className="h-4 w-4 rotate-180" />
+    <ToolLayout 
+      title="Compress PDF Online" 
+      description="Reduce PDF file size without losing quality" 
+      category="compress" 
+      icon={<Minimize2 className="h-7 w-7" />}
+      metaTitle="Compress PDF Online - FAST & FREE | MagicDOCX" 
+      metaDescription="Compress PDF files online for free. Reduce file size while keeping the highest quality possible. No signup required." 
+      toolId="compress" 
+      hideHeader={files.length > 0 || results.length > 0}
+    >
+      <div className="mt-2 flex flex-col h-full">
+        {results.length > 0 ? (
+          <div className="mt-8 mx-auto max-w-2xl w-full space-y-8 pb-20">
+            <div className="bg-card border border-border/60 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl text-center">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-bl-full -z-0"></div>
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="mb-8">
+                  <SavingsRing percentage={savingsPercent} />
+                </div>
+                <h2 className="text-2xl font-black text-foreground uppercase tracking-tight mb-2">Great job!</h2>
+                <p className="text-muted-foreground font-medium mb-8">You've saved {(totalSaved / (1024 * 1024)).toFixed(2)} MB of space.</p>
+                
+                <div className="grid grid-cols-2 gap-4 w-full max-w-sm mb-10">
+                  <div className="bg-secondary/30 p-4 rounded-2xl border border-border/40">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Before</p>
+                    <p className="text-lg font-black text-muted-foreground line-through opacity-50">{(totalOriginalResults / (1024 * 1024)).toFixed(2)} MB</p>
+                  </div>
+                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20">
+                    <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">After</p>
+                    <p className="text-lg font-black text-foreground">{(totalCompressed / (1024 * 1024)).toFixed(2)} MB</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                  <Button size="lg" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-[0.15em] shadow-glow" onClick={() => {
+                      results.forEach(r => {
+                          const a = document.createElement("a"); a.href = r.url; a.download = r.name; a.click();
+                      });
+                  }}>
+                    <Download className="mr-2 h-4 w-4" /> Download Files
                   </Button>
-                  <div className="h-4 w-[1px] bg-border mx-1" />
-                  <div className="flex items-center gap-2 text-left">
-                    <FileBox className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">{files.length} Files</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setFiles([]); setFileDataList([]); }}
-                    className="h-8 text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/5 px-3"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> Reset
-                  </Button>
-                  <input type="file" ref={fileInputRef} onChange={handleAddFiles} accept=".pdf" multiple className="hidden" />
-                </div>
-              </div>
-
-              <ScrollArea className="flex-1">
-                <div className="p-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {fileDataList.map((fd, idx) => (
-                      <div key={idx} className="group flex flex-col gap-2 p-2 bg-background border border-border hover:border-primary/50 rounded-xl transition-all duration-200 text-left relative">
-                        <div className="aspect-[3/4] w-full bg-secondary/30 rounded-lg overflow-hidden flex items-center justify-center relative shadow-sm border border-border/10">
-                          {fd.previewUrl ? (
-                            <img src={fd.previewUrl} alt="Preview" className="w-full h-full object-contain" style={{ transform: `rotate(${fd.rotation}deg)` }} />
-                          ) : (
-                            <FileBox className="h-8 w-8 text-muted-foreground/30" />
-                          )}
-                          <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button onClick={() => rotateFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-primary transition-colors shadow-sm border border-border/50"><RotateCw className="h-3 w-3" /></button>
-                            <button onClick={() => removeFile(idx)} className="p-1.5 bg-background/90 backdrop-blur-sm rounded-md hover:text-destructive transition-colors shadow-sm border border-border/50"><X className="h-3 w-3" /></button>
-                          </div>
-                          <div className="absolute bottom-1 left-1 bg-background/80 backdrop-blur-sm text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm uppercase text-muted-foreground">
-                            {idx + 1}
-                          </div>
-                        </div>
-                        <div className="px-1 min-w-0">
-                          <p className="text-[9px] font-bold text-foreground uppercase tracking-tight truncate">{fd.file.name}</p>
-                          <p className="text-[8px] font-bold text-primary uppercase">{formatSize(fd.file.size)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="aspect-[3/4] border-2 border-dashed border-border hover:border-primary/50 rounded-xl flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
-                    >
-                      <Plus className="h-5 w-5" />
-                      Add More
-                    </button>
-                  </div>
-                </div>
-              </ScrollArea>
-            </div>
-
-            {/* RIGHT SIDE: Workbench Settings */}
-            <div className="flex-1 bg-secondary/10 flex flex-col p-6 lg:pt-8 lg:pb-12 lg:px-12 overflow-y-auto">
-              <div className="max-w-xl mx-auto lg:mx-0 w-full space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-background border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -z-0" />
-                    <div className="relative z-10 space-y-1">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Weight</p>
-                      <p className="text-3xl font-bold text-foreground tracking-tighter">{formatSize(totalOriginalSize)}</p>
-                    </div>
-                  </div>
-                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-0" />
-                    <div className="relative z-10 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Post Estimation</p>
-                        <span className="bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse shadow-glow">-{reductionPercentage}%</span>
-                      </div>
-                      <p className="text-3xl font-bold text-primary tracking-tighter">{formatSize(estimatedSize)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-background border border-border rounded-3xl p-8 space-y-8 shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-2xl">
-                      <Zap className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex flex-col">
-                      <h3 className="text-base font-bold uppercase tracking-tighter">Compression Engine</h3>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Advanced neural optimization active</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    {[
-                      { id: 'high', label: 'Strong Compression', desc: 'Smaller files and lower quality', icon: Minimize2, color: 'text-primary' },
-                      { id: 'recommended', label: 'Recommended', desc: 'Balanced size and quality', icon: CheckCircle2, color: 'text-green-500' },
-                      { id: 'low', label: 'Professional', desc: 'Best quality and minimal compression', icon: FileBox, color: 'text-blue-500' }
-                    ].map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => setMode(m.id as CompressMode)}
-                        className={cn(
-                          "flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all duration-300 group relative overflow-hidden",
-                          mode === m.id ? "border-primary bg-primary/5 shadow-inner" : "border-border bg-background hover:border-primary/20"
-                        )}
-                      >
-                        <m.icon className={cn("h-6 w-6 shrink-0", mode === m.id ? m.color : "text-muted-foreground/40")} />
-                        <div className="flex flex-col">
-                          <p className={cn("text-[11px] font-bold uppercase tracking-widest", mode === m.id ? "text-foreground" : "text-muted-foreground")}>{m.label}</p>
-                          <p className="text-[9px] font-medium text-muted-foreground/40 uppercase leading-none tracking-tight">{m.desc}</p>
-                        </div>
-                        {mode === m.id && <div className="ml-auto"><CheckCircle2 className="h-4 w-4 text-primary" /></div>}
-                      </button>
-                    ))}
-                  </div>
-
-                  <Button
-                    onClick={() => { if(files.length > 0) setProcessing(true); }}
-                    size="lg"
-                    className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all gap-4 group"
-                  >
-                    Start Neural Compression
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <Button size="lg" variant="outline" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-[0.15em] border-2" onClick={() => { clearSession(); setResults([]); setFileDataList([]); }}>
+                    <RotateCw className="mr-2 h-4 w-4" /> Start Over
                   </Button>
                 </div>
               </div>
             </div>
           </div>
-        )}
-        {/* ── Processing View ─────────────────────────────────────────────── */}
-        {processing && (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md overflow-y-auto p-6">
-            <BatchProcessingView
-                files={files}
-                title="Compressing Documents..."
-                onReset={() => {
-                   setProcessing(false);
-                   setFiles([]);
-                   setFileDataList([]);
-                }}
-                processItem={async (file, onProgress) => {
-                    const targets = {
-                      recommended: { dpi: 150, quality: 0.75 },
-                      high: { dpi: 96, quality: 0.60 },
-                      low: { dpi: 200, quality: 0.85 },
-                      custom: { dpi: 120, quality: 0.70 },
-                    };
-                    let config = targets[mode === "custom" ? "custom" : mode];
-                    if (mode === "custom" && customTargetKB) {
-                      const targetSize = parseFloat(customTargetKB) * 1024;
-                      const totalSize = files.reduce((acc, f) => acc + f.size, 0);
-                      const ratio = targetSize / totalSize;
-                      if (ratio < 0.1) config = { dpi: 72, quality: 0.40 };
-                      else if (ratio < 0.25) config = { dpi: 72, quality: 0.50 };
-                      else if (ratio < 0.5) config = { dpi: 96, quality: 0.60 };
-                      else if (ratio < 0.8) config = { dpi: 150, quality: 0.75 };
-                      else config = { dpi: 200, quality: 0.85 };
-                    }
-                    
-                    const result = await compressSinglePdf(file, config.dpi, config.quality, onProgress);
-                    return { blob: result.blob, filename: file.name.replace(/\.pdf$/i, "_compressed.pdf") };
-                }}
+        ) : files.length === 0 ? (
+          <ToolUploadScreen
+            title="Compress PDF"
+            description="Reduce file size while optimization quality"
+            buttonLabel="Select PDF files"
+            accept=".pdf"
+            multiple={true}
+            onFilesSelected={handleFilesChange}
+          />
+        ) : processing ? (
+          <div className="mt-12 flex justify-center">
+            <ProcessingView 
+              files={files} 
+              processing={true} 
+              progress={progress} 
+              onProcess={() => {}} 
+              buttonText="" 
+              processingText="Optimizing your document..." 
+              estimateText="Reducing file size without compromising quality" 
             />
+          </div>
+        ) : (
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col xl:flex-row overflow-hidden">
+             <div className="w-full xl:w-[400px] border-r border-border bg-card flex flex-col py-6 px-4">
+                <div className="px-4 mb-6 flex justify-between items-center">
+                   <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">Original Files ({fileDataList.length})</h2>
+                   <Button variant="ghost" size="sm" className="h-7 text-[9px] font-black uppercase tracking-widest" onClick={() => setFileDataList([])}>Reset</Button>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                   {fileDataList.map((fd, i) => (
+                       <div key={fd.id} className="group p-3 rounded-2xl border border-border/40 bg-background hover:border-primary/30 transition-all flex items-center gap-3">
+                           <div className="w-12 h-16 bg-secondary/30 rounded-lg border border-border flex items-center justify-center shrink-0 overflow-hidden text-muted-foreground/30">
+                               {fd.previewUrl ? <img src={fd.previewUrl} className="w-full h-full object-contain p-1" alt="preview" /> : <FileBox className="h-6 w-6" />}
+                           </div>
+                           <div className="flex-1 min-w-0 pr-4">
+                               <p className="text-[11px] font-black text-foreground truncate">{fd.file.name}</p>
+                               <p className="text-[9px] font-bold text-muted-foreground mt-0.5 tracking-wider uppercase">{(fd.file.size / (1024 * 1024)).toFixed(2)} MB • {fd.pageCount} Pages</p>
+                           </div>
+                           <button onClick={() => setFileDataList(prev => prev.filter((_, idx) => idx !== i))} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted-foreground hover:text-red-500 rounded-lg transition-all"><X className="h-3.5 w-3.5" /></button>
+                       </div>
+                   ))}
+                </div>
+                <div className="pt-4 mt-auto border-t border-border border-dashed">
+                   <Button variant="outline" className="w-full h-10 rounded-xl text-[10px] font-black uppercase tracking-widest border-2" onClick={() => {}}>Add more files</Button>
+                </div>
+             </div>
+
+             <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+                
+                <div className="max-w-md w-full space-y-10 relative z-10">
+                   <div className="text-center">
+                       <h1 className="text-2xl font-black text-foreground uppercase tracking-tight mb-2">Compression Settings</h1>
+                       <p className="text-sm text-muted-foreground font-medium">Select the best mode for your needs</p>
+                   </div>
+
+                   <div className="grid grid-cols-1 gap-2">
+                       {[
+                           { id: 'extreme', label: 'Extreme Compression', desc: 'Less quality, high compression', icon: Sparkles, color: 'text-orange-500' },
+                           { id: 'recommended', label: 'Recommended', desc: 'Good quality, good compression', icon: CheckCircle2, color: 'text-green-500' },
+                           { id: 'basic', label: 'Basic Compression', desc: 'High quality, less compression', icon: Minimize2, color: 'text-blue-500' }
+                       ].map(m => (
+                           <button 
+                             key={m.id} 
+                             onClick={() => setMode(m.id as CompressMode)}
+                             className={cn("w-full p-5 rounded-3xl border-2 transition-all duration-300 text-left flex items-center gap-4 group", mode === m.id ? "border-primary bg-primary/[0.03] shadow-glow" : "border-border bg-card hover:border-primary/20")}
+                           >
+                               <div className={cn("p-3 rounded-2xl transition-all duration-300", mode === m.id ? "bg-primary text-white" : "bg-background text-muted-foreground group-hover:text-primary") }>
+                                   <m.icon className="h-5 w-5" />
+                               </div>
+                               <div className="flex-1 min-w-0">
+                                   <p className={cn("text-sm font-black uppercase tracking-widest leading-none mb-1", mode === m.id ? "text-primary" : "text-foreground")}>{m.label}</p>
+                                   <p className="text-[10px] text-muted-foreground font-medium opacity-60 truncate">{m.desc}</p>
+                               </div>
+                               {mode === m.id && <motion.div layoutId="mode-check" className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white"><ArrowRight className="h-3 w-3" /></motion.div>}
+                           </button>
+                       ))}
+                   </div>
+
+                   <div className="pt-6 border-t border-border border-dashed">
+                       <div className="flex justify-between items-baseline mb-6">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estimate</span>
+                           <span className="text-2xl font-black text-foreground tracking-tighter">~{(totalInFlight / (1024 * 1024) * 0.4).toFixed(2)} MB <span className="text-xs text-primary font-black uppercase ml-1 animate-pulse">-60%</span></span>
+                       </div>
+                       <Button size="lg" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/25 group relative overflow-hidden" onClick={startProcessing}>
+                           <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                           Compress PDF
+                       </Button>
+                   </div>
+                </div>
+             </div>
           </div>
         )}
       </div>
+
       <ToolSeoSection
         toolName="Compress PDF"
         category="compress"
-        intro="MagicDocx Compress PDF reduces your PDF file size without sacrificing readability. It's ideal for emailing large reports, uploading to portals with size limits, or optimizing documents for the web. Choose from three professional compression modes | Strong, Recommended, or Professional | or enter a custom target size. All processing happens in your browser, keeping your files private and secure."
+        intro="MagicDocx Compress PDF lets you reduce the size of your documents while maintaining professional quality. Our Hierarchical Compression Engine offers three distinct modes: Extreme (up to 95% savings), Recommended (perfect balance), and Basic (high fidelity). Our browser-based processing ensures your files never leave your device."
         steps={[
-          "Upload one or more PDF files to the compress tool.",
-          "Select a compression mode: Strong, Recommended, or Professional quality.",
-          "Optionally, specify a custom target file size in KB.",
-          "Click \"Start Compression\" and your optimized PDF will download automatically."
+          "Select the PDF files you want to compress from your computer or drag and drop them into the tool.",
+          "Choose your preferred compression level: Extreme, Recommended, or Basic quality.",
+          "Our engine will optimize images and clean up document headers locally in your browser.",
+          "Download your compressed PDFs instantly. You can see the space saved by our Savings Ring gauge."
         ]}
         formats={["PDF"]}
         relatedTools={[
           { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
           { name: "Split PDF", path: "/split-pdf", icon: Scissors },
           { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          { name: "Organize Pages", path: "/organize-pdf", icon: LayoutGrid },
+          { name: "Protect PDF", path: "/protect-pdf", icon: ShieldCheck },
         ]}
         schemaName="Compress PDF Online"
-        schemaDescription="Free online PDF compressor. Reduce PDF file size with multiple compression modes without losing quality."
+        schemaDescription="Free online tool to compress PDF files. Reduce file size without losing quality."
       />
     </ToolLayout>
   );

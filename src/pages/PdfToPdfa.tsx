@@ -3,7 +3,7 @@ import ToolSeoSection from "@/components/ToolSeoSection";
 import ToolLayout from "@/components/ToolLayout";
 import BatchProcessingView, { BatchProcessingResult } from "@/components/BatchProcessingView";
 import { FileCheck, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, Archive, FileText, Upload } from "lucide-react";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -265,13 +265,16 @@ const PdfToPdfa = () => {
       )}
 
 
-      <div className="mt-5">
-        {files.length === 0 && (
-          <div className="mt-5 text-center">
-            <FileUpload accept=".pdf" onFilesChange={setFiles} files={files} label="Select a PDF to convert" />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && (
+        <ToolUploadScreen
+          title="PDF to PDF/A"
+          description="Convert PDF to ISO-compliant PDF/A for long-term archiving"
+          buttonLabel="Select PDF file"
+          accept=".pdf"
+          multiple={true}
+          onFilesSelected={setFiles}
+        />
+      )}
       <ToolSeoSection
         toolName="PDF to PDF/A Converter"
         category="convert"

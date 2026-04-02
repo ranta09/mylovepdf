@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import { FileSpreadsheet, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileText, Upload, Plus } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -341,9 +341,14 @@ const PdfToExcel = () => {
           </div>
         </div>
       ) : (
-        <div className="mt-5 text-center">
-          <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to extract data from" />
-        </div>
+        <ToolUploadScreen
+          title="PDF to Excel"
+          description="Extract tables and data from PDF into a spreadsheet"
+          buttonLabel="Select PDF file"
+          accept=".pdf"
+          multiple={false}
+          onFilesSelected={setFiles}
+        />
       )}
 
       <AlertDialog open={showOcrModal} onOpenChange={setShowOcrModal}>

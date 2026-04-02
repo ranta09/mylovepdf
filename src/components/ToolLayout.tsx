@@ -98,22 +98,7 @@ const ToolLayout = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.05 }}
             >
-              {!hideHeader && (
-                <div className="mb-6 rounded-2xl border border-border bg-secondary/10 p-5 md:p-6 backdrop-blur-sm shadow-sm ring-1 ring-black/5 dark:ring-white/5">
-                  <div className="flex items-center gap-4">
-                    <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary-foreground shadow-sm transition-transform duration-300 group-hover:scale-110", currentTool?.bgClass || categoryColors[category])}>
-                      {icon && React.isValidElement(icon)
-                        ? React.cloneElement(icon as React.ReactElement, { className: "h-6 w-6" } as any)
-                        : icon
-                      }
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h1 className="font-display text-xl md:text-2xl font-black text-foreground tracking-tight truncate">{title}</h1>
-                      <p className="mt-0.5 text-sm md:text-base text-muted-foreground font-medium line-clamp-1">{description}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+
 
               {children}
             </motion.div>

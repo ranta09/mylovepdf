@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
 import BatchProcessingView from "@/components/BatchProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
@@ -51,7 +51,7 @@ const WordToPdf = () => {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleFilesChange = async (newFiles: File[]) => {
+  const handleFilesChange = useCallback(async (newFiles: File[]) => {
     const validFiles: FileWithMetadata[] = [];
     
     for (const file of newFiles) {
@@ -65,7 +65,7 @@ const WordToPdf = () => {
     }
     
     setFiles(prev => [...prev, ...validFiles]);
-  };
+  }, []);
 
   const initiateConversion = () => {
     if (files.length === 0) return;
@@ -275,13 +275,16 @@ const WordToPdf = () => {
         </div>
       )}
 
-      <div className="mt-5">
-        {files.length === 0 && !processing && results.length === 0 && (
-          <div className="mt-10 text-center">
-            <FileUpload accept=".doc,.docx" files={[]} onFilesChange={handleFilesChange} label="Select Word files to convert" />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && !processing && results.length === 0 && (
+        <ToolUploadScreen
+          title="Word to PDF"
+          description="Convert Word documents to professional PDF format"
+          buttonLabel="Select Word files"
+          accept=".doc,.docx"
+          multiple={true}
+          onFilesSelected={handleFilesChange}
+        />
+      )}
       <ToolSeoSection
         toolName="Word to PDF Converter"
         category="convert"

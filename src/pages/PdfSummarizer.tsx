@@ -20,7 +20,7 @@ import {
   Zap, AlignLeft, BarChart3
 } from "lucide-react";
 import { extractDocument, extractUrl, SUPPORTED_EXTENSIONS } from "@/lib/docExtract";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import DocumentInfoCard from "@/components/DocumentInfoCard";
@@ -413,11 +413,13 @@ const DocSummarizer = () => {
 
             {!urlMode ? (
               <>
-                <FileUpload
-                  onFilesChange={setFiles}
-                  files={files}
+                <ToolUploadScreen
+                  title="AI Document Summarizer"
+                  description="Upload your document to generate a summary"
+                  buttonLabel="Upload documents"
                   accept={SUPPORTED_EXTENSIONS}
-                  label="Upload documents"
+                  multiple={true}
+                  onFilesSelected={setFiles}
                 />
               </>
             ) : (

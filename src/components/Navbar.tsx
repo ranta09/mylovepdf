@@ -46,7 +46,6 @@ const megaColumns: MenuColumn[] = [
         label: "Convert to PDF",
         toolIds: ["word-to-pdf", "excel-to-pdf", "ppt-to-pdf", "jpg-to-pdf", "ocr-pdf", "html-to-pdf", "pdf-to-pdfa"],
       },
-      { label: "Smart Generators", toolIds: ["excel-to-ppt"] },
     ],
   },
   {

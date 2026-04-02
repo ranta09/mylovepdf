@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -378,15 +378,14 @@ const OrganizePdf = () => {
     >
       <div className="mt-2 flex flex-col h-full">
         {files.length === 0 ? (
-          <div className="mt-5">
-            <FileUpload
-              accept=".pdf"
-              files={files}
-              onFilesChange={handleFilesChange}
-              label="Select PDF to organize"
-              multiple={true}
-            />
-          </div>
+          <ToolUploadScreen
+            title="Organize PDF"
+            description="Reorder, rotate, delete and manage your PDF pages"
+            buttonLabel="Select PDF file"
+            accept=".pdf"
+            multiple={true}
+            onFilesSelected={handleFilesChange}
+          />
         ) : processing ? (
           <div className="mt-4 mx-auto max-w-2xl w-full rounded-2xl border border-border bg-card p-8 shadow-elevated text-center">
             <div className="mb-6 relative flex justify-center items-center h-24">

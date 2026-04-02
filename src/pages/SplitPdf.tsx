@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import { Scissors, Loader2, Info, ShieldCheck, Download, Trash2, Plus, ArrowRight, Layout, CheckCircle2, FileBox, FileText, X, LayoutGrid, Layers, Settings, Zap, Merge, FileOutput } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,7 @@ const SplitPdf = () => {
     return () => setDisableGlobalFeatures(false);
   }, [files, setDisableGlobalFeatures]);
 
-  const handleFilesChange = async (newFiles: File[]) => {
+  const handleFilesChange = useCallback(async (newFiles: File[]) => {
     if (newFiles.length === 0) {
       setFiles([]);
       setThumbnails([]);
@@ -108,7 +108,7 @@ const SplitPdf = () => {
     } finally {
       setLoadingThumbnails(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     setDisableGlobalFeatures(files.length > 0);
@@ -292,9 +292,14 @@ const SplitPdf = () => {
 
       <div className="mt-2">
         {files.length === 0 ? (
-          <div className="mt-5">
-            <FileUpload accept=".pdf" files={files} onFilesChange={handleFilesChange} multiple={false} label="Select PDF file to split" />
-          </div>
+          <ToolUploadScreen
+            title="Split PDF"
+            description="Separate pages or extract specific sections from your PDF"
+            buttonLabel="Select PDF file"
+            accept=".pdf"
+            multiple={false}
+            onFilesSelected={handleFilesChange}
+          />
         ) : processing ? (
           <div className="mt-4 mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 shadow-elevated text-center">
             <div className="mb-6 relative flex justify-center items-center h-24">

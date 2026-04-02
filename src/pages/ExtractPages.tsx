@@ -33,7 +33,7 @@ import {
   Archive
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -317,14 +317,14 @@ const ExtractPages = () => {
     >
       <div className="mt-2 flex flex-col h-full">
         {files.length === 0 ? (
-          <div className="mt-5">
-            <FileUpload
-              accept=".pdf"
-              files={files}
-              onFilesChange={handleFilesChange}
-              label="Select PDF to extract pages"
-            />
-          </div>
+          <ToolUploadScreen
+            title="Extract PDF Pages"
+            description="Pull specific pages into a new document or separate files"
+            buttonLabel="Select PDF file"
+            accept=".pdf"
+            multiple={false}
+            onFilesSelected={handleFilesChange}
+          />
         ) : processing ? (
           <div className="mt-4 mx-auto max-w-2xl w-full rounded-2xl border border-border bg-card p-8 shadow-elevated text-center">
             <div className="mb-6 relative flex justify-center items-center h-24">

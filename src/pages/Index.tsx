@@ -1,42 +1,33 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ToolCard from "@/components/ToolCard";
-import HeroUpload from "@/components/HeroUpload";
-
-import { tools, aiTools, categoryColors, type ToolCategory } from "@/lib/tools";
-import { motion } from "framer-motion";
-import {
-  Heart, Shield, Zap, Search, MessageCircleWarning, ImagePlus,
-  Wand2, FileText, Edit3, Lock, Minimize2, Scissors, Merge, Globe, CheckCircle, X, Loader2, ChevronDown, Trash2, UserX
-} from "lucide-react";
-
-const trustBadges = [
-  { icon: Lock, title: "SSL Encrypted", desc: "Bank-level security", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { icon: Trash2, title: "Auto-Deleted", desc: "Files gone in 60 min", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { icon: UserX, title: "No Signup", desc: "Start using instantly", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { icon: Zap, title: "Lightning Fast", desc: "Processes in seconds", color: "text-blue-500", bg: "bg-blue-500/10" },
-  { icon: Globe, title: "Trusted Globally", desc: "Used by 50,000+ people", color: "text-indigo-500", bg: "bg-indigo-500/10" },
-];
+import { tools, aiTools, categoryTextColors, categoryColors } from "@/lib/tools";
 import { Helmet } from "react-helmet-async";
 import SEOHead from "@/components/SEOHead";
-import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
+import { getRecommendedTools, type ToolGroup } from "@/lib/fileDetection";
+import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Input } from "@/components/ui/input";
+import { 
+  FileBox, Cpu, Trophy, Lock, MonitorSmartphone,
+  Wrench, Code2, Trash2, Cloud, HardDrive, Link2,
+  Search, ChevronRight, X
+} from "lucide-react";
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "MagicDOCX",
   "url": "https://mylovepdf.lovable.app",
-  "description": "Free online PDF tools: merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer, quiz generator, chat with PDF, ATS resume checker and translator.",
+  "description": "Free online PDF tools: merge, split, compress, convert, edit, protect PDFs.",
   "applicationCategory": "Productivity",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -55,344 +46,289 @@ const sitelinksJsonLd = {
   }
 };
 
+const steps = [
+  { id: 1, title: "Upload", desc: "Simply drag & drop or select the PDF, Word, or multimedia file you need to process natively." },
+  { id: 2, title: "Start processing", desc: "Our advanced browser-based engine will manipulate, convert, or compress your file instantly." },
+  { id: 3, title: "Download", desc: "Your optimized document is ready! Since MagicDOCX processes everything locally, your privacy is 100% guaranteed." }
+];
+
+const features = [
+  { icon: Trophy, title: "The Premium Free PDF Toolkit", desc: "Whether you need to merge reports, edit text, or convert spreadsheets, MagicDOCX is your all-in-one productivity powerhouse designed for seamless document management." },
+  { icon: Cpu, title: "AI-Powered PDF Intelligence", desc: "Beyond standard merging and splitting, MagicDOCX empowers you with cutting-edge AI. Summarize lengthy reports, generate interactive quizzes, bypass ATS filters, and translate documents instantly." },
+  { icon: Lock, title: "Unhackable Local Privacy", desc: "Your data never leaves your device. MagicDOCX leverages WebAssembly to process your sensitive documents directly in your browser, guaranteeing absolute privacy without cloud uploads." },
+  { icon: Trash2, title: "Zero Data Retention", desc: "Because processing happens directly on your device, there are no files left behind on external servers. You don't have to worry about manual deletion—your data simply never existed off-device." },
+  { icon: MonitorSmartphone, title: "Cross-Platform Access", desc: "MagicDOCX runs flawlessly on Windows, macOS, Linux, and even mobile devices. Enjoy enterprise-grade PDF processing anywhere without downloading hefty software installations." },
+  { icon: Wrench, title: "No Signup Required", desc: "Say goodbye to paywalls and premium subscriptions. MagicDOCX provides its entire suite of over 30 professional tools completely free of charge, with rapid processing and no restrictive limits." },
+];
+
 const Index = () => {
-  const [search, setSearch] = useState("");
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackEmail, setFeedbackEmail] = useState("");
-  const [feedbackScreenshot, setFeedbackScreenshot] = useState<File | null>(null);
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const { t, tt } = useLanguage();
+  const allTools = [...aiTools, ...tools];
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setGlobalFiles } = useGlobalUpload();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [suggestions, setSuggestions] = useState<ToolGroup[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const recs = getRecommendedTools(files);
+      setSelectedFile(files[0]);
+      setSuggestions(recs);
+      setShowSuggestions(true);
+      setSearchQuery("");
+    }
+  };
+
+  const filteredSuggestions = suggestions.map(group => ({
+    ...group,
+    tools: group.tools.filter(t => 
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      t.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })).filter(group => group.tools.length > 0);
+
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
 
   useEffect(() => {
     const lastTool = sessionStorage.getItem("lastVisitedTool");
     if (lastTool) {
       sessionStorage.removeItem("lastVisitedTool");
-      requestAnimationFrame(() => {
-        const el = document.querySelector(`[data-tool-path="${lastTool}"]`);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
     }
+    // Scroll to top on mount for the landing page
+    window.scrollTo(0, 0);
   }, []);
-
-  const allTools = [...aiTools, ...tools];
-  const filtered = allTools.filter(tool =>
-    tool.name.toLowerCase().includes(search.toLowerCase()) ||
-    tool.description.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleFeedbackSubmit = async () => {
-    if (!feedbackText.trim() || !feedbackEmail.trim()) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    setFeedbackLoading(true);
-    try {
-      const { error: invokeError } = await supabase.functions.invoke("send-contact", {
-        body: {
-          fullName: "Homepage Feedback User",
-          email: feedbackEmail,
-          subject: "🚨 Homepage Bug Report/Feedback",
-          message: feedbackText,
-        },
-      });
-
-      if (invokeError) {
-        console.error("Feedback error:", invokeError);
-        toast.error("Failed to send feedback. Please try again later.");
-        return;
-      }
-
-      toast.success("Feedback sent! Thank you for helping us improve.");
-      setFeedbackText("");
-      setFeedbackEmail("");
-      setFeedbackScreenshot(null);
-      setFeedbackOpen(false);
-    } catch (err) {
-      console.error("Feedback catch error:", err);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setFeedbackLoading(false);
-    }
-  };
 
   return (
     <>
       <SEOHead
-        title="MagicDOCX — Free PDF & DOCX Tools Online | No Signup Required"
-        description="35+ free PDF tools: merge, split, compress, convert, edit, protect, sign. Plus AI summarizer, quiz generator, chat with PDF, ATS checker & translator. No sign-up."
+        title="MagicDOCX — Free PDF & DOCX Tools Online"
+        description="Free online PDF tools: merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer and translator. No sign-up."
         canonicalUrl="/"
       />
       <Helmet>
-        <meta name="keywords" content="PDF tools, merge PDF, split PDF, compress PDF, PDF to Word, PDF to JPG, edit PDF, AI PDF summarizer, PDF quiz generator, chat with PDF, ATS resume checker, translate PDF, free PDF tools, online PDF editor, convert PDF" />
+        <meta name="keywords" content="PDF tools, merge PDF, split PDF, compress PDF, PDF to Word, convert PDF" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(sitelinksJsonLd)}</script>
       </Helmet>
 
       <div className="relative flex min-h-screen flex-col bg-background selection:bg-primary/30">
-        {/* Subtle Background Gradients - Keeping it premium but clean */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px]" />
-          <div className="absolute top-[20%] -right-[5%] w-[30%] h-[50%] rounded-full bg-indigo-500/5 blur-[100px]" />
-          <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[40%] rounded-full bg-violet-500/5 blur-[120px]" />
+        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-background">
+          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[120px]" />
+          <div className="absolute top-[20%] -right-[5%] w-[30%] h-[50%] rounded-full bg-primary/10 blur-[100px]" />
+          <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[40%] rounded-full bg-primary/10 blur-[120px]" />
         </div>
-        
         <Navbar />
-        <main className="flex-1 relative z-10">
-
-          {/* ─── HERO ─── */}
-          <section className="relative pt-20 pb-28 md:pt-32 md:pb-40 -mt-[1px]">
-            {/* The NeuralBackground shows through seamlessly, providing the theme-based color and magical cursor effects */}
-
-            <div className="container max-w-[1200px] w-[95%] relative z-10 text-center">
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                transition={{ duration: 0.8, ease: "easeOut" }}
+        
+        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+          
+          {/* ─── HERO SECTION ─── */}
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-card/60 backdrop-blur-3xl rounded-[2rem] border-2 border-dashed border-primary/25 p-10 md:p-32 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden mb-24 transition-all cursor-pointer group/hero hover:border-primary/50"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <span 
+                className="relative z-10 flex items-baseline gap-0 font-heading tracking-tight select-none"
+                style={{ letterSpacing: "-0.03em" }}
               >
-                {/* Headline */}
-                <h1 className="font-display mx-auto max-w-5xl text-4xl font-extrabold tracking-tight text-foreground md:text-7xl md:leading-[1.15] mb-6 drop-shadow-sm">
-                  Convert, Compress & Edit PDFs Free — <span className="text-primary tracking-tight">No Signup</span>
-                </h1>
-                
-                {/* Subtitle */}
-                <p className="text-lg md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto font-medium">
-                  100% free. Files deleted after 1 hour. No account needed.
-                </p>
-
-                {/* Large Upload Zone */}
-                <motion.div 
-                   initial={{ opacity: 0, scale: 0.95 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                   className="mx-auto max-w-4xl bg-card/80 dark:bg-background/80 backdrop-blur-2xl rounded-3xl p-2 md:p-3 shadow-2xl ring-1 ring-border overflow-hidden"
-                >
-                  <HeroUpload />
-                </motion.div>
-              </motion.div>
+                <span className="text-4xl md:text-5xl font-semibold text-foreground">Mag</span>
+                <span className="relative text-4xl md:text-5xl font-semibold text-foreground">
+                  <span className="invisible">i</span>
+                  <span className="absolute inset-0 flex flex-col items-center">
+                    <span className="text-primary animate-bounce text-[14px] leading-none" style={{ marginTop: "-2px" }}>✦</span>
+                    <span className="text-foreground text-4xl md:text-5xl font-semibold leading-none" style={{ marginTop: "-4px" }}>ı</span>
+                  </span>
+                </span>
+                <span className="text-4xl md:text-5xl font-semibold text-foreground">c</span>
+                <span className="text-4xl md:text-5xl font-bold text-primary">DOCX</span>
+              </span>
             </div>
-          </section>
+            
+            <p className="text-muted-foreground text-sm md:text-base font-medium mb-10 max-w-lg">
+              Edit, convert, merge, compress, and sign PDFs securely in your browser. Fully free, no signup required.
+            </p>
 
-          {/* ─── TRUST BADGES ─── */}
-          <section className="border-b border-border/50 bg-secondary/10 relative z-20">
-            <div className="container max-w-[1400px] w-[95%] mx-auto pt-8 pb-6">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
-                {trustBadges.map((badge, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1, duration: 0.5 }}
-                    className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-4 group"
-                  >
-                    <div className={`p-3 shrink-0 rounded-2xl ${badge.bg} ${badge.color} transition-transform duration-300 group-hover:scale-110 group-hover:shadow-sm`}>
-                      <badge.icon className="w-5 h-5" strokeWidth={2.5} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm md:text-base text-foreground mb-0.5">{badge.title}</h4>
-                      <p className="text-xs text-muted-foreground">{badge.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              
-              <div className="text-center">
-                 <Link to="/privacy" className="inline-flex items-center text-xs font-semibold text-muted-foreground/70 hover:text-primary transition-colors">
-                   <Shield className="mr-1.5 h-3.5 w-3.5" />
-                   We never read or store your files. Read our strict Privacy Policy.
-                 </Link>
-              </div>
+            <div className="relative flex items-center justify-center w-[90%] max-w-[500px] bg-primary group-hover/hero:bg-primary/90 text-white font-bold text-lg md:text-xl py-4 md:py-5 rounded-full transition-all shadow-xl shadow-primary/25 group-active/hero:scale-[0.98]">
+              <span className="flex items-center gap-2">
+                <span className="text-[1.3rem] font-bold leading-none -mt-0.5">+</span> Choose file
+              </span>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                className="hidden" 
+                onChange={handleFileChange}
+              />
             </div>
-          </section>
 
-          {/* ─── TOOLS ─── */}
-          <section className="container max-w-[1600px] w-[95%] py-16">
-            <div className="flex flex-col gap-12">
-              {/* Search */}
-              <div className="flex w-full items-center justify-center">
-                <div className="relative w-full max-w-2xl">
-                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder={search ? t.searchPlaceholder : "Search for a tool..."}
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="h-14 pl-12 pr-12 rounded-2xl border border-border bg-card shadow-sm text-base focus-visible:ring-primary/20"
-                  />
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 flex items-center justify-center bg-secondary rounded-full"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
+
+          </div>
+
+          {/* ─── HOW TO CONVERT ─── */}
+          <div className="mb-24">
+            <h2 className="text-xl md:text-2.5xl font-extrabold text-center text-foreground mb-14 tracking-tight">
+              Rapid Browser-Based Processing
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14 text-center max-w-4xl mx-auto">
+              {steps.map(step => (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div className="h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold mb-6 shadow-md shadow-primary/20">
+                    {step.id}
+                  </div>
+                  <h3 className="text-[1.05rem] font-bold text-foreground mb-3">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">{step.desc}</p>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              {/* Tool Grid(s) */}
-              <div className="flex flex-col gap-16">
-                {search ? (
-                  filtered.length === 0 ? (
-                    <div className="py-16 text-center">
-                      <p className="text-lg text-muted-foreground">{tt("noToolsFound", { query: search })}</p>
-                      <p className="mt-2 text-sm text-muted-foreground">{t.trySearching}</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
-                      {filtered.map((tool, i) => (
-                        <ToolCard key={tool.id} tool={tool} index={i} />
-                      ))}
-                    </div>
-                  )
-                ) : (
-                  [
-                    { id: "convert", label: "Convert", filter: (t: any) => t.category === "convert" || t.category === "image" },
-                    { id: "optimize", label: "Optimize & Edit", filter: (t: any) => t.category === "compress" || t.category === "edit" },
-                    { id: "organize", label: "Organize", filter: (t: any) => t.category === "merge" || t.category === "split" },
-                    { id: "security", label: "Security", filter: (t: any) => t.category === "protect" },
-                  ].map((group, groupIdx) => {
-                    const groupTools = allTools.filter(group.filter);
-                    if (groupTools.length === 0) return null;
-                    return (
-                      <div key={group.id} className="flex flex-col gap-6">
-                        <h2 className="text-2xl font-bold text-foreground border-b border-border/50 pb-3">{group.label}</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
-                          {groupTools.map((tool, i) => (
-                            <ToolCard key={tool.id} tool={tool} index={i} />
+          <div className="w-full h-px bg-border/40 my-16 max-w-5xl mx-auto" />
+
+          {/* ─── FEATURES GRID ─── */}
+          <div className="mb-28 max-w-[1000px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-16">
+            {features.map((feat, i) => (
+              <div key={i} className="flex flex-col items-center md:items-start text-center md:text-left">
+                <div className="mb-5">
+                  <feat.icon className="h-[26px] w-[26px] text-foreground" strokeWidth={1.5} />
+                </div>
+                <h3 className="text-base font-bold text-foreground mb-3">{feat.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed block max-w-md">{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ─── MEET PRODUCT FAMILY ─── */}
+          <div className="mb-24">
+            <h2 className="text-2xl font-extrabold text-center text-foreground mb-10 tracking-tight">
+              Explore the MagicDOCX toolkit
+            </h2>
+            <div className="grid grid-cols-2 min-[500px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-[10px] md:gap-4 max-w-[1100px] mx-auto">
+              {allTools.map(tool => (
+                <Link
+                  key={tool.id}
+                  to={tool.path}
+                  className="bg-card/60 backdrop-blur-3xl border border-border/60 hover:border-primary/40 rounded-2xl p-4 md:p-5 flex flex-col items-center text-center justify-center gap-3 transition-all hover:shadow-lg hover:shadow-black/5 group aspect-square"
+                >
+                  <div className={cn("transition-transform group-hover:scale-110 group-hover:-translate-y-1 duration-300", categoryTextColors[tool.category] || "text-primary")}>
+                    <tool.icon className="h-[28px] w-[28px] md:h-[32px] md:w-[32px]" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[11px] md:text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors leading-tight">
+                    {tool.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+
+
+
+          {/* ─── SUGGESTIONS DIALOG ─── */}
+          <Dialog open={showSuggestions} onOpenChange={setShowSuggestions}>
+            <DialogContent className="max-w-lg w-[90vw] max-h-[85vh] bg-card rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden animate-slide-up flex flex-col">
+              <div className="p-6 md:p-8 flex-1 overflow-hidden flex flex-col">
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">
+                    File Detected
+                  </DialogTitle>
+                </DialogHeader>
+
+                {/* File Info Box */}
+                <div className="bg-card dark:bg-zinc-900 border border-border/60 rounded-2xl p-4 flex items-center gap-4 mb-8 shadow-sm">
+                  <div className="bg-primary/5 border border-primary/10 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-[10px] text-primary">
+                    {selectedFile?.name.split('.').pop()?.toUpperCase() || "FILE"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-bold text-foreground truncate mb-0.5">
+                      {selectedFile?.name}
+                    </p>
+                    <p className="text-[13px] font-medium text-muted-foreground">
+                      {selectedFile ? formatSize(selectedFile.size) : ""}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative mb-8">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground/50" />
+                  <Input 
+                    placeholder="Search for a tool..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-11 h-12 bg-secondary/30 border-border/40 rounded-xl focus-visible:ring-primary/20 placeholder:text-muted-foreground/40 font-medium"
+                  />
+                </div>
+
+                {/* Suggestions List */}
+                <div className="space-y-8 max-h-[45vh] overflow-y-auto pr-1 custom-scrollbar">
+                  {filteredSuggestions.length > 0 ? (
+                    filteredSuggestions.map((group, idx) => (
+                      <div key={idx} className="space-y-4">
+                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 px-1">
+                          {group.category}
+                        </h3>
+                        <div className="space-y-2">
+                          {group.tools.map((tool) => (
+                            <div
+                              key={tool.id}
+                              onClick={() => {
+                                if (selectedFile) {
+                                  setGlobalFiles([selectedFile]);
+                                  setShowSuggestions(false);
+                                  navigate(tool.path);
+                                }
+                              }}
+                              className="group flex items-center gap-4 p-4 rounded-2xl border border-border/40 hover:border-primary/20 bg-card dark:bg-zinc-900 hover:bg-primary/[0.02] dark:hover:bg-primary/[0.05] transition-all hover:shadow-md hover:shadow-primary/5 active:scale-[0.99] cursor-pointer"
+                            >
+                              <div className={cn(
+                                "h-12 w-12 shrink-0 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 duration-300",
+                                categoryColors[tool.category] || "bg-primary text-white"
+                              )}>
+                                <tool.icon className="h-6 w-6" strokeWidth={2} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[15px] font-bold text-foreground mb-0.5 group-hover:text-primary transition-colors">
+                                  {tool.name}
+                                </p>
+                                <p className="text-[13px] font-medium text-muted-foreground line-clamp-1">
+                                  {tool.description}
+                                </p>
+                              </div>
+                              <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                            </div>
                           ))}
                         </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* ─── HOW IT WORKS (Removed per design) ─── */}
-
-          {/* ─── WHY US ─── */}
-          {!search && (
-            <section className="border-t border-border bg-secondary/30 py-16">
-              <div className="container">
-                <h2 className="font-display text-2xl font-bold text-foreground text-center mb-10 md:text-3xl">{t.whyTitle}</h2>
-                <div className="grid gap-8 md:grid-cols-3">
-                  {[
-                    { icon: Zap, title: t.whyFastTitle, desc: t.whyFastDesc },
-                    { icon: Shield, title: t.whySecureTitle, desc: t.whySecureDesc },
-                    { icon: Heart, title: t.whyFreeTitle, desc: t.whyFreeDesc },
-                  ].map((f, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 16 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.1 + i * 0.1 }}
-                      className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-8 text-center shadow-card"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                        <f.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="font-display text-lg font-semibold text-foreground">{f.title}</h3>
-                      <p className="text-sm text-muted-foreground">{f.desc}</p>
-                    </motion.div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground font-medium">No tools matching your search.</p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Report Issue */}
-                <div className="mt-12 flex flex-col items-center gap-3 text-center">
-                  <p className="text-sm text-muted-foreground">{t.somethingNotWorking}</p>
-                  <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="rounded-xl gap-2">
-                        <MessageCircleWarning className="h-4 w-4" />
-                        {t.reportIssue}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle className="font-display">{t.reportIssue}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 pt-2">
-                        <Input placeholder="Your email *" type="email" value={feedbackEmail} onChange={e => setFeedbackEmail(e.target.value)} className="rounded-xl" required />
-                        <Textarea placeholder="Describe the issue…" value={feedbackText} onChange={e => setFeedbackText(e.target.value)} rows={4} className="rounded-xl resize-none" />
-                        <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-border p-3 hover:bg-secondary/50 transition-colors">
-                          <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            {feedbackScreenshot ? feedbackScreenshot.name : "Attach a screenshot (optional)"}
-                          </span>
-                          <input type="file" accept="image/*" className="hidden" onChange={e => setFeedbackScreenshot(e.target.files?.[0] || null)} />
-                        </label>
-                        <Button onClick={handleFeedbackSubmit} disabled={!feedbackText.trim() || !feedbackEmail.trim() || feedbackLoading} className="w-full rounded-xl">
-                          {feedbackLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Sending...</> : "Submit"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                <div className="mt-8 text-center">
+                  <button 
+                    onClick={() => setShowSuggestions(false)}
+                    className="text-[14px] font-semibold text-primary/80 hover:text-primary transition-colors"
+                  >
+                    Or <span className="underline underline-offset-4 decoration-primary/30">browse all tools</span>
+                  </button>
                 </div>
               </div>
-            </section>
-          )}
+            </DialogContent>
+          </Dialog>
 
         </main>
-
-        {/* ─── SEO CONTENT SECTION ─── */}
-        <section className="container py-20 border-t border-border">
-          <div className="max-w-4xl mx-auto prose prose-sm md:prose-base dark:prose-invert space-y-12">
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl font-display font-bold text-foreground m-0">Global PDF Excellence for Everyone</h2>
-              <p className="text-lg text-muted-foreground">MagicDOCX is more than just a PDF editor. It's a complete ecosystem designed to make document management accessible, secure, and intelligent.</p>
-            </div>
-
-            <div className="grid gap-12 md:grid-cols-2">
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-foreground">Secure & Private by Design</h3>
-                <p>
-                  Most online PDF tools upload your sensitive documents to their servers. We do things differently.
-                  MagicDOCX utilizes <strong>browser-based processing</strong> (WebAssembly and Javascript) to
-                  manipulate your files directly on your device. This means your private data stays private.
-                </p>
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-foreground">Powered by Advanced AI</h3>
-                <p>
-                  We are bridging the gap between traditional PDF utilities and future-proof AI. Our platform
-                  includes tools to <strong>summarize lengthy PDFs</strong>, generate quizzes for students,
-                  translate documents into 65+ languages, and even chat with your documents using natural language.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-secondary/20 rounded-3xl p-8 md:p-12 space-y-6">
-              <h3 className="text-2xl font-bold text-foreground text-center">Free Tools, Professional Quality</h3>
-              <p className="text-center text-muted-foreground">
-                We believe that powerful productivity shouldn't come with a subscription price tag. MagicDOCX
-                offers 35+ professional tools | from merging and splitting to OCR and electronic signatures
-                completely free of charge. No watermarks, no sign-ups, and no hidden limits.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-                {["Merge", "Convert", "OCR", "Sign", "Protect", "Compress", "Translate", "Summarize"].map(tool => (
-                  <div key={tool} className="flex items-center gap-2 justify-center py-2 px-4 rounded-xl bg-background border border-border text-xs font-bold">
-                    <CheckCircle className="h-3 w-3 text-primary" /> {tool}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-foreground">Why Browser-Based Tools Matter?</h3>
-              <p>
-                When you use MagicDOCX, you are using the latest in web technology. Traditional server-side
-                converters add latency, pose security risks, and often have strict file size limits. By
-                leveraging the power of your modern browser, we provide <strong>instant results</strong>
-                without the wait. Your computer does the work, and your data stays in your hands.
-              </p>
-            </div>
-          </div>
-        </section>
-
+        
         <Footer />
       </div>
     </>

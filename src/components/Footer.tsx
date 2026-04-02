@@ -25,39 +25,7 @@ const Footer = () => {
     <footer className="border-t border-border bg-card overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 pointer-events-none" />
       <div className="container relative z-10 pt-16 pb-8">
-        {/* Top Section: Branding & Tagline */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 border-b border-border/50 pb-8">
-          <div>
-            <Link to="/" className="flex items-center group shrink-0 mb-3">
-              <span className="relative z-10 flex items-baseline gap-0 font-display tracking-tight">
-                <span className="text-3xl font-semibold text-foreground">Mag</span>
-                <span className="relative text-3xl font-semibold text-foreground">
-                  <span className="invisible">i</span>
-                  <span className="absolute inset-0 flex flex-col items-center">
-                    <span className="text-primary animate-bounce text-[12px] leading-none" style={{ marginTop: "-2px" }}>✦</span>
-                    <span className="text-foreground text-3xl font-semibold leading-none" style={{ marginTop: "-4px" }}>ı</span>
-                  </span>
-                </span>
-                <span className="text-3xl font-semibold text-foreground">c</span>
-                <span className="text-3xl font-bold text-primary">DOCX</span>
-              </span>
-            </Link>
-            <p className="text-sm text-muted-foreground max-w-sm flex items-center gap-2">
-              Made with <Heart className="h-4 w-4 text-red-500 fill-red-500 animate-pulse" /> — <span className="font-semibold text-foreground">Free forever.</span>
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-              <Twitter className="h-4 w-4" />
-            </a>
-            <a href="https://github.com" target="_blank" rel="noreferrer" className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-              <Github className="h-4 w-4" />
-            </a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-              <Linkedin className="h-4 w-4" />
-            </a>
-          </div>
-        </div>
+
 
         {/* Links Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10 mb-12 justify-between">

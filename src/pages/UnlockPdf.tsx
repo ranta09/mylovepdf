@@ -4,7 +4,7 @@ import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { unlockPdfDocument, analyzePdfProtection, PdfProtectionStatus } from "@/lib/unlockPdfEngine";
 import { Unlock, Loader2, ShieldCheck, FileText, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, AlertTriangle, Download } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -388,13 +388,16 @@ const UnlockPdf = () => {
       )}
 
       {/* ── BEFORE UPLOAD: SEO AND DRAG-DROP AREA ─────────────────────── */}
-      <div className="mt-5">
-        {files.length === 0 && !processing && results.length === 0 && !analyzing && (
-          <div className="mt-10 text-center">
-            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF to unlock" multiple={false} />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && !processing && results.length === 0 && !analyzing && (
+        <ToolUploadScreen
+          title="Unlock PDF"
+          description="Remove passwords and permissions from your protected PDF"
+          buttonLabel="Select PDF to unlock"
+          accept=".pdf"
+          multiple={false}
+          onFilesSelected={(f) => setFiles(f.slice(0, 1))}
+        />
+      )}
 
       {!files.length && !processing && results.length === 0 && !analyzing && (
         <ToolSeoSection

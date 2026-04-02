@@ -11,7 +11,7 @@ import {
   Plus, X, Search as SearchIcon, MousePointer2, ChevronUp, ChevronDown, RotateCw
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -264,7 +264,14 @@ const ComparePdf = () => {
           <div className="space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">Original Document</h3>
             {!fileA.length ? (
-              <FileUpload accept=".pdf" files={fileA} onFilesChange={setFiles => setFileA(setFiles)} label="Select Original" />
+              <ToolUploadScreen
+                title="Original Document"
+                description=""
+                buttonLabel="Select Original"
+                accept=".pdf"
+                multiple={false}
+                onFilesSelected={(setFiles) => setFileA(setFiles)}
+              />
             ) : (
               <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex flex-col items-center justify-center text-center space-y-4 h-[240px] animate-in zoom-in-95 duration-300">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
@@ -282,7 +289,14 @@ const ComparePdf = () => {
           <div className="space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">Revised Document</h3>
             {!fileB.length ? (
-              <FileUpload accept=".pdf" files={fileB} onFilesChange={setFiles => setFileB(setFiles)} label="Select Revised" />
+              <ToolUploadScreen
+                title="Revised Document"
+                description=""
+                buttonLabel="Select Revised"
+                accept=".pdf"
+                multiple={false}
+                onFilesSelected={(setFiles) => setFileB(setFiles)}
+              />
             ) : (
               <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex flex-col items-center justify-center text-center space-y-4 h-[240px] animate-in zoom-in-95 duration-300">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">

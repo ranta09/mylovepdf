@@ -35,7 +35,7 @@ import {
   Sparkles
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -563,12 +563,13 @@ const RedactPdf = () => {
     >
       <div className="space-y-6">
         {files.length === 0 && !loading && (
-          <FileUpload
+          <ToolUploadScreen
+            title="Redact PDF"
+            description="Permanently remove sensitive information from your PDF"
+            buttonLabel="Select PDF file"
             accept=".pdf"
             multiple={false}
-            files={files}
-            onFilesChange={handleFilesChange}
-            label="Click or drag to upload PDF for redaction"
+            onFilesSelected={handleFilesChange}
           />
         )}
 

@@ -12,7 +12,7 @@ html {
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 0 0% 100%;
     --foreground: 220 25% 9%;
 
     --card: 0 0% 100%;
@@ -21,17 +21,18 @@ html {
     --popover: 0 0% 100%;
     --popover-foreground: 220 25% 9%;
 
-    /* Vibrant blue primary */
-    --primary: 217 91% 55%;
+    /* Brand Orange-Red #E96144 */
+    --primary: 9 80% 59%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
+    /* Light Gray Section Background #F7F9FB */
+    --secondary: 210 20% 98%;
     --secondary-foreground: 220 25% 9%;
 
     --muted: 210 20% 95%;
     --muted-foreground: 220 12% 48%;
 
-    --accent: 199 89% 48%;
+    --accent: 9 80% 59%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -39,7 +40,7 @@ html {
 
     --border: 215 20% 90%;
     --input: 215 20% 90%;
-    --ring: 217 91% 55%;
+    --ring: 9 80% 59%;
 
     --radius: 0.875rem;
 
@@ -50,32 +51,22 @@ html {
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 215 20% 90%;
-    --sidebar-ring: 217 91% 55%;
+    --sidebar-ring: 9 80% 59%;
 
-    /* Professional SaaS Tool Palette */
+    /* Tool-specific Palette matching freepdfconvert.com */
     --tool-pdf: 0 84% 60%;
-    /* Red #EF4444 */
     --tool-image: 271 91% 65%;
-    /* Purple #A855F7 */
-    --tool-ai: 239 84% 67%;
-    /* Indigo #6366F1 */
-    --tool-convert: 0 84% 60%;
-    /* Red #EF4444 */
+    --tool-ai: 9 80% 59%;
+    --tool-convert: 9 80% 59%;
     --tool-edit: 161 84% 39%;
-    /* Green #10B981 */
 
-    /* Tool-specific Vibrant Palette */
-    --tool-merge: 221 83% 53%;
-    /* Vibrant Blue */
-    --tool-split: 327 73% 52%;
-    /* Vibrant Pink */
-    --tool-compress: 199 89% 48%;
-    /* Vibrant Cyan */
-    --tool-protect: 215 16% 47%;
-    /* Professional Slate */
+    --tool-merge: 211 76% 59%; /* Blue #4A90E2 */
+    --tool-split: 340 82% 52%; /* Pink #E91E63 */
+    --tool-compress: 187 100% 42%; /* Cyan #00BCD4 */
+    --tool-protect: 0 0% 62%; /* Gray #9E9E9E */
 
-    --gradient-hero: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(271 91% 65%) 100%);
-    --gradient-subtle: linear-gradient(160deg, hsl(var(--primary) / 0.02) 0%, hsl(var(--background)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(9 80% 59%) 0%, hsl(20 100% 65%) 100%);
+    --gradient-subtle: linear-gradient(160deg, hsl(var(--primary) / 0.05) 0%, hsl(var(--background)) 100%);
 
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.03);
     --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -93,8 +84,8 @@ html {
     --popover: 222 47% 7%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 9 80% 59%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 20% 98%;
@@ -102,15 +93,15 @@ html {
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 9 80% 59%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 9 80% 59%;
     
     --sidebar-background: 224 71.4% 3%;
     --sidebar-foreground: 240 5.3% 96.1%;
@@ -119,7 +110,7 @@ html {
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 9 80% 59%;
 
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
     --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);

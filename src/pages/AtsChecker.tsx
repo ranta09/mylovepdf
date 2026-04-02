@@ -17,7 +17,7 @@ import {
   LinkedinIcon, BriefcaseBusiness, Wand2, Layout, Info,
   BrainCircuit, MessageSquare, Search, ListChecks
 } from "lucide-react";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -188,12 +188,13 @@ const AtsChecker = () => {
 
             {inputMode === "file" && (
               <>
-                <FileUpload
-                  onFilesChange={setFiles}
-                  files={files}
+                <ToolUploadScreen
+                  title="Upload resume"
+                  description="Select your resume for ATS analysis"
+                  buttonLabel="Select file"
                   accept=".pdf,.docx,.doc,.txt,.rtf,.odt"
                   multiple={false}
-                  label="Upload resume"
+                  onFilesSelected={setFiles}
                 />
                 {files.length > 0 && (
                   <DocumentInfoCard

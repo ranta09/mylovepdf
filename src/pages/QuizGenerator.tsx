@@ -19,7 +19,7 @@ import {
   Timer, Star, Zap, BookOpen, GraduationCap, X, Plus, ChevronDown,
   Wand2, MessageSquare, Search, BookMarked
 } from "lucide-react";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import DocumentInfoCard from "@/components/DocumentInfoCard";
 
@@ -299,11 +299,13 @@ const QuizGenerator = () => {
             {/* Input content */}
             {inputMode === "file" && (
               <div className="space-y-3">
-                <FileUpload
-                  onFilesChange={setFiles}
-                  files={files}
+                <ToolUploadScreen
+                  title="Upload study material"
+                  description="Select a document to generate your AI quiz"
+                  buttonLabel="Select file"
                   accept={SUPPORTED_EXTENSIONS}
-                  label="Upload study material"
+                  multiple={true}
+                  onFilesSelected={setFiles}
                 />
               </div>
             )}

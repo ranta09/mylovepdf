@@ -6,7 +6,7 @@ import {
   Type, Languages, ArrowRight, ArrowLeft, Loader2, ScanSearch, FileBox, AlertTriangle
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import BatchProcessingView from "@/components/BatchProcessingView";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -455,13 +455,17 @@ const PdfToWord = () => {
         </div>
       )}
 
-      <div className="mt-5">
-        {files.length === 0 && (
-          <div className="mt-10 text-center">
-            <FileUpload accept=".pdf" files={[]} onFilesChange={setFiles} label="Select PDF Files" multiple={true} maxSize={50} />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && !processing && (
+        <ToolUploadScreen
+          title="PDF to Word"
+          description="Convert PDF documents into editable Word files"
+          buttonLabel="Select PDF file"
+          accept=".pdf"
+          multiple={true}
+          maxSize={50}
+          onFilesSelected={setFiles}
+        />
+      )}
 
       {!files.length && !processing && (
         <ToolSeoSection

@@ -5,7 +5,7 @@ import pptxgen from "pptxgenjs";
 import { Presentation, FileBox, CheckCircle2, ArrowRight, RotateCcw, ShieldCheck, Settings, Layout, FileText, Sparkles, Upload, Plus } from "lucide-react";
 import ToolHeader from "@/components/ToolHeader";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { Button } from "@/components/ui/button";
@@ -364,9 +364,14 @@ const PdfToPpt = () => {
           </div>
         </div>
       ) : (
-        <div className="mt-5 text-center">
-          <FileUpload accept=".pdf" files={files} onFilesChange={setFiles} label="Select a PDF to convert" />
-        </div>
+        <ToolUploadScreen
+          title="PDF to PowerPoint"
+          description="Convert PDF pages into editable PowerPoint slides"
+          buttonLabel="Select PDF file"
+          accept=".pdf"
+          multiple={true}
+          onFilesSelected={setFiles}
+        />
       )}
       <ToolSeoSection
         toolName="PDF to PowerPoint Converter"

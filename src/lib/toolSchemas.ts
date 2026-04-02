@@ -326,27 +326,6 @@ export const toolSchemas: Record<string, ToolSchema> = {
     ]),
   },
 
-  "/excel-to-ppt": {
-    softwareApplication: makeApp(
-      "Excel to PowerPoint Converter",
-      "Automatically generate PowerPoint presentations from Excel spreadsheet data online for free.",
-      "/excel-to-ppt"
-    ),
-    howTo: makeHowTo("How to Convert Excel to PowerPoint", [
-      {
-        name: "Upload your Excel file",
-        text: "Click or drag and drop your XLSX or XLS file into the tool.",
-      },
-      {
-        name: "Choose slide layout",
-        text: "Select a presentation theme and how you want the spreadsheet data to be arranged on slides.",
-      },
-      {
-        name: "Download the presentation",
-        text: "Click 'Generate Presentation' and download your PPTX file.",
-      },
-    ]),
-  },
 
   "/pdf-to-pdfa": {
     softwareApplication: makeApp(

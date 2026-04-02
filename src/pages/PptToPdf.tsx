@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import BatchProcessingView, { BatchProcessingResult } from "@/components/BatchProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { toast } from "sonner";
@@ -323,15 +323,14 @@ const PptToPdf = () => {
       )}
 
       {files.length === 0 && !processing && results.length === 0 && (
-        <div className="mt-8">
-          <FileUpload 
-            accept=".ppt,.pptx" 
-            files={[]} 
-            onFilesChange={handleFilesChange} 
-            label="Select PowerPoint files to convert" 
-            multiple
-          />
-        </div>
+        <ToolUploadScreen
+          title="Convert PowerPoint to PDF"
+          description="Preserve slide layouts, images, and formatting"
+          buttonLabel="Select PowerPoint files"
+          accept=".ppt,.pptx"
+          multiple={true}
+          onFilesSelected={handleFilesChange}
+        />
       )}
 
       <ToolSeoSection

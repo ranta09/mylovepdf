@@ -4,7 +4,7 @@ import { useGlobalUpload } from "@/components/GlobalUploadContext";
 import { flattenPdfDocument, analyzePdfFlattenState, FlattenAnalysis, FlattenMode } from "@/lib/flattenPdfEngine";
 import { Layers, Loader2, ShieldCheck, FileText, CheckCircle2, FileBox, AlertTriangle, Download, Settings, MousePointerClick, Zap } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -377,14 +377,16 @@ const FlattenPdf = () => {
         </div>
       )}
 
-      {/* ── BEFORE UPLOAD: SEO AND DRAG-DROP AREA ─────────────────────── */}
-      <div className="mt-5">
-        {files.length === 0 && !processing && results.length === 0 && !analyzing && (
-          <div className="mt-10 text-center">
-            <FileUpload accept=".pdf" files={[]} onFilesChange={(f) => setFiles(f.slice(0, 1))} label="Select PDF to flatten" multiple={false} />
-          </div>
-        )}
-      </div>
+      {files.length === 0 && !processing && results.length === 0 && !analyzing && (
+        <ToolUploadScreen
+          title="Flatten PDF"
+          description="Merge form fields and annotations into a static PDF"
+          buttonLabel="Select PDF to flatten"
+          accept=".pdf"
+          multiple={false}
+          onFilesSelected={(f) => setFiles(f.slice(0, 1))}
+        />
+      )}
 
       {!files.length && !processing && results.length === 0 && !analyzing && (
         <ToolSeoSection

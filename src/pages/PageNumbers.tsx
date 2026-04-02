@@ -33,7 +33,7 @@ import {
   Sliders
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -381,12 +381,13 @@ const PageNumbers = () => {
     >
       <div className="space-y-6">
         {files.length === 0 && !loading && (
-          <FileUpload
+          <ToolUploadScreen
+            title="Add Page Numbers"
+            description="Professional PDF page numbering at your fingertips"
+            buttonLabel="Select PDF file"
             accept=".pdf"
             multiple={false}
-            files={files}
-            onFilesChange={handleFilesChange}
-            label="Click or drag to upload PDF"
+            onFilesSelected={handleFilesChange}
           />
         )}
 

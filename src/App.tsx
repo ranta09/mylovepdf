@@ -30,7 +30,6 @@ const PdfToPpt        = lazy(() => import("./pages/PdfToPpt"));
 const PptToPdf        = lazy(() => import("./pages/PptToPdf"));
 const PdfToExcel      = lazy(() => import("./pages/PdfToExcel"));
 const ExcelToPdf      = lazy(() => import("./pages/ExcelToPdf"));
-const ExcelToPpt      = lazy(() => import("./pages/ExcelToPpt"));
 const EditPdf         = lazy(() => import("./pages/EditPdf"));
 const RotatePdf       = lazy(() => import("./pages/RotatePdf"));
 const WatermarkPdf    = lazy(() => import("./pages/WatermarkPdf"));
@@ -106,7 +105,6 @@ const App = () => (
                       <Route path="/ppt-to-pdf"     element={<PptToPdf />} />
                       <Route path="/pdf-to-excel"   element={<PdfToExcel />} />
                       <Route path="/excel-to-pdf"   element={<ExcelToPdf />} />
-                      <Route path="/excel-to-ppt"   element={<ExcelToPpt />} />
                       <Route path="/edit-pdf"       element={<EditPdf />} />
                       <Route path="/rotate-pdf"     element={<RotatePdf />} />
                       <Route path="/add-watermark"  element={<WatermarkPdf />} />

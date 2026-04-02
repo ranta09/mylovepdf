@@ -5,7 +5,7 @@ import ToolHeader from "@/components/ToolHeader";
 import * as pdfjsLib from "pdfjs-dist";
 import ToolLayout from "@/components/ToolLayout";
 import { saveAs } from "file-saver";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
 import ResultView, { ProcessingResult } from "@/components/ResultView";
 import { Label } from "@/components/ui/label";
@@ -447,13 +447,16 @@ const PdfToJpg = () => {
         </div>
       )}
 
-      <div className="mt-5">
-        {filesData.length === 0 && (
-          <div className="mt-5 text-center">
-            <FileUpload accept=".pdf" files={filesData.map(f => f.file)} onFilesChange={handleFilesChange} label="Select a PDF to convert" />
-          </div>
-        )}
-      </div>
+      {filesData.length === 0 && (
+        <ToolUploadScreen
+          title="PDF to JPG"
+          description="Convert each PDF page into a high-quality JPG image"
+          buttonLabel="Select PDF file"
+          accept=".pdf"
+          multiple={true}
+          onFilesSelected={handleFilesChange}
+        />
+      )}
       <ToolSeoSection
         toolName="PDF to JPG Converter"
         category="convert"

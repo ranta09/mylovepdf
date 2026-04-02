@@ -97,7 +97,7 @@ export const getRecommendedTools = (files: File[]): ToolGroup[] => {
                 break;
             case "Excel":
                 groupName = "Excel Tools";
-                recommendedIds = ["excel-to-pdf", "excel-to-ppt"];
+                recommendedIds = ["excel-to-pdf"];
                 break;
             case "Image":
                 groupName = "Image Tools";

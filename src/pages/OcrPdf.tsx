@@ -28,7 +28,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { runOcrOnCanvas, analyzePdfDocument, preprocessCanvas } from "@/lib/ocrEngine";
 import ToolLayout from "@/components/ToolLayout";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -68,10 +68,10 @@ const OcrPdf = () => {
     return () => setDisableGlobalFeatures(false);
   }, [files.length, processing, setDisableGlobalFeatures]);
 
-  const handleFilesChange = async (newFiles: File[]) => {
+  const handleFilesChange = useCallback(async (newFiles: File[]) => {
     if (newFiles.length === 0) return;
     setFiles(prev => [...prev, ...newFiles]);
-  };
+  }, []);
 
   const removeFile = (index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
@@ -343,14 +343,14 @@ const OcrPdf = () => {
 
       {/* Landing State: Upload Area */}
       {files.length === 0 && !processing && (
-        <div className="mt-8 text-center uppercase">
-          <FileUpload 
-            accept=".pdf" 
-            files={[]} 
-            onFilesChange={handleFilesChange} 
-            label="Select scanned PDF for OCR" 
-          />
-        </div>
+        <ToolUploadScreen
+          title="OCR PDF"
+          description="Extract text from scanned PDFs using high-accuracy text recognition"
+          buttonLabel="Select PDF file"
+          accept=".pdf"
+          multiple={true}
+          onFilesSelected={handleFilesChange}
+        />
       )}
 
       <ToolSeoSection

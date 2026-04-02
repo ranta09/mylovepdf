@@ -17,7 +17,7 @@ import {
   RotateCcw, FileQuestion, ChevronDown, CheckCircle2,
   Zap, Wand2, BrainCircuit, Search, Layout
 } from "lucide-react";
-import FileUpload from "@/components/FileUpload";
+import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DocumentInfoCard from "@/components/DocumentInfoCard";
@@ -322,11 +322,13 @@ const ChatWithPdf = () => {
 
             {inputMode === "file" && (
               <div className="space-y-3">
-                <FileUpload
-                  onFilesChange={setFiles}
-                  files={files}
+                <ToolUploadScreen
+                  title="Upload documents"
+                  description="Select documents to start chatting"
+                  buttonLabel="Select files"
                   accept={SUPPORTED_EXTENSIONS}
-                  label="Upload documents"
+                  multiple={true}
+                  onFilesSelected={setFiles}
                 />
               </div>
             )}

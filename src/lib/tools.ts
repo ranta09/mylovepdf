@@ -32,7 +32,6 @@ export const tools: PdfTool[] = [
     { id: "ppt-to-pdf", name: "PPT to PDF", description: "Convert presentations to PDF", icon: Presentation, path: "/ppt-to-pdf", category: "convert", available: true },
     { id: "pdf-to-excel", name: "PDF to Excel", description: "Extract tables from PDF to CSV", icon: FileSpreadsheet, path: "/pdf-to-excel", category: "convert", available: true },
     { id: "excel-to-pdf", name: "Excel to PDF", description: "Convert spreadsheet data to PDF", icon: FileSpreadsheet, path: "/excel-to-pdf", category: "convert", available: true },
-    { id: "excel-to-ppt", name: "Excel to PPT", description: "Smart generator to convert spreadsheet data into a PowerPoint presentation", icon: Presentation, path: "/excel-to-ppt", category: "convert", available: true },
     { id: "edit", name: "Edit PDF", description: "Add text, shapes and annotations", icon: Edit3, path: "/edit-pdf", category: "edit", available: true },
     { id: "rotate", name: "Rotate PDF", description: "Rotate PDF pages to any angle", icon: RotateCw, path: "/rotate-pdf", category: "edit", available: true },
     { id: "watermark", name: "Add Watermark", description: "Stamp text or images on your PDF", icon: Droplets, path: "/add-watermark", category: "edit", available: true },
