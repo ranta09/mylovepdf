@@ -78,4 +78,5 @@ export const categoryTextColors: Record<ToolCategory, string> = {
     split: "text-tool-split",
     compress: "text-tool-compress",
     protect: "text-tool-protect",
+    ai: "text-indigo-600",
 };
