@@ -126,15 +126,18 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
     const compressedSize = compressedStat ? compressedStat.size : originalSize;
 
     const reductionPercent = originalSize > 0
-      ? Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100))
+      ? Math.max(0, ((originalSize - compressedSize) / originalSize) * 100)
       : 0;
 
     const compressionTime = Date.now() - startTime;
 
-    // ── If no reduction, serve the original file instead of the larger output ──
-    if (compressedSize >= originalSize) {
-      safeDelete(outputPath);                        // discard the bloated output
-      fs.copyFileSync(inputPath, outputPath);        // replace with original bytes
+    // Only consider it "no reduction" if less than 1% savings
+    const meaningfulReduction = reductionPercent >= 1;
+
+    // ── If no meaningful reduction, serve the original file instead ───────────
+    if (!meaningfulReduction) {
+      safeDelete(outputPath);
+      fs.copyFileSync(inputPath, outputPath);
     }
 
     // ── Register for cleanup ──────────────────────────────────────────────────
