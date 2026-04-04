@@ -342,15 +342,19 @@ const CompressPdf = () => {
     onProgress: (p: number) => void
   ): Promise<ProcessedFile> => {
     const blob = await compressSinglePdf(file, m, onProgress);
-    // If compressed is larger, serve the original file unchanged
-    const finalBlob = blob.size < file.size ? blob : file;
+    // If compressed is larger or equal, serve the original file unchanged
+    const actuallySmaller = blob.size < file.size;
+    const reductionPct = actuallySmaller ? ((file.size - blob.size) / file.size) * 100 : 0;
+    const meaningfulReduction = actuallySmaller && reductionPct >= 1;
+    const finalBlob = meaningfulReduction ? blob : file;
     return {
       name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
       originalSize: file.size,
-      compressedSize: finalBlob.size, // actual size — original when no gain
+      compressedSize: meaningfulReduction ? blob.size : file.size,
       url: URL.createObjectURL(finalBlob),
       blob: finalBlob,
       engine: "client",
+      alreadyOptimized: !meaningfulReduction,
     };
   };
 
