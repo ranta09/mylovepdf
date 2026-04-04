@@ -181,11 +181,12 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
       success: true,
       status: "reduced",
       alreadyOptimized: false,
+      message: "PDF compressed successfully",
       originalSizeMB: toMB(originalSize),
       compressedSizeMB: toMB(compressedSize),
-      originalSize,                          // raw bytes
-      compressedSize,                        // raw bytes
-      reductionPercent,                      // clamped ≥ 0
+      originalSize,
+      compressedSize,
+      reductionPercent: Math.round(reductionPercent),
       compressionTime,
       pages: meta.pages,
       fileType: meta.fileType,
