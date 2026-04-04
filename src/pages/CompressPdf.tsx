@@ -429,7 +429,8 @@ const CompressPdf = () => {
       ? ((totalOriginal - totalCompressed) / totalOriginal) * 100
       : 0;
   const savingsPercent = Math.max(0, Math.round(rawSavingsPercent));
-  const noReduction = totalCompressed >= totalOriginal;
+  // Only show "can't compress" if no meaningful reduction (less than 1%)
+  const noReduction = totalOriginal === 0 || ((totalOriginal - totalCompressed) / totalOriginal) * 100 < 1;
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
