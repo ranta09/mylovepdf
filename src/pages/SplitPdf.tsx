@@ -1,18 +1,24 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import ToolSeoSection from "@/components/ToolSeoSection";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
-import { Scissors, Loader2, Info, ShieldCheck, Download, Trash2, Plus, ArrowRight, Layout, CheckCircle2, FileBox, FileText, X, LayoutGrid, Layers, Settings, Zap, Merge, FileOutput } from "lucide-react";
-import ToolHeader from "@/components/ToolHeader";
+import {
+  Scissors, Loader2, ShieldCheck, Download, Trash2, Plus, ArrowRight,
+  CheckCircle2, FileBox, FileText, X, LayoutGrid, Layers, Zap, Merge,
+  FileOutput, ChevronRight, ChevronDown, Star, ArrowLeft, Lock, Monitor,
+  Minimize2, RotateCcw, Hash, Droplets, Edit3, Copy, Scan,
+  FileSpreadsheet, Presentation, PenTool, Unlock, Square, Globe,
+  ShieldAlert, Wrench, GitCompare, Crop, Image as ImageIcon,
+  Layout, FileOutput as FileOut,
+} from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
+import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
@@ -33,6 +39,101 @@ interface SplitResult {
   url: string;
   pages: string;
 }
+
+// ── Star Rating Bar ───────────────────────────────────────────────────────────
+const RatingBar = () => {
+  const [userRating, setUserRating] = useState<number>(0);
+  const [hovered, setHovered] = useState<number>(0);
+  const fixed = 4.5;
+  const votes = 412893;
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 py-6 border-y border-border">
+      <span className="text-sm font-bold text-foreground">Rate this tool</span>
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const active = hovered ? star <= hovered : userRating ? star <= userRating : star <= fixed;
+          const isHalf = !hovered && !userRating && star === 5 && fixed % 1 !== 0;
+          return (
+            <button
+              key={star}
+              onMouseEnter={() => setHovered(star)}
+              onMouseLeave={() => setHovered(0)}
+              onClick={() => setUserRating(star)}
+              className="relative focus:outline-none"
+              title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+            >
+              <Star
+                className={cn(
+                  "h-6 w-6 transition-colors",
+                  active ? "text-yellow-400 fill-yellow-400" : "text-yellow-200 fill-yellow-100"
+                )}
+              />
+              {isHalf && (
+                <Star
+                  className="h-6 w-6 text-yellow-400 fill-yellow-400 absolute inset-0"
+                  style={{ clipPath: "inset(0 50% 0 0)" }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <span className="text-sm text-muted-foreground font-medium">
+        {userRating ? `${userRating}.0 / 5` : `${fixed} / 5`} —{" "}
+        <span className="text-foreground font-semibold">{votes.toLocaleString()} votes</span>
+      </span>
+    </div>
+  );
+};
+
+// ── FAQ Accordion ─────────────────────────────────────────────────────────────
+const FAQ_ITEMS = [
+  {
+    q: "Is MagicDOCX Split PDF free?",
+    a: "Yes, completely free with no file limits or account required.",
+  },
+  {
+    q: "How many ways can I split a PDF?",
+    a: "Four modes: Extract selected pages, Custom page ranges, Split every page into its own file, or Fixed chunk size (e.g. every 5 pages).",
+  },
+  {
+    q: "Is my file secure?",
+    a: "All splitting happens locally in your browser — your files are never uploaded to any server.",
+  },
+  {
+    q: "Can I split a large PDF?",
+    a: "Yes, files with hundreds of pages are fully supported. Pages load progressively so you can start selecting immediately.",
+  },
+  {
+    q: "What format are the output files?",
+    a: "All output files are standard PDF format. Multiple files are bundled into a ZIP for easy download.",
+  },
+];
+
+const FaqAccordion = () => {
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <div className="space-y-2">
+      {FAQ_ITEMS.map((item, i) => (
+        <div key={i} className="border border-border rounded-xl overflow-hidden">
+          <button
+            onClick={() => setOpen(open === i ? null : i)}
+            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-secondary/40 transition-colors"
+          >
+            <span className="text-sm font-semibold text-foreground">{item.q}</span>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200", open === i && "rotate-180")} />
+          </button>
+          {open === i && (
+            <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border/50 pt-3">
+              {item.a}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const SplitPdf = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -286,153 +387,439 @@ const SplitPdf = () => {
     setProgress(0);
   };
 
+  const relatedTools = [
+    { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+    { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+    { name: "Rotate PDF", path: "/rotate-pdf", icon: RotateCcw },
+    { name: "Extract Pages", path: "/extract-pages", icon: FileOutput },
+    { name: "Delete Pages", path: "/delete-pages", icon: Trash2 },
+    { name: "Organize PDF", path: "/organize-pdf", icon: Layout },
+  ];
+
   return (
     <ToolLayout title="Split PDF Online" description="Extract specific pages or split one PDF into multiple files" category="split" icon={<Scissors className="h-7 w-7" />}
       metaTitle="Split PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Split PDF files into multiple documents online for free. Extract pages, define ranges, or split every page. Fast and secure | no software needed." toolId="split" hideHeader={files.length > 0}>
 
-      <div className="mt-2">
-        {files.length === 0 ? (
-          <ToolUploadScreen
-            title="Split PDF"
-            description="Separate pages or extract specific sections from your PDF"
-            buttonLabel="Select PDF file"
-            accept=".pdf"
-            multiple={false}
-            onFilesSelected={handleFilesChange}
-          />
-        ) : processing ? (
-          <div className="mt-4 mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 shadow-elevated text-center">
-            <div className="mb-6 relative flex justify-center items-center h-24">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full border-4 border-primary/20"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full border-4 border-primary border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }}></div>
-              </div>
-              <Scissors className="h-7 w-7 text-primary absolute animate-pulse" />
-            </div>
+      <div className="mt-2 flex flex-col h-full">
 
-            <h3 className="text-xl font-bold mb-1">Splitting your PDF...</h3>
-            <p className="text-sm text-muted-foreground mb-8">Processing pages based on your settings</p>
+        {/* ── RESULTS VIEW ── */}
+        {results.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full min-h-full bg-secondary/30 dark:bg-secondary/10"
+          >
+            <div className="w-full max-w-5xl mx-auto px-4 pt-1 pb-12 space-y-8">
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground">
-                <span>Overall Progress</span>
-                <span className="text-primary">{progress}%</span>
-              </div>
-              <div className="h-3 w-full bg-secondary rounded-full overflow-hidden p-0.5 border border-border/50 shadow-inner">
-                <motion.div
-                  className="h-full bg-primary rounded-full shadow-glow"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ type: "spring", stiffness: 50 }}
-                />
-              </div>
-            </div>
-          </div>
-        ) : results.length > 0 ? (
-          <div className="mt-4 mx-auto max-w-3xl space-y-4">
-            <div className="bg-card border-2 border-green-500/20 shadow-elevated rounded-2xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-bl-full pointer-events-none -z-0"></div>
-              <div className="flex items-center gap-4 relative z-10">
-                <div className="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center border border-green-500/20 shadow-sm shrink-0">
-                  <CheckCircle2 className="h-7 w-7 text-green-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-black text-foreground tracking-tight">Split Completed!</h2>
-                  <p className="text-sm text-muted-foreground font-medium">Your PDF has been split into {results.length} professional files.</p>
-                </div>
-              </div>
-            </div>
+              {/* Title */}
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center tracking-tighter">
+                {results.length > 1 ? `PDF has been split into ${results.length} files!` : "PDF has been split!"}
+              </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-card border border-border shadow-elevated rounded-2xl p-5 flex flex-col h-[400px]">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-black text-xs uppercase tracking-widest text-muted-foreground">Generated Files</h3>
+              {/* ── ACTION ROW ── */}
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:-ml-24">
+                {/* Back button */}
+                <button
+                  onClick={() => setResults([])}
+                  className="flex items-center justify-center w-14 h-14 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors shrink-0"
+                  title="Go back"
+                >
+                  <ArrowLeft className="h-6 w-6 text-foreground" />
+                </button>
+
+                {/* Main download button */}
+                <button
+                  className="h-20 px-8 md:px-20 w-full md:w-auto md:min-w-[420px] rounded-2xl font-bold text-lg md:text-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-3 justify-center uppercase tracking-wider"
+                  onClick={() => {
+                    if (zipUrl) {
+                      const a = document.createElement("a");
+                      a.href = zipUrl;
+                      a.download = "MagicDOCX_Split_PDFs.zip";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    } else if (results.length === 1) {
+                      const a = document.createElement("a");
+                      a.href = results[0].url;
+                      a.download = results[0].filename;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }
+                  }}
+                >
+                  <Download className="h-6 w-6" />
+                  {results.length > 1 ? "Download All (ZIP)" : "Download PDF"}
+                </button>
+              </div>
+
+              {/* ── FILE LIST ── */}
+              <div className="bg-background rounded-2xl border border-border overflow-hidden">
+                <div className="px-5 py-3 border-b border-border bg-secondary/20 flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Generated Files</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 bg-secondary rounded-full text-muted-foreground uppercase">{results.length} files</span>
                 </div>
-
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                <div className="divide-y divide-border max-h-80 overflow-y-auto custom-scrollbar">
                   {results.slice(0, 50).map((res, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl border border-border/50 group hover:border-primary/30 transition-all">
-                      <div className="w-8 h-10 bg-background rounded border border-border flex items-center justify-center shrink-0">
-                        <FileText className="h-4 w-4 text-primary/40" />
+                    <div key={idx} className="flex items-center gap-3 px-5 py-3.5 group hover:bg-secondary/30 transition-colors">
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <FileText className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold truncate group-hover:text-primary transition-colors">{res.filename}</p>
-                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{res.pages}</p>
+                        <p className="text-sm font-semibold text-foreground truncate">{res.filename}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 uppercase font-bold tracking-wide">{res.pages}</p>
                       </div>
                       <a
                         href={res.url}
                         download={res.filename}
-                        className="p-1.5 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-all"
+                        className="p-2 rounded-xl hover:bg-secondary transition-colors"
+                        title="Download"
                       >
-                        <Download className="h-4 w-4" />
+                        <Download className="h-4 w-4 text-muted-foreground" />
                       </a>
                     </div>
                   ))}
                   {results.length > 50 && (
-                    <p className="text-center text-[10px] text-muted-foreground py-2 font-bold uppercase tracking-widest">
+                    <p className="text-center text-[10px] text-muted-foreground py-3 font-bold uppercase tracking-widest">
                       + {results.length - 50} more files
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="bg-primary/[0.03] border-2 border-primary/20 shadow-elevated rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-4 h-[250px]">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 shadow-inner group">
-                    <Zap className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
-                  </div>
-                  <div>
-                    <h4 className="font-black text-lg text-foreground tracking-tight">Ready to Download</h4>
-                    <p className="text-xs text-muted-foreground max-w-[200px] mx-auto mt-1 leading-relaxed">
-                      {results.length > 1 ? "We've bundled all your files into a single ZIP for convenience." : "Your split PDF is ready for safe download."}
-                    </p>
-                  </div>
+              {/* ── CONTINUE TO... ── */}
+              <div className="bg-background rounded-2xl border border-border overflow-hidden">
+                <div className="px-6 py-4 border-b border-border">
+                  <h3 className="text-base font-bold text-foreground">Continue to...</h3>
                 </div>
-
-                <div className="flex flex-col gap-2">
-                  {zipUrl && (
-                    <Button
-                      size="lg"
-                      className="w-full text-md h-12 shadow-glow"
-                      onClick={() => {
-                        const a = document.createElement('a');
-                        a.href = zipUrl;
-                        a.download = "MagicDOCX_Split_PDFs.zip";
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                      }}
+                <div className="grid grid-cols-1 sm:grid-cols-3">
+                  {relatedTools.map((tool, i) => (
+                    <a
+                      key={tool.path}
+                      href={tool.path}
+                      className={cn(
+                        "flex items-center gap-3 px-5 py-4 hover:bg-secondary/40 transition-colors group",
+                        i % 3 !== 2 && "sm:border-r border-border",
+                        i >= 3 && "border-t border-border"
+                      )}
                     >
-                      <Download className="mr-2 h-5 w-5" /> Download All (ZIP)
-                    </Button>
-                  )}
-                  {results.length === 1 && (
-                    <Button
-                      size="lg"
-                      className="w-full text-md h-12 shadow-glow"
-                      onClick={() => {
-                        const a = document.createElement('a');
-                        a.href = results[0].url;
-                        a.download = results[0].filename;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                      }}
-                    >
-                      <Download className="mr-2 h-5 w-5" /> Download PDF
-                    </Button>
-                  )}
-                  <Button variant="outline" className="w-full h-12 text-sm font-bold border-2" onClick={resetAll}>
-                    Split Another PDF
-                  </Button>
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <tool.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <span className="text-sm font-semibold text-foreground flex-1 group-hover:text-primary transition-colors">{tool.name}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </a>
+                  ))}
+                </div>
+                <div className="px-6 py-3 border-t border-border flex justify-end">
+                  <button
+                    onClick={() => { window.location.href = "/#all-tools"; }}
+                    className="text-sm font-semibold text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                  >
+                    See more
+                  </button>
                 </div>
               </div>
+
+              {/* ── SECURITY SECTION ── */}
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-8 space-y-4">
+                <h3 className="text-xl font-bold text-foreground">Secure. Private. In your control</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  MagicDOCX processes all files directly in your browser with no server uploads, no tracking, and complete privacy.
+                  Your files are always handled safely and automatically cleared after processing.
+                </p>
+                <div className="flex flex-wrap gap-4 pt-2">
+                  {[
+                    { icon: ShieldCheck, label: "SSL Encryption" },
+                    { icon: Lock, label: "No Storage" },
+                    { icon: CheckCircle2, label: "100% Private" },
+                  ].map(({ icon: Icon, label }) => (
+                    <div key={label} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/20 bg-background text-sm font-semibold text-foreground">
+                      <Icon className="h-4 w-4 text-primary" />
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Split Another */}
+              <div className="flex justify-center">
+                <Button variant="outline" className="h-12 px-8 text-sm font-bold border-2" onClick={resetAll}>
+                  Split Another PDF
+                </Button>
+              </div>
+
+            </div>
+          </motion.div>
+
+        ) : files.length === 0 ? (
+          /* ── UPLOAD SCREEN + INFO SECTIONS ── */
+          <div className="w-full">
+            <ToolUploadScreen
+              title="Split PDF"
+              description="Separate pages or extract specific sections from your PDF"
+              buttonLabel="Select PDF file"
+              accept=".pdf"
+              multiple={false}
+              onFilesSelected={handleFilesChange}
+            />
+
+            {/* ── INFO SECTIONS ─────────────────────────────────────── */}
+            <div className="w-full px-6 pb-16 space-y-16 mt-12">
+
+              {/* ── How it works ── */}
+              <section>
+                <h2 className="text-2xl font-bold text-foreground text-center mb-8">How It Works</h2>
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                  <div className="hidden sm:block absolute top-6 left-[calc(16.67%)] right-[calc(16.67%)] border-t-2 border-dashed border-border" />
+                  {[
+                    { step: "1", title: "Upload your PDF", sub: "Drag & drop or click to select a file" },
+                    { step: "2", title: "Choose split mode", sub: "Extract, range, every page, or fixed split" },
+                    { step: "3", title: "Download instantly", sub: "Get individual PDFs or a ZIP bundle" },
+                  ].map((s) => (
+                    <div key={s.step} className="relative flex flex-col items-center text-center flex-1 gap-3">
+                      <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-black shadow-lg shadow-primary/20 z-10">
+                        {s.step}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{s.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{s.sub}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ── Why MagicDOCX ── */}
+              <section>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-12">
+                  {[
+                    {
+                      icon: Scissors,
+                      title: "The Best Free PDF Splitter Online",
+                      desc: "Need to extract a specific page or divide a large PDF into smaller parts? MagicDOCX lets you split PDF files online free, with no quality loss and no software to install. Fast, flexible, and always free.",
+                    },
+                    {
+                      icon: Lock,
+                      title: "Permanent File Deletion for Privacy",
+                      desc: "Your security matters. All splitting happens locally in your browser — files are never uploaded to any server. No copies are retained, ensuring your documents remain 100% private.",
+                    },
+                    {
+                      icon: ShieldCheck,
+                      title: "Encrypted & Secure PDF Splitting",
+                      desc: "Every file is handled with the highest security standards. Even sensitive documents stay completely private while you split, extract, or reorganise your PDF pages.",
+                    },
+                    {
+                      icon: Monitor,
+                      title: "Split PDFs on Any Device",
+                      desc: "Our PDF splitter works online across all devices and operating systems. Whether you're on Windows, Mac, Linux, iOS, or Android — no software download needed.",
+                    },
+                    {
+                      icon: Zap,
+                      title: "Free PDF Splitter with Unlimited Use",
+                      desc: "Split as many PDF files as you like instantly — no limits, no account required. Completely free and always available.",
+                    },
+                    {
+                      icon: Merge,
+                      title: "All-in-One PDF Tools Beyond Splitting",
+                      desc: "More than just a splitter — MagicDOCX offers powerful tools to merge, compress, rotate, and convert PDFs. Everything you need for working with PDFs, in one place.",
+                    },
+                  ].map((f) => (
+                    <div key={f.title} className="flex items-start gap-5">
+                      <div className="w-14 h-14 rounded-2xl border-2 border-border flex items-center justify-center shrink-0 bg-background">
+                        <f.icon className="h-7 w-7 text-foreground" strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-foreground mb-2">{f.title}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ── FAQ ── */}
+              <section>
+                <h2 className="text-2xl font-bold text-foreground text-center mb-8">Frequently Asked Questions</h2>
+                <FaqAccordion />
+              </section>
+
+              {/* ── Meet our full product family ── */}
+              <section>
+                <h2 className="text-2xl font-bold text-foreground text-center mb-10">Meet our full product family</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-6 lg:gap-x-8 gap-y-10 mt-16 px-4">
+                  {[
+                    {
+                      category: "Compress & Convert",
+                      tools: [
+                        { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2, iconColor: "text-red-500" },
+                        { name: "HTML to PDF", path: "/html-to-pdf", icon: Globe, iconColor: "text-blue-500" },
+                      ]
+                    },
+                    {
+                      category: "Organize",
+                      tools: [
+                        { name: "Merge PDF", path: "/merge-pdf", icon: Merge, iconColor: "text-violet-600" },
+                        { name: "Split PDF", path: "/split-pdf", icon: Scissors, iconColor: "text-violet-600", active: true },
+                        { name: "Rotate PDF", path: "/rotate-pdf", icon: RotateCcw, iconColor: "text-violet-600" },
+                        { name: "Organize PDF", path: "/organize-pdf", icon: Layers, iconColor: "text-violet-600" },
+                        { name: "Delete PDF Pages", path: "/delete-pages", icon: Trash2, iconColor: "text-violet-600" },
+                        { name: "Extract PDF Pages", path: "/extract-pages", icon: Copy, iconColor: "text-violet-600" },
+                      ]
+                    },
+                    {
+                      category: "View & Edit",
+                      tools: [
+                        { name: "Edit PDF", path: "/edit-pdf", icon: Edit3, iconColor: "text-cyan-500" },
+                        { name: "Number Pages", path: "/page-numbers", icon: Hash, iconColor: "text-cyan-500" },
+                        { name: "Crop PDF", path: "/crop-pdf", icon: Crop, iconColor: "text-cyan-500" },
+                        { name: "Redact PDF", path: "/redact-pdf", icon: ShieldAlert, iconColor: "text-cyan-500" },
+                        { name: "Watermark PDF", path: "/add-watermark", icon: Droplets, iconColor: "text-cyan-500" },
+                        { name: "Repair PDF", path: "/repair-pdf", icon: Wrench, iconColor: "text-cyan-500" },
+                        { name: "Compare PDF", path: "/compare-pdf", icon: GitCompare, iconColor: "text-cyan-500" },
+                      ]
+                    },
+                    {
+                      category: "Convert from PDF",
+                      tools: [
+                        { name: "PDF to Word", path: "/pdf-to-word", icon: FileText, iconColor: "text-blue-500" },
+                        { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileSpreadsheet, iconColor: "text-emerald-500" },
+                        { name: "PDF to JPG", path: "/pdf-to-jpg", icon: ImageIcon, iconColor: "text-orange-400" },
+                        { name: "PDF to PPT", path: "/pdf-to-ppt", icon: Presentation, iconColor: "text-red-400" },
+                      ]
+                    },
+                    {
+                      category: "Convert to PDF",
+                      tools: [
+                        { name: "Word to PDF", path: "/word-to-pdf", icon: FileText, iconColor: "text-blue-600" },
+                        { name: "Excel to PDF", path: "/excel-to-pdf", icon: FileSpreadsheet, iconColor: "text-green-600" },
+                        { name: "PPT to PDF", path: "/ppt-to-pdf", icon: Presentation, iconColor: "text-orange-600" },
+                        { name: "JPG to PDF", path: "/jpg-to-pdf", icon: ImageIcon, iconColor: "text-amber-500" },
+                        { name: "OCR PDF", path: "/ocr-pdf", icon: Scan, iconColor: "text-red-500" },
+                      ]
+                    },
+                    {
+                      category: "Sign & Secure",
+                      tools: [
+                        { name: "Sign PDF", path: "/sign-pdf", icon: PenTool, iconColor: "text-pink-500" },
+                        { name: "Protect PDF", path: "/protect-pdf", icon: Lock, iconColor: "text-red-400" },
+                        { name: "Unlock PDF", path: "/unlock-pdf", icon: Unlock, iconColor: "text-red-400" },
+                        { name: "Flatten PDF", path: "/flatten-pdf", icon: Square, iconColor: "text-red-400" },
+                      ]
+                    }
+                  ].map((column: any, idx: number) => (
+                    <div key={idx} className="flex flex-col gap-8">
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-1">
+                          {column.category}
+                        </h3>
+                        <div className="flex flex-col gap-1">
+                          {column.tools.map((tool: any) => (
+                            <a
+                              key={tool.name}
+                              href={tool.path}
+                              className={cn(
+                                "group flex items-center gap-3 px-1 py-1.5 rounded-lg transition-all hover:bg-primary/5",
+                                tool.active && "bg-blue-50/80 dark:bg-blue-900/20"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110",
+                                "bg-background border border-border group-hover:border-primary/20 shadow-sm"
+                              )}>
+                                <tool.icon className={cn("h-4 w-4", tool.iconColor)} strokeWidth={2} />
+                              </div>
+                              <span className={cn(
+                                "text-xs font-bold leading-tight transition-colors",
+                                tool.active ? "text-blue-600 dark:text-blue-400" : "text-foreground/80 group-hover:text-primary"
+                              )}>
+                                {tool.name}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ── Tutorials ── */}
+              <section>
+                <h2 className="text-2xl font-bold text-foreground text-center mb-10">Tutorials on PDF Splitting</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {[
+                    {
+                      bg: "from-primary to-primary/70",
+                      category: "HOW TO SPLIT PDF",
+                      title: "How to Extract Pages from a PDF Online",
+                      desc: "Step-by-step guide to extracting specific pages from any PDF document — free, fast, and without installing any software.",
+                      path: "/blog",
+                    },
+                    {
+                      bg: "from-slate-200 to-slate-100 dark:from-slate-700 dark:to-slate-800",
+                      category: "HOW TO SPLIT PDF",
+                      title: "Split a Multi-Page PDF into Single Pages",
+                      desc: "Need one file per page? Learn how to split every page of a PDF into its own document in just a few clicks.",
+                      path: "/blog",
+                    },
+                    {
+                      bg: "from-rose-400 to-rose-300",
+                      category: "HOW TO SPLIT PDF",
+                      title: "How to Split a PDF by Page Range",
+                      desc: "Define custom page ranges to divide a large PDF into exactly the sections you need — no extra software required.",
+                      path: "/blog",
+                    },
+                  ].map((article, i) => (
+                    <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow group">
+                      <div className={cn("h-44 bg-gradient-to-br flex items-center justify-center", article.bg)}>
+                        <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <Scissors className="h-8 w-8 text-white drop-shadow" />
+                        </div>
+                      </div>
+                      <div className="p-5 space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{article.category}</p>
+                        <h3 className="text-sm font-bold text-foreground leading-snug">{article.title}</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{article.desc}</p>
+                        <a
+                          href={article.path}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline mt-2 pt-1"
+                        >
+                          Read article <ChevronRight className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-center mt-8">
+                  <a href="/blog" className="text-sm font-semibold text-primary hover:underline">Show more articles</a>
+                </div>
+              </section>
+
+              {/* ── Rate this tool ── */}
+              <section>
+                <RatingBar />
+              </section>
+
             </div>
           </div>
+
+        ) : processing ? (
+          /* ── PROCESSING ── */
+          <div className="mt-12 flex justify-center">
+            <ProcessingView
+              files={files}
+              processing={true}
+              progress={progress}
+              onProcess={() => {}}
+              buttonText=""
+              processingText="Splitting your PDF..."
+              estimateText="Extracting pages and building documents"
+            />
+          </div>
+
         ) : (
+          /* ── WORKSPACE: thumbnail grid + settings sidebar ── */
           <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
               {/* LEFT SIDE: PREVIEW PANEL */}
@@ -698,26 +1085,7 @@ const SplitPdf = () => {
           </div>
         )}
       </div>
-      <ToolSeoSection
-        toolName="Split PDF"
-        category="split"
-        intro="MagicDocx Split PDF allows you to break any PDF file into smaller, separate documents instantly. Whether you need to extract specific pages, define custom ranges, split every page into its own file, or create fixed-size chunks, our free tool gives you full control. No software installation required | just upload your PDF, configure your split settings, and download all results in a ZIP file or individual PDFs."
-        steps={[
-          "Upload a PDF file by clicking the upload area or dragging and dropping it.",
-          "Select your split mode: Extract, Range, Every Page, or Fixed Split.",
-          "Choose the pages or ranges you want to extract or split.",
-          "Click \"Split PDF\" to process and download your results automatically."
-        ]}
-        formats={["PDF"]}
-        relatedTools={[
-          { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
-          { name: "Extract Pages", path: "/extract-pages", icon: FileOutput },
-          { name: "Delete Pages", path: "/delete-pages", icon: Trash2 },
-          { name: "Organize Pages", path: "/organize-pdf", icon: Layout },
-        ]}
-        schemaName="Split PDF Online"
-        schemaDescription="Free online tool to split PDF files into multiple documents. Extract pages, define ranges, or split every page."
-      />
+      <Footer />
     </ToolLayout>
   );
 };

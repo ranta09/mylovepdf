@@ -208,23 +208,25 @@ const ToolUploadScreen = ({
 
       {/* Center content */}
       <motion.div
-        className="w-full max-w-2xl text-center"
+        className="w-full max-w-2xl text-center flex flex-col items-center"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="text-3xl md:text-5xl font-bold text-foreground tracking-tight mb-4">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4 px-2">
           {title}
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground mb-6">{description}</p>
+        <p className="text-base md:text-lg lg:text-xl text-muted-foreground mb-8 max-w-lg mx-auto px-4">
+          {description}
+        </p>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="relative inline-flex items-center">
+        <div className="flex flex-col items-center gap-4 w-full px-4">
+          <div className="relative w-full sm:w-auto flex justify-center">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => fileInputRef.current?.click()}
-              className="bg-primary text-white text-xl md:text-2xl font-bold px-24 py-6 rounded-2xl shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center min-w-[360px]"
+              className="bg-primary text-white text-lg md:text-2xl font-bold px-8 py-4 md:px-20 md:py-6 rounded-2xl shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center w-full sm:min-w-[360px]"
             >
               {buttonLabel}
             </motion.button>

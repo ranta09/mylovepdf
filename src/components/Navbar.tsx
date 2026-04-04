@@ -129,7 +129,7 @@ const Navbar = () => {
             onClick={() => setMegaOpen(prev => !prev)}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${megaOpen
               ? "text-primary bg-primary/10"
-              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              : "text-muted-foreground hover:text-primary hover:bg-primary/5"
               }`}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -138,19 +138,19 @@ const Navbar = () => {
           </button>
           <Link
             to="/blog"
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-200"
           >
             Blog
           </Link>
           <Link
             to="/contact"
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-200"
           >
             Contact Us
           </Link>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center justify-center rounded-xl p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+            className="flex items-center justify-center rounded-xl p-2 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-200"
             aria-label="Toggle dark mode"
           >
             {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -159,12 +159,20 @@ const Navbar = () => {
 
         {/* Mobile toggles */}
         <div className="flex md:hidden items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex items-center justify-center rounded-xl p-2 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-200"
+            aria-label="Toggle dark mode"
+          >
             {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+          </button>
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="flex items-center justify-center rounded-xl p-2 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-200"
+            aria-label="Toggle menu"
+          >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          </button>
         </div>
       </div>
 

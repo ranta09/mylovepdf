@@ -103,8 +103,16 @@ const Index = () => {
     if (lastTool) {
       sessionStorage.removeItem("lastVisitedTool");
     }
-    // Scroll to top on mount for the landing page
-    window.scrollTo(0, 0);
+    // If a hash is present, scroll to that element; otherwise scroll to top
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        const el = document.querySelector(hash);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, []);
 
   return (
@@ -206,7 +214,7 @@ const Index = () => {
           </div>
 
           {/* ─── MEET PRODUCT FAMILY ─── */}
-          <div className="mb-24">
+          <div id="all-tools" className="mb-24">
             <h2 className="text-2xl font-extrabold text-center text-foreground mb-10 tracking-tight">
               Explore the MagicDOCX toolkit
             </h2>

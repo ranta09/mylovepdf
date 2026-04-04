@@ -24,7 +24,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-card overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 pointer-events-none" />
-      <div className="container relative z-10 pt-16 pb-8">
+      <div className="w-full px-6 relative z-10 pt-16 pb-8">
 
 
         {/* Links Grid */}
