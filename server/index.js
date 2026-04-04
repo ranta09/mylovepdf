@@ -156,18 +156,18 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
       `(${reductionPercent}% saved, ${compressionTime} ms, engine: ${meta.engine})`
     );
 
-    // ── No reduction (compressed >= original) ─────────────────────────────────
-    if (compressedSize >= originalSize) {
+    // ── No meaningful reduction ─────────────────────────────────────────────
+    if (!meaningfulReduction) {
       return res.json({
         success: true,
         status: "no_reduction",
         alreadyOptimized: true,
-        message: "This PDF is already optimized. No further compression possible.",
+        message: "This file can't be compressed further without losing quality",
         originalSizeMB: toMB(originalSize),
         compressedSizeMB: toMB(originalSize),
         originalSize,
-        compressedSize: originalSize, // return original size — never report larger
-        reductionPercent: 0,          // always 0, never negative
+        compressedSize: originalSize,
+        reductionPercent: 0,
         compressionTime,
         pages: meta.pages,
         fileType: meta.fileType,
