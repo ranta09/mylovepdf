@@ -126,15 +126,18 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
     const compressedSize = compressedStat ? compressedStat.size : originalSize;
 
     const reductionPercent = originalSize > 0
-      ? Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100))
+      ? Math.max(0, ((originalSize - compressedSize) / originalSize) * 100)
       : 0;
 
     const compressionTime = Date.now() - startTime;
 
-    // ── If no reduction, serve the original file instead of the larger output ──
-    if (compressedSize >= originalSize) {
-      safeDelete(outputPath);                        // discard the bloated output
-      fs.copyFileSync(inputPath, outputPath);        // replace with original bytes
+    // Only consider it "no reduction" if less than 1% savings
+    const meaningfulReduction = reductionPercent >= 1;
+
+    // ── If no meaningful reduction, serve the original file instead ───────────
+    if (!meaningfulReduction) {
+      safeDelete(outputPath);
+      fs.copyFileSync(inputPath, outputPath);
     }
 
     // ── Register for cleanup ──────────────────────────────────────────────────
@@ -153,18 +156,18 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
       `(${reductionPercent}% saved, ${compressionTime} ms, engine: ${meta.engine})`
     );
 
-    // ── No reduction (compressed >= original) ─────────────────────────────────
-    if (compressedSize >= originalSize) {
+    // ── No meaningful reduction ─────────────────────────────────────────────
+    if (!meaningfulReduction) {
       return res.json({
         success: true,
         status: "no_reduction",
         alreadyOptimized: true,
-        message: "This PDF is already optimized. No further compression possible.",
+        message: "This file can't be compressed further without losing quality",
         originalSizeMB: toMB(originalSize),
         compressedSizeMB: toMB(originalSize),
         originalSize,
-        compressedSize: originalSize, // return original size — never report larger
-        reductionPercent: 0,          // always 0, never negative
+        compressedSize: originalSize,
+        reductionPercent: 0,
         compressionTime,
         pages: meta.pages,
         fileType: meta.fileType,
@@ -178,11 +181,12 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
       success: true,
       status: "reduced",
       alreadyOptimized: false,
+      message: "PDF compressed successfully",
       originalSizeMB: toMB(originalSize),
       compressedSizeMB: toMB(compressedSize),
-      originalSize,                          // raw bytes
-      compressedSize,                        // raw bytes
-      reductionPercent,                      // clamped ≥ 0
+      originalSize,
+      compressedSize,
+      reductionPercent: Math.round(reductionPercent),
       compressionTime,
       pages: meta.pages,
       fileType: meta.fileType,
