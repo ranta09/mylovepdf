@@ -576,37 +576,6 @@ const EditPdf = () => {
     }
   };
 
-  // ─── Marquee drag ─────────────────────────────────────────────────────────
-  const handleMarqueeMouseDown = (e: React.MouseEvent) => {
-    if (activeTool !== "select") return;
-    const t = e.target as HTMLElement;
-    if (t.closest("[data-overlay]") || t.closest("[data-textblock]")) return; 
-    const { x, y } = getRelativePos(e);
-    setMarqueeStart({ x, y }); setMarqueeRect(null); setMarqueeDragging(true);
-    if (!e.shiftKey) setSelectedIds(new Set());
-  };
-  const handleMarqueeMouseMove = (e: React.MouseEvent) => {
-    if (!marqueeDragging || !marqueeStart) return;
-    const { x, y } = getRelativePos(e);
-    setMarqueeRect({ x: Math.min(marqueeStart.x, x), y: Math.min(marqueeStart.y, y), width: Math.abs(x - marqueeStart.x), height: Math.abs(y - marqueeStart.y) });
-  };
-  const handleMarqueeMouseUp = (e: React.MouseEvent, srcIdx: number) => {
-    if (!marqueeDragging || !marqueeStart) { setMarqueeDragging(false); return; }
-    setMarqueeDragging(false);
-    const rect = marqueeRect;
-    setMarqueeRect(null); setMarqueeStart(null);
-    if (rect && rect.width > 0.5 && rect.height > 0.5) {
-      const selectBox = { x: rect.x, y: rect.y, w: rect.width, h: rect.height };
-      const items = getPageItems(srcIdx);
-      const newSelected = new Set(selectedIds);
-      items.forEach(it => {
-         const itemBox = { x: it.x, y: it.y, w: it.width, h: it.height };
-         if (rectsIntersect(itemBox, selectBox)) newSelected.add(it.id);
-      });
-      setSelectedIds(newSelected);
-    }
-  };
-
   // ─── Page management ──────────────────────────────────────────────────────
 
   const deletePage = (visIdx: number) => {
@@ -1324,19 +1293,16 @@ const EditPdf = () => {
                             if (activeTool === "image") handleImgMouseDown(e);
                             if (ANNOT_TOOLS.includes(activeTool)) handleAnnotMouseDown(e);
                             if (activeTool === "eraser") handleEraserMouseDown(e);
-                            if (activeTool === "select") handleMarqueeMouseDown(e);
                           }}
                           onMouseMove={e => {
                             if (activeTool === "image") handleImgMouseMove(e);
                             if (ANNOT_TOOLS.includes(activeTool)) handleAnnotMouseMove(e);
                             if (activeTool === "eraser") handleEraserMouseMove(e);
-                            if (activeTool === "select") handleMarqueeMouseMove(e);
                           }}
                           onMouseUp={e => {
                             if (activeTool === "image") handleImgMouseUp(e, srcIdx);
                             if (ANNOT_TOOLS.includes(activeTool)) handleAnnotMouseUp(e, srcIdx);
                             if (activeTool === "eraser") handleEraserMouseUp(e, srcIdx);
-                            if (activeTool === "select") handleMarqueeMouseUp(e, srcIdx);
                           }}
                         >
                           <img
