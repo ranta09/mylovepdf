@@ -32,7 +32,7 @@ export interface ImageOverlay {
 export interface AnnotationOverlay {
     id: string;
     type: "annotation";
-    kind: "highlight" | "rectangle" | "ellipse" | "comment" | "freehand";
+    kind: "highlight" | "rectangle" | "ellipse" | "comment" | "freehand" | "line" | "arrow";
     x: number;
     y: number;
     width?: number;
@@ -75,15 +75,18 @@ export async function renderPdfPages(file: File, scale = 1.5): Promise<string[]>
     const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
     const results: string[] = [];
 
+    // Use DPR for crisp rendering on high-density displays
+    const dpr = Math.min(window.devicePixelRatio || 1, 3); // cap at 3x to limit memory
+
     for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale });
+        const viewport = page.getViewport({ scale: scale * dpr });
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         const ctx = canvas.getContext("2d")!;
         await page.render({ canvasContext: ctx, viewport }).promise;
-        results.push(canvas.toDataURL("image/jpeg", 0.88));
+        results.push(canvas.toDataURL("image/png"));
     }
 
     return results;
@@ -251,12 +254,36 @@ export async function buildEditedPdf(
                        pg.drawSvgPath(path, { color: c });
                     }
                 } else if (o.kind === "freehand" && o.points && o.points.length > 1) {
-                    const pathParts = o.points.map((p, i) => {
-                       const px = (p[0] / 100) * width;
-                       const py = height - (p[1] / 100) * height;
-                       return `${i === 0 ? "M" : "L"} ${px} ${py}`;
-                    });
-                    pg.drawSvgPath(pathParts.join(" "), { borderColor: c, borderWidth: 2 });
+                    // Convert to PDF coordinates and use Catmull-Rom smoothing
+                    const pdfPoints = o.points.map(p => [
+                       (p[0] / 100) * width,
+                       height - (p[1] / 100) * height,
+                    ]);
+                    // Build smooth cubic bezier SVG path
+                    const tension = 0.5;
+                    let svgPath = `M ${pdfPoints[0][0]} ${pdfPoints[0][1]}`;
+                    for (let pi = 0; pi < pdfPoints.length - 1; pi++) {
+                      const pp0 = pdfPoints[Math.max(pi - 1, 0)];
+                      const pp1 = pdfPoints[pi];
+                      const pp2 = pdfPoints[pi + 1];
+                      const pp3 = pdfPoints[Math.min(pi + 2, pdfPoints.length - 1)];
+                      const cp1x = pp1[0] + (pp2[0] - pp0[0]) / (6 / tension);
+                      const cp1y = pp1[1] + (pp2[1] - pp0[1]) / (6 / tension);
+                      const cp2x = pp2[0] - (pp3[0] - pp1[0]) / (6 / tension);
+                      const cp2y = pp2[1] - (pp3[1] - pp1[1]) / (6 / tension);
+                      svgPath += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${pp2[0]} ${pp2[1]}`;
+                    }
+                    try {
+                      pg.drawSvgPath(svgPath, { borderColor: c, borderWidth: 2 });
+                    } catch {
+                      // Fallback to polyline if bezier fails
+                      const pathParts = o.points.map((p, i) => {
+                         const px = (p[0] / 100) * width;
+                         const py = height - (p[1] / 100) * height;
+                         return `${i === 0 ? "M" : "L"} ${px} ${py}`;
+                      });
+                      pg.drawSvgPath(pathParts.join(" "), { borderColor: c, borderWidth: 2 });
+                    }
                 }
             }
 
@@ -340,5 +367,5 @@ export async function buildEditedPdf(
     }
 
     onProgress?.(100);
-    return outDoc.save();
+    return outDoc.save({ useObjectStreams: true });
 }
