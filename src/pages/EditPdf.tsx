@@ -506,6 +506,24 @@ const EditPdf = () => {
     }
   };
 
+  // ─── Print (PDF pages only) ───────────────────────────────────────────────
+
+  const handlePrint = () => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const pages = state.pageOrder.map(i => previews[i]).filter(Boolean);
+    win.document.write(`<!DOCTYPE html><html><head><title>Print</title><style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{background:#fff}
+      .page{page-break-after:always;text-align:center}
+      .page:last-child{page-break-after:avoid}
+      img{max-width:100%;height:auto;display:block;margin:0 auto}
+      @media print{body{margin:0}}
+    </style></head><body>${pages.map(src => `<div class="page"><img src="${src}"/></div>`).join("")}</body></html>`);
+    win.document.close();
+    win.onload = () => { win.focus(); win.print(); win.close(); };
+  };
+
   // ─── Save / Download ──────────────────────────────────────────────────────
 
   const download = async () => {
@@ -784,6 +802,7 @@ const EditPdf = () => {
                 undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo}
                 dirtyCount={dirtyCount} isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen}
                 onSave={download} saving={saving}
+                onPrint={handlePrint}
               />
 
               <SecondaryToolbar

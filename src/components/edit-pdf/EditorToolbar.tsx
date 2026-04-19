@@ -7,6 +7,8 @@ import {
   Minus, ArrowUpRight, Square, Circle, Triangle, Spline,
   Maximize, Minimize,
   ChevronDown,
+  Printer, Search,
+  Download, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +56,9 @@ interface EditorToolbarProps {
   dirtyCount: number;
   isFullscreen: boolean;
   toggleFullscreen: () => void;
+  onSave: () => void;
+  saving: boolean;
+  onPrint?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -72,11 +77,14 @@ export function EditorToolbar({
   dirtyCount,
   isFullscreen,
   toggleFullscreen,
+  onSave,
+  saving,
+  onPrint,
 }: EditorToolbarProps) {
   const currentShape = SHAPES.find((s) => s.id === activeShape) ?? SHAPES[0];
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center px-3 h-[68px] shrink-0 gap-0.5">
+    <div className="bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-gray-700 flex items-center px-3 h-[68px] shrink-0 gap-0.5">
       {/* Undo / Redo */}
       <button
         onClick={undo}
@@ -209,6 +217,23 @@ export function EditorToolbar({
 
       {/* Right side */}
       <div className="ml-auto flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 mr-2 pr-2 border-r border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => onPrint ? onPrint() : window.print()}
+            className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[50px] text-gray-700 dark:text-gray-300"
+          >
+            <Printer className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Print</span>
+          </button>
+          <button
+            onClick={() => alert("Please use Ctrl+F (or Cmd+F on Mac) to search the document text.")}
+            className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[50px] text-gray-700 dark:text-gray-300"
+          >
+            <Search className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Search</span>
+          </button>
+        </div>
+
         {dirtyCount > 0 && (
           <span className="text-[10px] text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-full px-2 py-0.5 font-medium">
             {dirtyCount} edit{dirtyCount > 1 ? "s" : ""}
@@ -223,6 +248,19 @@ export function EditorToolbar({
           ) : (
             <Maximize className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           )}
+        </button>
+
+        <button
+          onClick={onSave}
+          disabled={saving}
+          className="ml-2 flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          Save
         </button>
       </div>
     </div>
