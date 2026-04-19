@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import type { Overlay, TextOverlay, ImageOverlay, AnnotationOverlay, SignatureOverlay } from "@/lib/pdfEditorUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface TransformItem {
+export interface TransformItemData {
   id: string;
   x: number; // %
   y: number; // %
@@ -15,7 +16,7 @@ export interface TransformItem {
 
 interface TransformBoxProps {
   selectedIds: Set<string>;
-  allItems: TransformItem[];
+  allItems: TransformItemData[];
   containerRef: React.RefObject<HTMLElement>;
   zoom: number;
   onCommit: (
@@ -73,7 +74,7 @@ export function TransformBox({
 
   const draggingState = useRef<{
     mode: "move" | "resize" | "rotate" | null;
-    itemsStart: TransformItem[];
+    itemsStart: TransformItemData[];
     mouseStart: { x: number; y: number };
     boxStart: { x: number; y: number; w: number; h: number };
     handleId?: HandleId;
@@ -621,4 +622,95 @@ export function TransformBox({
       </div>
     </>
   );
+}
+
+// ─── TransformItem — visual renderer for a single overlay ────────────────────
+
+interface TransformItemProps {
+  overlay: Overlay;
+  zoom: number;
+  isSelected: boolean;
+  onSelect: (e: React.MouseEvent) => void;
+}
+
+export function TransformItem({ overlay: ov, isSelected, onSelect }: TransformItemProps) {
+  const base: React.CSSProperties = {
+    position: "absolute",
+    left: `${ov.x}%`,
+    top: `${ov.y}%`,
+    cursor: "move",
+    pointerEvents: "auto",
+    outline: isSelected ? "2px solid #3b82f6" : "none",
+    outlineOffset: "1px",
+    boxSizing: "border-box",
+  };
+
+  if (ov.type === "text") {
+    const t = ov as TextOverlay;
+    return (
+      <div
+        id={`item-${ov.id}`}
+        style={{
+          ...base,
+          fontSize: `${t.fontSize}px`,
+          color: t.color,
+          fontWeight: t.bold ? "bold" : "normal",
+          fontStyle: t.italic ? "italic" : "normal",
+          whiteSpace: "nowrap",
+          userSelect: "none",
+        }}
+        onMouseDown={onSelect}
+      >
+        {t.text}
+      </div>
+    );
+  }
+
+  if (ov.type === "image" || ov.type === "signature") {
+    const img = ov as ImageOverlay | SignatureOverlay;
+    return (
+      <div
+        id={`item-${ov.id}`}
+        style={{ ...base, width: `${img.width}%`, height: `${img.height}%` }}
+        onMouseDown={onSelect}
+      >
+        <img src={img.dataUrl} style={{ width: "100%", height: "100%", objectFit: "fill", display: "block" }} alt="" draggable={false} />
+      </div>
+    );
+  }
+
+  if (ov.type === "annotation") {
+    const a = ov as AnnotationOverlay;
+    if ((a.kind === "freehand" || a.kind === "line" || a.kind === "arrow") && a.points && a.points.length > 1) {
+      return (
+        <svg
+          id={`item-${ov.id}`}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }}
+        >
+          <polyline
+            points={a.points.map(p => `${p[0]},${p[1]}`).join(" ")}
+            fill="none"
+            stroke={a.color}
+            strokeWidth={2}
+          />
+        </svg>
+      );
+    }
+    return (
+      <div
+        id={`item-${ov.id}`}
+        style={{
+          ...base,
+          width: `${a.width ?? 8}%`,
+          height: `${a.height ?? 2}%`,
+          background: a.kind === "highlight" ? "rgba(255,255,0,0.35)" : "transparent",
+          border: a.kind !== "highlight" ? `2px solid ${a.color}` : undefined,
+          borderRadius: a.kind === "ellipse" ? "50%" : undefined,
+        }}
+        onMouseDown={onSelect}
+      />
+    );
+  }
+
+  return null;
 }

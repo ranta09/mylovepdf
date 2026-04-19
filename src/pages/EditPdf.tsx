@@ -9,7 +9,7 @@ import {
   Edit3, MessageSquare, X, ShieldCheck, Loader2, CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TransformBox, TransformItem } from "@/components/TransformBox";
+import { TransformBox, TransformItem, TransformItemData } from "@/components/TransformBox";
 import {
   renderPdfPages, buildEditedPdf, makeId,
   type Overlay, type TextOverlay, type ImageOverlay,
@@ -20,7 +20,7 @@ import { extractTextBlocks, type TextBlock } from "@/lib/pdfTextExtractor";
 import { useEditorHistory } from "@/hooks/useEditorHistory";
 import {
   EditorToolbar, SecondaryToolbar, PageThumbnails,
-  PropertiesPanel, BottomBar,
+  PropertiesPanel,
   ANNOT_TOOLS,
   type Tool, type Shape,
 } from "@/components/edit-pdf";
@@ -147,6 +147,48 @@ const EditPdf = () => {
   // ── Layout state ──────────────────────────────────────────────────────────
   const [zoom, setZoom] = useState(1.0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem("magicdocx_left_sidebar_width");
+    return saved ? parseInt(saved, 10) : 200;
+  });
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem("magicdocx_right_sidebar_width");
+    return saved ? parseInt(saved, 10) : 220;
+  });
+
+  const resizingLeft = useRef(false);
+  const resizingRight = useRef(false);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (resizingLeft.current) {
+        setLeftSidebarWidth((prev) => {
+          const newWidth = Math.min(Math.max(150, e.clientX), 450);
+          localStorage.setItem("magicdocx_left_sidebar_width", String(newWidth));
+          return newWidth;
+        });
+      }
+      if (resizingRight.current) {
+        setRightSidebarWidth((prev) => {
+          const newWidth = Math.min(Math.max(150, window.innerWidth - e.clientX), 450);
+          localStorage.setItem("magicdocx_right_sidebar_width", String(newWidth));
+          return newWidth;
+        });
+      }
+    };
+    const onMouseUp = () => {
+      resizingLeft.current = false;
+      resizingRight.current = false;
+      document.body.style.cursor = "";
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -283,7 +325,13 @@ const EditPdf = () => {
   const zoomOut = () => { const n = [...ZOOM_STEPS].reverse().find(z => z < zoom); if (n) setZoom(n); };
   const zoomFitWidth = () => setZoom(1.0);
   const scrollToPage = (idx: number) => {
-    pageRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = pageRefs.current[idx];
+    if (el && scrollRef.current) {
+      const top = el.offsetTop - 12; // Small padding offset
+      scrollRef.current.scrollTo({ top, behavior: "smooth" });
+    } else if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     setActivePage(idx);
   };
 
@@ -355,8 +403,8 @@ const EditPdf = () => {
     if (hasOverlayUpdates) pushState(nextState);
   };
 
-  const getPageItems = useCallback((srcIdx: number): TransformItem[] => {
-    const items: TransformItem[] = [];
+  const getPageItems = useCallback((srcIdx: number): TransformItemData[] => {
+    const items: TransformItemData[] = [];
     textBlocksPerPage[srcIdx]?.forEach(b => {
       items.push({ id: b.id, x: b.x, y: b.y, width: b.width, height: b.height, isText: true });
     });
@@ -454,7 +502,7 @@ const EditPdf = () => {
         const bbox = overlayBBox(ov); return !bbox || !rectsIntersect(bbox, eraseBox);
       });
       const erased = before - next.pages[srcIdx].overlays.length;
-      if (erased > 0) { pushState(next); toast.success(`Erased ${erased} object${erased > 1 ? "s" : ""}`); }
+      if (erased > 0) { pushState(next); }
     }
   };
 
@@ -701,61 +749,43 @@ const EditPdf = () => {
     });
   };
 
-  // ─── Derived values ───────────────────────────────────────────────────────
-
   const dirtyCount = textBlocksPerPage.flat().filter(b => b.isDirty).length;
   const selectedBlock = selectedBlockId
     ? textBlocksPerPage.flat().find(b => b.id === selectedBlockId) ?? null
     : null;
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   return (
     <ToolLayout
       title="Edit PDF Online"
-      description="Edit PDF online | add text, replace images, annotate, sign and manage pages."
-      category="edit"
-      icon={<Edit3 className="h-7 w-7" />}
-      metaTitle="Edit PDF Online | Change Text & Images | MagicDocx"
-      metaDescription="Edit any PDF online. Add text, replace images, annotate, sign, and manage pages. Free in-browser PDF editor."
-      toolId="edit"
-      hideHeader={!!file}
+      description="Edit existing text, add signatures, images, and annotations to your PDF documents."
+      toolName="Edit PDF Online"
     >
       <div className="space-y-4">
-        {!file && !loading && (
-          <ToolUploadScreen
-            title="Edit PDF Online"
-            description="Drop your PDF here to start editing"
-            buttonLabel="Select PDF file"
-            accept=".pdf"
-            multiple={false}
-            onFilesSelected={handleFiles}
-          />
-        )}
-
-        {loading && (
-          <div className="flex flex-col items-center justify-center gap-4 py-20 text-muted-foreground">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-sm font-medium">Loading PDF and extracting text…</p>
+        {!file && (
+          <div className="max-w-4xl mx-auto py-12 px-4">
+            <ToolUploadScreen
+              title="Edit PDF Online"
+              description="Click existing text to edit it, or add new text, images, and annotations."
+              accept={{ "application/pdf": [".pdf"] }}
+              onFilesSelected={handleFiles}
+              loading={loading}
+              isBatch={false}
+            />
           </div>
         )}
 
         {file && previews.length > 0 && (
           <div className="fixed top-16 inset-x-0 bottom-0 z-40 flex flex-col bg-white dark:bg-gray-950">
             <div ref={editorRef} className="flex-1 flex flex-col overflow-hidden">
-
-              {/* ── TOP TOOLBAR ── */}
               <EditorToolbar
                 activeTool={activeTool} setActiveTool={setActiveTool}
                 activeShape={activeShape} setActiveShape={setActiveShape}
                 shapeDropdownOpen={shapeDropdownOpen} setShapeDropdownOpen={setShapeDropdownOpen}
                 undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo}
                 dirtyCount={dirtyCount} isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen}
+                onSave={download} saving={saving}
               />
 
-              {saving && <Progress value={saveProgress} className="h-0.5 rounded-none" />}
-
-              {/* ── SECONDARY TOOLBAR ── */}
               <SecondaryToolbar
                 activeTool={activeTool} activeShape={activeShape}
                 selectedBlock={selectedBlock}
@@ -779,17 +809,25 @@ const EditPdf = () => {
                 totalTextBlocks={textBlocksPerPage.flat().length}
               />
 
-              {/* ── MAIN AREA ── */}
               <div className="flex flex-1 overflow-hidden">
-
-                {/* Left panel */}
                 <PageThumbnails
                   previews={previews} state={state} activePage={activePage}
                   zoom={zoom} zoomSteps={ZOOM_STEPS} setZoom={setZoom}
                   zoomIn={zoomIn} zoomOut={zoomOut} scrollToPage={scrollToPage}
+                  width={leftSidebarWidth}
                 />
 
-                {/* Center canvas */}
+                <div 
+                  className="w-1.5 hover:w-2 bg-transparent hover:bg-blue-400/20 active:bg-blue-500/40 cursor-col-resize transition-all z-50 flex items-center justify-center group"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    resizingLeft.current = true;
+                    document.body.style.cursor = "col-resize";
+                  }}
+                >
+                  <div className="w-0.5 h-6 bg-gray-300 dark:bg-gray-700 rounded-full group-hover:bg-blue-400 transition-colors" />
+                </div>
+
                 <div ref={scrollRef} className="flex-1 overflow-y-auto bg-[#e8e8e8] dark:bg-[#1a1a1a] px-8 py-6">
                   <div className="flex flex-col items-center gap-8">
                     {state.pageOrder.map((srcIdx, visIdx) => {
@@ -842,34 +880,47 @@ const EditPdf = () => {
                             />
                           )}
 
-                          {renderTextBlocks(srcIdx)}
-                          {overlays.map(ov => renderOverlay(ov, srcIdx))}
+                          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                            {overlays.map((ov) => (
+                              <TransformItem
+                                key={ov.id}
+                                overlay={ov}
+                                zoom={zoom}
+                                isSelected={selectedIds.has(ov.id)}
+                                onSelect={(e) => {
+                                  e.stopPropagation();
+                                  if (e.shiftKey) {
+                                    const next = new Set(selectedIds);
+                                    if (next.has(ov.id)) next.delete(ov.id);
+                                    else next.add(ov.id);
+                                    setSelectedIds(next);
+                                  } else {
+                                    setSelectedIds(new Set([ov.id]));
+                                  }
+                                }}
+                              />
+                            ))}
 
-                          {imgDragging && imgRect && activePage === visIdx && (
-                            <div className="absolute border-2 border-green-500 border-dashed bg-green-500/10 pointer-events-none"
-                              style={{ left:`${imgRect.x}%`, top:`${imgRect.y}%`, width:`${imgRect.width}%`, height:`${imgRect.height}%` }} />
-                          )}
-                          {annotDragging && annotStart && lineEnd && activePage === visIdx && (annotKind === "line" || annotKind === "arrow") && (
-                            <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
-                              <line x1={`${annotStart.x}%`} y1={`${annotStart.y}%`} x2={`${lineEnd.x}%`} y2={`${lineEnd.y}%`}
-                                stroke={annotColor} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeDasharray="4 2" />
-                            </svg>
-                          )}
-                          {annotDragging && annotRect && activePage === visIdx && annotKind !== "freehand" && annotKind !== "comment" && annotKind !== "line" && annotKind !== "arrow" && (
-                            <div className="absolute border-2 border-dashed pointer-events-none"
-                              style={{ left:`${annotRect.x}%`, top:`${annotRect.y}%`, width:`${annotRect.width}%`, height:`${annotRect.height}%`,
-                                borderColor: annotColor, background: annotKind === "highlight" ? "rgba(255,255,0,0.25)" : "transparent",
-                                borderRadius: annotKind === "ellipse" ? "50%" : undefined }} />
-                          )}
-                          {annotDragging && annotKind === "freehand" && freehandPoints.length > 1 && activePage === visIdx && (
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
-                              <path d={catmullRomToSvgPath(freehandPoints.map(p => [p[0], p[1]]))} fill="none" stroke={annotColor} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" transform="scale(1)" />
-                            </svg>
-                          )}
-                          {eraserDragging && eraserRect && activePage === visIdx && (
-                            <div className="absolute border-2 border-red-500 border-dashed bg-red-500/10 pointer-events-none"
-                              style={{ left:`${eraserRect.x}%`, top:`${eraserRect.y}%`, width:`${eraserRect.width}%`, height:`${eraserRect.height}%` }} />
-                          )}
+                            {imgDragging && imgRect && activePage === visIdx && (
+                              <div className="absolute border-2 border-blue-500 border-dashed bg-blue-500/10 pointer-events-none"
+                                style={{ left:`${imgRect.x}%`, top:`${imgRect.y}%`, width:`${imgRect.width}%`, height:`${imgRect.height}%` }} />
+                            )}
+                            {annotDragging && annotRect && activePage === visIdx && annotKind !== "freehand" && annotKind !== "line" && annotKind !== "arrow" && (
+                              <div className="absolute border-2 border-dashed pointer-events-none"
+                                style={{ left:`${annotRect.x}%`, top:`${annotRect.y}%`, width:`${annotRect.width}%`, height:`${annotRect.height}%`,
+                                  borderColor: annotColor, background: annotKind === "highlight" ? "rgba(255,255,0,0.25)" : "transparent",
+                                  borderRadius: annotKind === "ellipse" ? "50%" : undefined }} />
+                            )}
+                            {annotDragging && annotKind === "freehand" && freehandPoints.length > 1 && activePage === visIdx && (
+                              <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+                                <path d={catmullRomToSvgPath(freehandPoints.map(p => [p[0], p[1]]))} fill="none" stroke={annotColor} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                            {eraserDragging && eraserRect && activePage === visIdx && (
+                              <div className="absolute border-2 border-red-500 border-dashed bg-red-500/10 pointer-events-none"
+                                style={{ left:`${eraserRect.x}%`, top:`${eraserRect.y}%`, width:`${eraserRect.width}%`, height:`${eraserRect.height}%` }} />
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -879,21 +930,25 @@ const EditPdf = () => {
                   </div>
                 </div>
 
+                <div 
+                  className="w-1.5 hover:w-2 bg-transparent hover:bg-blue-400/20 active:bg-blue-500/40 cursor-col-resize transition-all z-50 flex items-center justify-center group"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    resizingRight.current = true;
+                    document.body.style.cursor = "col-resize";
+                  }}
+                >
+                  <div className="w-0.5 h-6 bg-gray-300 dark:bg-gray-700 rounded-full group-hover:bg-blue-400 transition-colors" />
+                </div>
+
                 {/* Right panel */}
                 <PropertiesPanel
                   activeTool={activeTool} activePage={activePage}
                   addOverlay={addOverlay} versions={versions}
                   downloadVersion={downloadVersion}
+                  width={rightSidebarWidth}
                 />
               </div>
-
-              {/* ── BOTTOM BAR ── */}
-              <BottomBar
-                activePage={activePage} totalPages={state.pageOrder.length}
-                zoom={zoom} zoomSteps={ZOOM_STEPS} saving={saving}
-                scrollToPage={scrollToPage} zoomIn={zoomIn} zoomOut={zoomOut}
-                zoomFitWidth={zoomFitWidth} onNewPdf={handleNewPdf} onSave={download}
-              />
             </div>
           </div>
         )}
