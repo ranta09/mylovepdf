@@ -572,26 +572,26 @@ const OrganizePdf = () => {
           <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
               {/* MOBILE TAB CONTROL */}
-              <div className="lg:hidden bg-[#16191E] border-b border-white/5 p-2 flex gap-1 shadow-sm shrink-0">
+              <div className="lg:hidden dark:bg-[#16191E] bg-white border-b dark:border-white/5 border-border p-2 flex gap-1 shadow-sm shrink-0">
                 <button
                   onClick={() => setActiveTab("configure")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
-                    activeTab === "configure" ? "bg-primary text-white shadow-elevated" : "text-white/40 hover:bg-white/5 hover:text-white"
+                    activeTab === "configure" ? "bg-primary text-white shadow-elevated" : "dark:text-white/40 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 dark:hover:text-white"
                   )}
                 >
                   <LayoutGrid className="h-4 w-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Organize</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-inherit">Organize</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("options")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
-                    activeTab === "options" ? "bg-primary text-white shadow-elevated" : "text-white/40 hover:bg-white/5 hover:text-white"
+                    activeTab === "options" ? "bg-primary text-white shadow-elevated" : "dark:text-white/40 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 dark:hover:text-white"
                   )}
                 >
                   <Settings className="h-4 w-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Controls</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-inherit">Controls</span>
                 </button>
               </div>
 
@@ -599,7 +599,7 @@ const OrganizePdf = () => {
               <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
                 
                 <div className={cn(
-                  "flex-1 flex flex-col min-h-0 overflow-hidden bg-[#0B0D11] relative border-r border-white/5",
+                  "flex-1 flex flex-col min-h-0 overflow-hidden dark:bg-[#0B0D11] bg-slate-50/50 relative border-r dark:border-white/5 border-border",
                   activeTab !== "configure" && "hidden lg:flex"
                 )}>
                   {/* Background Glow */}
@@ -607,25 +607,25 @@ const OrganizePdf = () => {
                   
                   
                   {/* Zoom Toolbar */}
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[40] hidden sm:flex items-center gap-1 p-1.5 bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl">
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[40] hidden sm:flex items-center gap-1 p-1.5 dark:bg-black/60 bg-white/80 backdrop-blur-xl border dark:border-white/10 border-border shadow-2xl rounded-2xl">
                     <button 
                       onClick={() => setZoom(prev => Math.max(0.6, prev - 0.1))}
-                      className="h-8 w-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                      className="h-8 w-8 rounded-xl dark:hover:bg-white/10 hover:bg-black/5 flex items-center justify-center dark:text-white/70 text-muted-foreground hover:text-primary dark:hover:text-white transition-colors"
                       title="Zoom Out"
                     >
                       <ZoomOut className="h-4 w-4" />
                     </button>
-                    <div className="h-4 w-px bg-white/10 mx-1" />
+                    <div className="h-4 w-px dark:bg-white/10 bg-border mx-1" />
                     <button 
                       onClick={() => setZoom(0.7)}
-                      className="px-3 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white transition-colors"
+                      className="px-3 h-8 rounded-xl dark:hover:bg-white/10 hover:bg-black/5 flex items-center justify-center text-[10px] font-black uppercase tracking-widest dark:text-white/70 text-muted-foreground hover:text-primary dark:hover:text-white transition-colors"
                     >
                       {Math.round(zoom * 100)}%
                     </button>
-                    <div className="h-4 w-px bg-white/10 mx-1" />
+                    <div className="h-4 w-px dark:bg-white/10 bg-border mx-1" />
                     <button 
                       onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
-                      className="h-8 w-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                      className="h-8 w-8 rounded-xl dark:hover:bg-white/10 hover:bg-black/5 flex items-center justify-center dark:text-white/70 text-muted-foreground hover:text-primary dark:hover:text-white transition-colors"
                       title="Zoom In"
                     >
                       <ZoomIn className="h-4 w-4" />
@@ -636,7 +636,7 @@ const OrganizePdf = () => {
                     {loadingThumbnails && pages.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
                         <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                        <p className="text-xs font-black uppercase tracking-widest text-white/40 animate-pulse">Initializing Workspace...</p>
+                        <p className="text-xs font-black uppercase tracking-widest dark:text-white/40 text-muted-foreground animate-pulse">Initializing Workspace...</p>
                       </div>
                     ) : (
                       <DragDropContext onDragEnd={onDragEnd}>
@@ -671,7 +671,7 @@ const OrganizePdf = () => {
                                       >
                                         <div
                                            className={cn("relative aspect-[3/4.2] w-[95%] sm:w-full p-2.5 rounded-xl transition-all duration-500 overflow-visible cursor-pointer group flex flex-col",
-                                            isSelected ? fileColor.solid : `"bg-[#16191E] hover:border-white/10"`,
+                                            isSelected ? fileColor.solid : "dark:bg-[#16191E] bg-white border border-border hover:border-primary/30 shadow-sm",
                                             snapshot.isDragging ? `shadow-[0_20px_50px_rgba(0,0,0,0.3)] ring-4 ring-primary/60 scale-110 z-[101]` : `${fileColor.light}`
                                           )}
                                           onClick={(e) => togglePageSelection(e, page.id)}
@@ -685,8 +685,8 @@ const OrganizePdf = () => {
                                             </div>
                                           )}
 
-                                          <div className="w-full flex-1 bg-black/20 rounded-lg flex flex-col overflow-hidden shadow-sm hover:shadow relative">
-                                            <div {...provided.dragHandleProps} className="flex-1 cursor-grab active:cursor-grabbing flex-1 p-2 flex items-center justify-center relative overflow-hidden bg-black/20">
+                                          <div className="w-full flex-1 bg-black/5 dark:bg-black/20 rounded-lg flex flex-col overflow-hidden shadow-sm hover:shadow relative">
+                                            <div {...provided.dragHandleProps} className="flex-1 cursor-grab active:cursor-grabbing flex-1 p-2 flex items-center justify-center relative overflow-hidden bg-black/5 dark:bg-black/20">
                                               {page.thumbnail ? (
                                                 <img 
                                                   src={page.thumbnail} 
@@ -697,28 +697,28 @@ const OrganizePdf = () => {
                                                 />
                                               ) : (
                                                 <div className="flex flex-col items-center gap-1 opacity-20">
-                                                  <FileText className="h-8 w-8 text-white" />
+                                                  <FileText className="h-8 w-8 dark:text-white text-black" />
                                                 </div>
                                               )}
                                                {isSelected && <div className={cn("absolute inset-0 pointer-events-none", fileColor.solid, "opacity-5")} />}
                                              </div>
-                                             <div className="h-7 sm:h-8 flex items-center justify-between bg-black/40 border-t border-white/5 shrink-0 px-2 overflow-hidden relative z-[40]">
+                                             <div className="h-7 sm:h-8 flex items-center justify-between dark:bg-black/40 bg-black/5 border-t dark:border-white/5 border-border shrink-0 px-2 overflow-hidden relative z-[40]">
                                                {index > 0 ? (
                                                  <button 
                                                    onClick={(e) => movePage(e, page.id, "backward")}
-                                                   className="h-5 w-5 rounded-md hover:bg-white/10 flex items-center justify-center text-primary transition-colors cursor-pointer"
+                                                   className="h-5 w-5 rounded-md dark:hover:bg-white/10 hover:bg-black/5 flex items-center justify-center text-primary transition-colors cursor-pointer"
                                                    title="Move Backward"
                                                  >
                                                    <ChevronLeft className="h-4 w-4" />
                                                  </button>
                                                ) : <div className="w-5" />}
 
-                                               <span className="text-[10px] font-black text-white/70">{index + 1}</span>
+                                               <span className="text-[10px] font-black dark:text-white/70 text-muted-foreground">{index + 1}</span>
 
                                                {index < pages.length - 1 ? (
                                                  <button 
                                                    onClick={(e) => movePage(e, page.id, "forward")}
-                                                   className="h-5 w-5 rounded-md hover:bg-white/10 flex items-center justify-center text-primary transition-colors cursor-pointer"
+                                                   className="h-5 w-5 rounded-md dark:hover:bg-white/10 hover:bg-black/5 flex items-center justify-center text-primary transition-colors cursor-pointer"
                                                    title="Move Forward"
                                                  >
                                                    <ChevronRight className="h-4 w-4" />
@@ -777,15 +777,15 @@ const OrganizePdf = () => {
                                 whileHover={{ scale: 1.05 }} 
                                 whileTap={{ scale: 0.95 }} 
                                 onClick={() => fileInputRef.current?.click()} 
-                                className="aspect-[3/4.2] border-2 border-dashed border-white/10 bg-[#16191E] shadow-lg hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center gap-4 text-white/40 hover:text-primary  transition-all group flex-shrink-0"
+                                className="aspect-[3/4.2] border-2 border-dashed dark:border-white/10 border-border dark:bg-[#16191E] bg-white shadow-lg dark:hover:border-primary/50 hover:border-primary/30 rounded-2xl flex flex-col items-center justify-center gap-4 dark:text-white/40 text-muted-foreground hover:text-primary transition-all group flex-shrink-0"
                                 style={{ width: '100%', maxWidth: `${220 * zoom}px` }}
                               >
-                                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm">
+                                <div className="w-10 h-10 rounded-full dark:bg-white/5 bg-black/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm text-inherit">
                                   <Plus className="h-5 w-5" />
                                 </div>
                                 <div className="text-center px-2">
-                                  <p className="text-[9px] font-black uppercase tracking-widest text-white/40">Upload</p>
-                                  <p className="text-[8px] font-bold uppercase opacity-30 text-white">Another PDF</p>
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-inherit">Upload</p>
+                                  <p className="text-[8px] font-bold uppercase opacity-30 text-inherit">Another PDF</p>
                                 </div>
                               </motion.button>
                             </div>
@@ -797,18 +797,18 @@ const OrganizePdf = () => {
                 </div>
 
                 <div className={cn(
-                  "w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col min-h-0 bg-[#0B0D11] overflow-hidden border-l border-white/5",
+                  "w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col min-h-0 dark:bg-[#0B0D11] bg-white overflow-hidden border-l dark:border-white/5 border-border",
                   activeTab !== "options" && "hidden lg:flex"
                 )}>
                   <div className="flex-1 flex flex-col min-h-0 p-6 relative">
                     <div className="mb-6 shrink-0">
-                      <h2 className="text-xl sm:text-2xl font-black text-white text-center border-b border-white/10 pb-4 tracking-tighter capitalize transition-all">Organize PDF</h2>
+                      <h2 className="text-xl sm:text-2xl font-black dark:text-white text-foreground text-center border-b dark:border-white/10 border-border pb-4 tracking-tighter capitalize transition-all">Organize PDF</h2>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 touch-pan-y">
                       <div className="space-y-4 pb-24">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                           <span className="font-bold text-sm text-white/70">Source Files:</span>
+                        <div className="flex items-center justify-between pb-2 border-b dark:border-white/10 border-border">
+                           <span className="font-bold text-sm dark:text-white/70 text-muted-foreground">Source Files:</span>
                            <button onClick={resetAll} className="text-sm font-bold text-rose-500 hover:text-rose-400">Reset Workspace</button>
                         </div>
                          {files.map((fileData, fIdx) => {
@@ -851,7 +851,7 @@ const OrganizePdf = () => {
                     </div>
 
                     {/* Desktop Execution Button */}
-                    <div className="hidden lg:block shrink-0 pt-6 border-t border-white/10 bg-[#0B0D11]">
+                    <div className="hidden lg:block shrink-0 pt-6 border-t dark:border-white/10 border-border dark:bg-[#0B0D11] bg-white">
                       <Button
                         size="lg"
                         className="w-full h-14 sm:h-16 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90"
