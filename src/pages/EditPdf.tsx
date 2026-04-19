@@ -766,7 +766,7 @@ const EditPdf = () => {
             <ToolUploadScreen
               title="Edit PDF Online"
               description="Click existing text to edit it, or add new text, images, and annotations."
-              accept={{ "application/pdf": [".pdf"] }}
+              accept=".pdf"
               onFilesSelected={handleFiles}
               loading={loading}
               isBatch={false}
