@@ -302,22 +302,22 @@ const CompressPdf = () => {
     };
   };
 
-  // ── Client-side fallback, strict lossless optimisation (pdf-lib) ───────────
-  // Applies ONLY: object-stream packing + optional metadata cleanup.
-  // No rasterisation, no image re-encoding, no DPI change.
-  // Output is visually pixel-identical to the input.
+  // ── Client-side fallback ─────────────────────────────────────────────────────
+  // basic mode    → lossless: object-stream repack + metadata cleanup (pdf-lib)
+  // extreme/recommended → canvas page render → JPEG re-encode (matches backend
+  //   behaviour; picks the smallest result vs lossless repack vs original)
   const compressViaClient = async (
     file: File,
     m: CompressMode,
     onProgress: (p: number) => void
   ): Promise<ProcessedFile> => {
+    // ── Step 1: Lossless structural repack (fast, always run first) ──────────
     const bytes = await file.arrayBuffer();
-    onProgress(20);
+    onProgress(15);
 
     const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-    onProgress(50);
+    onProgress(30);
 
-    // ── Metadata cleanup (lossless, page content unaffected) ──────────────
     try {
       if (m === 'recommended' || m === 'extreme') {
         doc.setProducer('');
@@ -329,27 +329,88 @@ const CompressPdf = () => {
         doc.setSubject('');
         doc.setKeywords([]);
       }
-    } catch { /* metadata fields may not exist, safe to ignore */ }
+    } catch { /* metadata fields may not exist */ }
 
-    onProgress(80);
-
-    // ── Structural re-pack with object streams (lossless Flate compression) ─
     const raw = await doc.save({ useObjectStreams: true, addDefaultPage: false });
-    onProgress(100);
+    const structuralBlob = new Blob([new Uint8Array(raw)], { type: "application/pdf" });
+    onProgress(50);
 
-    const blob = new Blob([new Uint8Array(raw)], { type: "application/pdf" });
-    // Never return a larger file, serve original if re-pack gained nothing
-    const finalBlob = blob.size < file.size ? blob : file;
+    // basic mode stops here (lossless only)
+    if (m === 'basic') {
+      const finalBlob = structuralBlob.size < file.size ? structuralBlob : file;
+      onProgress(100);
+      return {
+        name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
+        originalSize: file.size,
+        compressedSize: finalBlob.size,
+        url: URL.createObjectURL(finalBlob),
+        blob: finalBlob,
+        engine: "client",
+        alreadyOptimized: false,
+      };
+    }
 
-    return {
-      name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
-      originalSize: file.size,
-      compressedSize: finalBlob.size,
-      url: URL.createObjectURL(finalBlob),
-      blob: finalBlob,
-      engine: "client",
-      alreadyOptimized: false,
-    };
+    // ── Step 2: Canvas page render + JPEG re-encode (extreme / recommended) ───
+    try {
+      const jpegQuality = m === 'extreme' ? 0.55 : 0.75;
+      // Scale: lower = smaller file; 1.5 ≈ 108 dpi, 1.2 ≈ 86 dpi at 72-dpi base
+      const renderScale = m === 'extreme' ? 1.2 : 1.5;
+
+      const pdfData = await file.arrayBuffer();
+      const pdfDoc  = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      const outDoc  = await PDFDocument.create();
+
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page     = await pdfDoc.getPage(i);
+        const vp       = page.getViewport({ scale: renderScale });
+        const canvas   = document.createElement("canvas");
+        canvas.width   = vp.width;
+        canvas.height  = vp.height;
+        const ctx      = canvas.getContext("2d")!;
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+        const dataUrl  = canvas.toDataURL("image/jpeg", jpegQuality);
+        const b64      = dataUrl.split(",")[1];
+        const imgBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const img      = await outDoc.embedJpg(imgBytes);
+        const { width: iw, height: ih } = img.scale(1);
+        const pg = outDoc.addPage([iw, ih]);
+        pg.drawImage(img, { x: 0, y: 0, width: iw, height: ih });
+
+        onProgress(50 + Math.round((i / pdfDoc.numPages) * 45));
+      }
+
+      const outBytes   = await outDoc.save();
+      const canvasBlob = new Blob([outBytes], { type: "application/pdf" });
+
+      // Pick the smallest result: canvas < structural < original
+      const candidates: Blob[] = [file, structuralBlob, canvasBlob];
+      const best = candidates.reduce((a, b) => (b.size < a.size ? b : a));
+      onProgress(100);
+
+      return {
+        name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
+        originalSize: file.size,
+        compressedSize: best.size,
+        url: URL.createObjectURL(best),
+        blob: best,
+        engine: "client",
+        alreadyOptimized: false,
+      };
+    } catch {
+      // Canvas compression failed — fall back to structural repack result
+      const finalBlob = structuralBlob.size < file.size ? structuralBlob : file;
+      onProgress(100);
+      return {
+        name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
+        originalSize: file.size,
+        compressedSize: finalBlob.size,
+        url: URL.createObjectURL(finalBlob),
+        blob: finalBlob,
+        engine: "client",
+        alreadyOptimized: false,
+      };
+    }
   };
 
   const startProcessing = async () => {
