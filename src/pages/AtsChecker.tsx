@@ -638,36 +638,38 @@ const AtsChecker = () => {
         )}
 
         {/* ── SEO Content ─────────────────────────────────────────────────── */}
-        <ToolSeoSection
-          toolName="ATS Resume Checker"
-          category="ai"
-          intro="The most powerful free ATS resume checker online. Analyze your resume against real ATS algorithms, get keyword insights, bullet point improvements, and LinkedIn optimization | all in one tool."
-          features={[
-            { icon: ScanSearch, title: "5-Dimension Scoring", desc: "ATS, keyword match, content, formatting, and impact" },
-            { icon: Wand2, title: "AI Bullet Rewrites", desc: "Before/after improved bullet points with strong action verbs" },
-            { icon: BriefcaseBusiness, title: "Job Match Analysis", desc: "Match % + missing skills + suggested job roles" },
-            { icon: LinkedinIcon, title: "LinkedIn Optimizer", desc: "AI-optimized headline and About section" },
-          ]}
-          steps={[
-            "Upload your resume (PDF, DOCX, TXT) or paste the text",
-            "Optionally paste the job description for tailored matching",
-            "Click Analyze My Resume",
-            "Apply improvements based on AI feedback"
-          ]}
-          formats={["PDF", "DOCX", "TXT", "RTF", "ODT"]}
-          relatedTools={[
-            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
-            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
-            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
-            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          ]}
-          faqs={[
-            { q: "What is an ATS resume checker?", a: "An ATS (Applicant Tracking System) resume checker analyzes your resume the same way employer software does | checking for keywords, formatting issues, section completeness, and relevance to a job description to predict how likely your resume is to pass automated screening." },
-            { q: "How do ATS systems scan resumes?", a: "ATS systems parse resume text and look for relevant keywords, job titles, skills, and qualifications. They struggle with tables, columns, images, and unusual fonts. MagicDocx simulates this process and tells you exactly what to fix." },
-            { q: "How can I improve my resume for ATS?", a: "Use a single-column format, include keywords from the job description, start bullet points with strong action verbs, quantify achievements, and ensure all standard sections (Contact, Summary, Experience, Skills, Education) are clearly labeled." },
-            { q: "Is this tool free?", a: "Yes | MagicDocx ATS Resume Checker is completely free to use. No account or credit card required. Upload your resume and get results in seconds." },
-          ]}
-        />
+        {files.length === 0 && pastedText.trim() === "" && !result && !processing && (
+          <ToolSeoSection
+            toolName="ATS Resume Checker"
+            category="ai"
+            intro="The most powerful free ATS resume checker online. Analyze your resume against real ATS algorithms, get keyword insights, bullet point improvements, and LinkedIn optimization | all in one tool."
+            features={[
+              { icon: ScanSearch, title: "5-Dimension Scoring", desc: "ATS, keyword match, content, formatting, and impact" },
+              { icon: Wand2, title: "AI Bullet Rewrites", desc: "Before/after improved bullet points with strong action verbs" },
+              { icon: BriefcaseBusiness, title: "Job Match Analysis", desc: "Match % + missing skills + suggested job roles" },
+              { icon: LinkedinIcon, title: "LinkedIn Optimizer", desc: "AI-optimized headline and About section" },
+            ]}
+            steps={[
+              "Upload your resume (PDF, DOCX, TXT) or paste the text",
+              "Optionally paste the job description for tailored matching",
+              "Click Analyze My Resume",
+              "Apply improvements based on AI feedback"
+            ]}
+            formats={["PDF", "DOCX", "TXT", "RTF", "ODT"]}
+            relatedTools={[
+              { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+              { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+              { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+              { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            ]}
+            faqs={[
+              { q: "What is an ATS resume checker?", a: "An ATS (Applicant Tracking System) resume checker analyzes your resume the same way employer software does | checking for keywords, formatting issues, section completeness, and relevance to a job description to predict how likely your resume is to pass automated screening." },
+              { q: "How do ATS systems scan resumes?", a: "ATS systems parse resume text and look for relevant keywords, job titles, skills, and qualifications. They struggle with tables, columns, images, and unusual fonts. MagicDocx simulates this process and tells you exactly what to fix." },
+              { q: "How can I improve my resume for ATS?", a: "Use a single-column format, include keywords from the job description, start bullet points with strong action verbs, quantify achievements, and ensure all standard sections (Contact, Summary, Experience, Skills, Education) are clearly labeled." },
+              { q: "Is this tool free?", a: "Yes | MagicDocx ATS Resume Checker is completely free to use. No account or credit card required. Upload your resume and get results in seconds." },
+            ]}
+          />
+        )}
       </div>
     </ToolLayout>
   );

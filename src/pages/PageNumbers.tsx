@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DownloadScreen from "@/components/DownloadScreen";
+import { Merge, Minimize2, Scissors, Lock, LayoutGrid as LG } from "lucide-react";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -295,11 +297,6 @@ const PageNumbers = () => {
         numberedPages: numberedPages.length
       });
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = name;
-      a.click();
-
       toast.success("Page numbers added successfully!");
       setProgress(100);
     } catch (error) {
@@ -320,50 +317,21 @@ const PageNumbers = () => {
         toolId="page-numbers"
         hideHeader={true}
       >
-        <div className="max-w-4xl mx-auto py-12 px-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-              <CheckCircle2 className="w-10 h-10 text-primary" />
-            </div>
-            <h1 className="text-4xl font-black mb-4 uppercase tracking-tight">Success!</h1>
-            <p className="text-muted-foreground text-lg">Your file is ready for download.</p>
-          </motion.div>
-
-          <div className="bg-card border-2 border-border rounded-3xl p-8 mb-8 shadow-card">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-primary" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Document Name</p>
-                  <p className="font-black text-xl truncate max-w-[200px]">{results.name}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 rounded-2xl p-4 text-center">
-                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Total Pages</p>
-                  <p className="text-xl font-black text-primary">{results.totalPages}</p>
-                </div>
-                <div className="bg-secondary/30 rounded-2xl p-4 text-center">
-                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Numbered</p>
-                  <p className="text-xl font-black text-primary">{results.numberedPages}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" className="flex-1 h-14 text-sm font-black uppercase tracking-widest shadow-glow" onClick={() => {
-              const a = document.createElement('a'); a.href = results.url; a.download = results.name; a.click();
-            }}>
-              <Download className="mr-2 h-5 w-5" /> Download Numbered PDF
-            </Button>
-            <Button size="lg" variant="secondary" className="flex-1 h-14 text-sm font-black uppercase tracking-widest" onClick={resetAll}>
-              <Plus className="mr-2 h-5 w-5" /> Upload More
-            </Button>
-          </div>
-        </div>
+        <DownloadScreen
+          title="Page numbers added!"
+          downloadLabel="DOWNLOAD NUMBERED PDF"
+          resultUrl={results.url}
+          resultName={results.name}
+          onReset={resetAll}
+          recommendedTools={[
+            { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+            { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+            { name: "Organize PDF", path: "/organize-pdf", icon: LG },
+            { name: "Protect PDF", path: "/protect-pdf", icon: Lock },
+            { name: "Rotate PDF", path: "/rotate-pdf", icon: LayoutGrid },
+          ]}
+        />
       </ToolLayout>
     );
   }
@@ -703,26 +671,28 @@ const PageNumbers = () => {
           </div>
         )}
       </div>
-      <ToolSeoSection
-        toolName="Add Page Numbers to PDF"
-        category="edit"
-        intro="MagicDocx Add Page Numbers tool makes it easy to number the pages of any PDF document. Choose from 6 placement positions, multiple number formats (1, 01, Page 1, Page 1 of N), full typography controls (font, size, color, bold, opacity), and even specify horizontal and vertical margin offsets. A live preview shows exactly where your page numbers will appear before you process the file."
-        steps={[
-          "Upload your PDF file using the drag-and-drop area.",
-          "Set your page number position, format (e.g. 'Page 1 of N'), and typography settings.",
-          "Specify the page range to number (e.g. 1-10) and the starting number.",
-          "Click 'Add Page Numbers' to download your numbered PDF."
-        ]}
-        formats={["PDF"]}
-        relatedTools={[
-          { name: "Edit PDF", path: "/edit-pdf", icon: Hash },
-          { name: "Add Watermark", path: "/watermark", icon: Hash },
-          { name: "Organize PDF", path: "/organize-pdf", icon: Hash },
-          { name: "Rotate PDF", path: "/rotate-pdf", icon: Hash },
-        ]}
-        schemaName="Add Page Numbers to PDF Online"
-        schemaDescription="Free online tool to add page numbers to PDF. Customize font, size, position, format and range with live preview."
-      />
+      {files.length === 0 && (
+        <ToolSeoSection
+          toolName="Add Page Numbers to PDF"
+          category="edit"
+          intro="MagicDocx Add Page Numbers tool makes it easy to number the pages of any PDF document. Choose from 6 placement positions, multiple number formats (1, 01, Page 1, Page 1 of N), full typography controls (font, size, color, bold, opacity), and even specify horizontal and vertical margin offsets. A live preview shows exactly where your page numbers will appear before you process the file."
+          steps={[
+            "Upload your PDF file using the drag-and-drop area.",
+            "Set your page number position, format (e.g. 'Page 1 of N'), and typography settings.",
+            "Specify the page range to number (e.g. 1-10) and the starting number.",
+            "Click 'Add Page Numbers' to download your numbered PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Edit PDF", path: "/edit-pdf", icon: Hash },
+            { name: "Add Watermark", path: "/watermark", icon: Hash },
+            { name: "Organize PDF", path: "/organize-pdf", icon: Hash },
+            { name: "Rotate PDF", path: "/rotate-pdf", icon: Hash },
+          ]}
+          schemaName="Add Page Numbers to PDF Online"
+          schemaDescription="Free online tool to add page numbers to PDF. Customize font, size, position, format and range with live preview."
+        />
+      )}
     </ToolLayout>
   );
 };

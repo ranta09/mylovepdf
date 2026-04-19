@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DownloadScreen from "@/components/DownloadScreen";
+import { Merge, Minimize2, Scissors, Lock, LayoutGrid, FileText as FP } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -192,11 +194,6 @@ const RepairPdf = () => {
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       setResults({ url, size: blob.size, pages: pagesCount });
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `repaired_${files[0].name}`;
-      a.click();
       toast.success("Document structure successfully recovered");
     } catch (err) {
       console.error("Repair failed:", err);
@@ -414,39 +411,21 @@ const RepairPdf = () => {
       {/* RESULTS PHASE */}
       {
         results && (
-          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex items-center justify-center p-6 animate-in fade-in duration-500">
-            <div className="w-full max-w-2xl bg-card border border-primary/20 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="bg-primary/5 border-b border-primary/10 p-12 text-center space-y-6">
-                <div className="mx-auto w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center border-4 border-green-500/30">
-                  <CheckCircle2 className="h-12 w-12 text-green-500" />
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">PDF Successfully Repaired</h2>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Structural integrity restored</p>
-                </div>
-
-                <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border grid grid-cols-3 gap-6 divide-x divide-border shadow-sm">
-                  <div className="space-y-1"><p className="text-[9px] font-black text-muted-foreground uppercase">Original Size</p><p className="text-2xl font-black text-foreground">{(files[0]?.size / (1024 * 1024)).toFixed(2)}MB</p></div>
-                  <div className="space-y-1"><p className="text-[9px] font-black text-primary uppercase">Recovered Pages</p><p className="text-2xl font-black text-primary uppercase">{results.pages}</p></div>
-                  <div className="space-y-1"><p className="text-[9px] font-black text-muted-foreground uppercase">Repair Status</p><p className="text-2xl font-black text-foreground">Success</p></div>
-                </div>
-              </div>
-
-              <div className="p-8 space-y-3">
-                <Button size="lg" className="w-full h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30" onClick={() => { const a = document.createElement('a'); a.href = results.url; a.download = `repaired_${files[0]?.name}`; a.click(); }}>
-                  <Download className="h-5 w-5 mr-3" /> Download Repaired PDF
-                </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="ghost" className="h-12 text-[10px] font-black uppercase" onClick={() => setResults(null)}>
-                    <RefreshCw className="h-4 w-4 mr-2" /> Repair Again
-                  </Button>
-                  <Button variant="ghost" className="h-12 text-[10px] font-black uppercase" onClick={() => { setResults(null); setFiles([]); setAnalysisComplete(false); setPreviews([]); }}>
-                    <Plus className="h-4 w-4 mr-2" /> Upload New
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DownloadScreen
+            title="PDF repaired successfully!"
+            downloadLabel="DOWNLOAD REPAIRED PDF"
+            resultUrl={results.url}
+            resultName={`repaired_${files[0]?.name || 'document.pdf'}`}
+            onReset={() => { setResults(null); setFiles([]); setAnalysisComplete(false); setPreviews([]); }}
+            recommendedTools={[
+              { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+              { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+              { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+              { name: "Protect PDF", path: "/protect-pdf", icon: Lock },
+              { name: "Organize PDF", path: "/organize-pdf", icon: LayoutGrid },
+              { name: "Add Page Numbers", path: "/page-numbers", icon: FP },
+            ]}
+          />
         )
       }
 

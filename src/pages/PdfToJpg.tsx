@@ -457,26 +457,28 @@ const PdfToJpg = () => {
           onFilesSelected={handleFilesChange}
         />
       )}
-      <ToolSeoSection
-        toolName="PDF to JPG Converter"
-        category="convert"
-        intro="MagicDocx PDF to JPG converter exports each page of your PDF as a high-resolution JPEG image. Whether you need a single page screenshot, a full document image export, or images for web and print, our tool gives you full control over quality and DPI. Export at 150, 300, or 600 DPI and download all images instantly as a ZIP file."
-        steps={[
-          "Upload a PDF file by dragging and dropping or clicking the upload area.",
-          "Select your image quality (Low, Medium, High) and pixel density (DPI).",
-          "Optionally specify a custom page range (e.g. 1-3, 5) or leave blank for all pages.",
-          "Click \"Initiate Extraction\" and download your JPG images instantly."
-        ]}
-        formats={["PDF", "JPG", "JPEG", "ZIP"]}
-        relatedTools={[
-          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          { name: "JPG to PDF", path: "/jpg-to-pdf", icon: Image },
-          { name: "Compress PDF", path: "/compress-pdf", icon: Layers },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileBox },
-        ]}
-        schemaName="PDF to JPG Converter Online"
-        schemaDescription="Free online PDF to JPG converter. Export PDF pages as high-resolution images with custom quality and DPI settings."
-      />
+      {filesData.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="PDF to JPG Converter"
+          category="convert"
+          intro="MagicDocx PDF to JPG converter exports each page of your PDF as a high-resolution JPEG image. Whether you need a single page screenshot, a full document image export, or images for web and print, our tool gives you full control over quality and DPI. Export at 150, 300, or 600 DPI and download all images instantly as a ZIP file."
+          steps={[
+            "Upload a PDF file by dragging and dropping or clicking the upload area.",
+            "Select your image quality (Low, Medium, High) and pixel density (DPI).",
+            "Optionally specify a custom page range (e.g. 1-3, 5) or leave blank for all pages.",
+            "Click \"Initiate Extraction\" and download your JPG images instantly."
+          ]}
+          formats={["PDF", "JPG", "JPEG", "ZIP"]}
+          relatedTools={[
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            { name: "JPG to PDF", path: "/jpg-to-pdf", icon: Image },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Layers },
+            { name: "Merge PDF", path: "/merge-pdf", icon: FileBox },
+          ]}
+          schemaName="PDF to JPG Converter Online"
+          schemaDescription="Free online PDF to JPG converter. Export PDF pages as high-resolution images with custom quality and DPI settings."
+        />
+      )}
     </ToolLayout>
   );
 };

@@ -398,26 +398,28 @@ const PdfToExcel = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <ToolSeoSection
-        toolName="PDF to Excel Converter"
-        category="convert"
-        intro="MagicDocx PDF to Excel converter intelligently extracts tables, data, and numerical content from any PDF file and converts them into structured Excel spreadsheets or CSV files. Whether you're pulling data from financial reports, invoices, or scanned forms, our tool uses smart spatial analysis and optional OCR to deliver clean, accurate results in XLSX or CSV format | instantly and for free."
-        steps={[
-          "Upload a PDF containing tables or data by dragging and dropping or clicking the upload area.",
-          "Choose your output format: Standard Excel (XLSX) or CSV for universal compatibility.",
-          "Click \"Convert to EXCEL\" | our engine extracts and structures the data.",
-          "Download your spreadsheet immediately."
-        ]}
-        formats={["PDF", "XLSX", "CSV"]}
-        relatedTools={[
-          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          { name: "PDF to PPT", path: "/pdf-to-ppt", icon: FileText },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
-          { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
-        ]}
-        schemaName="PDF to Excel Converter Online"
-        schemaDescription="Free online PDF to Excel converter. Extract tables and data from PDF files to XLSX or CSV with OCR support."
-      />
+      {files.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="PDF to Excel Converter"
+          category="convert"
+          intro="MagicDocx PDF to Excel converter intelligently extracts tables, data, and numerical content from any PDF file and converts them into structured Excel spreadsheets or CSV files. Whether you're pulling data from financial reports, invoices, or scanned forms, our tool uses smart spatial analysis and optional OCR to deliver clean, accurate results in XLSX or CSV format | instantly and for free."
+          steps={[
+            "Upload a PDF containing tables or data by dragging and dropping or clicking the upload area.",
+            "Choose your output format: Standard Excel (XLSX) or CSV for universal compatibility.",
+            "Click \"Convert to EXCEL\" | our engine extracts and structures the data.",
+            "Download your spreadsheet immediately."
+          ]}
+          formats={["PDF", "XLSX", "CSV"]}
+          relatedTools={[
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            { name: "PDF to PPT", path: "/pdf-to-ppt", icon: FileText },
+            { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
+            { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
+          ]}
+          schemaName="PDF to Excel Converter Online"
+          schemaDescription="Free online PDF to Excel converter. Extract tables and data from PDF files to XLSX or CSV with OCR support."
+        />
+      )}
     </ToolLayout>
   );
 };

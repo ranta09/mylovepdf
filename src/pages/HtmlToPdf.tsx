@@ -335,7 +335,7 @@ const HtmlToPdf = () => {
       description="Convert web pages or HTML files into professional PDF documents"
       category="convert"
       icon={<Globe className="h-7 w-7" />}
-      metaTitle="HTML to PDF Converter — Convert Webpages to PDF Online"
+      metaTitle="HTML to PDF Converter, Convert Webpages to PDF Online"
       metaDescription="Convert HTML files and URLs to PDF with high accuracy. Preserves CSS, images, and layouts. Free online tool."
       toolId="html-to-pdf"
       hideHeader={url.trim() !== "" || processing || results.length > 0}
@@ -647,27 +647,29 @@ const HtmlToPdf = () => {
         </>
       )}
 
-      <ToolSeoSection
-        toolName="HTML to PDF Converter"
-        category="convert"
-        intro="Convert any webpage URL into a professional PDF document. Our tool preserves layouts, styles, images, and formatting with high accuracy. Perfect for archiving web content, creating offline documentation, or sharing web pages as PDFs."
-        steps={[
-          "Enter a website URL",
-          "Select your preferred screen size (Desktop, Laptop, Tablet, or Mobile)",
-          "Choose orientation (Portrait or Landscape) and page size",
-          "Enable 'One Long Page' option if you want a single continuous page",
-          "Click 'Convert to PDF' to generate your document"
-        ]}
-        formats={["URL", "PDF"]}
-        relatedTools={[
-          { name: "Word to PDF", path: "/word-to-pdf", icon: Globe },
-          { name: "JPG to PDF", path: "/jpg-to-pdf", icon: Globe },
-          { name: "Merge PDF", path: "/merge-pdf", icon: Globe },
-          { name: "Compress PDF", path: "/compress-pdf", icon: Globe },
-        ]}
-        schemaName="HTML to PDF Converter Online"
-        schemaDescription="Free online HTML to PDF converter. Convert webpages and HTML files to PDF with high accuracy and customizable settings."
-      />
+      {url.trim() === "" && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="HTML to PDF Converter"
+          category="convert"
+          intro="Convert any webpage URL into a professional PDF document. Our tool preserves layouts, styles, images, and formatting with high accuracy. Perfect for archiving web content, creating offline documentation, or sharing web pages as PDFs."
+          steps={[
+            "Enter a website URL",
+            "Select your preferred screen size (Desktop, Laptop, Tablet, or Mobile)",
+            "Choose orientation (Portrait or Landscape) and page size",
+            "Enable 'One Long Page' option if you want a single continuous page",
+            "Click 'Convert to PDF' to generate your document"
+          ]}
+          formats={["URL", "PDF"]}
+          relatedTools={[
+            { name: "Word to PDF", path: "/word-to-pdf", icon: Globe },
+            { name: "JPG to PDF", path: "/jpg-to-pdf", icon: Globe },
+            { name: "Merge PDF", path: "/merge-pdf", icon: Globe },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Globe },
+          ]}
+          schemaName="HTML to PDF Converter Online"
+          schemaDescription="Free online HTML to PDF converter. Convert webpages and HTML files to PDF with high accuracy and customizable settings."
+        />
+      )}
     </ToolLayout>
   );
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DownloadScreen from "@/components/DownloadScreen";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -11,10 +12,6 @@ import {
   Trash2,
   RotateCw,
   Plus,
-  Minus,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
   LayoutGrid,
   FileBox,
   ArrowRight,
@@ -25,9 +22,7 @@ import {
   Layers,
   ChevronRight,
   RefreshCw,
-  Search,
   Settings,
-  Eye,
   Scissors,
   Minimize2
 } from "lucide-react";
@@ -83,7 +78,6 @@ const MergePdf = () => {
   const [error, setError] = useState<string | null>(null);
 
   // UI States
-  const [previewZoom, setPreviewZoom] = useState(0.8);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const [activeTab, setActiveTab] = useState("configure");
@@ -214,7 +208,6 @@ const MergePdf = () => {
 
     setProcessing(true);
     setError(null);
-    setProcessing(true);
     setProgress(0);
 
     try {
@@ -262,14 +255,6 @@ const MergePdf = () => {
         pages: mergedDoc.getPageCount()
       });
 
-      // Auto-download
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = "MagicDOCX_Merged_Document.pdf";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
       toast.success("PDFs merged successfully!");
     } catch (err) {
       let errorMessage = "An unknown error occurred.";
@@ -277,6 +262,8 @@ const MergePdf = () => {
       else if (typeof err === "string") errorMessage = err;
       setError(errorMessage || "Failed to merge PDFs. Please try again.");
       toast.error("Failed to merge PDFs.");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -293,178 +280,138 @@ const MergePdf = () => {
     setDisableGlobalFeatures(files.length > 0);
   }, [files, setDisableGlobalFeatures]);
 
-  const previewPages = useMemo(() => {
-    if (mergeMode === 'full') {
-      const activeFile = files.find(f => f.id === activeFileId);
-      if (!activeFile) return [];
-      return activeFile.thumbnails.map((thumb, idx) => ({
-        thumbnail: thumb,
-        label: `Page ${idx + 1}`,
-        rotation: 0
-      }));
-    } else {
-      return pages.map((p, idx) => ({
-        thumbnail: p.thumbnail,
-        label: `Page ${idx + 1}`,
-        rotation: p.rotation
-      }));
-    }
-  }, [mergeMode, files, activeFileId, pages]);
 
   // View Components
-  const PreviewPanel = () => (
-    <div className="flex-1 flex flex-col overflow-hidden bg-zinc-100/30">
-      <div className="h-14 border-b border-border bg-background/50 backdrop-blur-md flex justify-between items-center px-4 shrink-0 z-10">
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 bg-primary/10 rounded-lg">
-            <Search className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-[10px] font-black text-foreground tracking-widest uppercase">Document Preview</h2>
-            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-0.5">
-              {mergeMode === 'full'
-                ? `${files.find(f => f.id === activeFileId)?.pageCount || 0} Pages (Active File)`
-                : `${pages.length} Pages (Merged Sequence)`}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 bg-secondary/5 p-1 rounded-xl border border-border">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewZoom(z => Math.max(0.3, z - 0.1))}><ZoomOut className="h-3.5 w-3.5" /></Button>
-          <span className="text-[10px] font-black w-10 text-center">{Math.round(previewZoom * 100)}%</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewZoom(z => Math.min(2, z + 0.1))}><ZoomIn className="h-3.5 w-3.5" /></Button>
-        </div>
-      </div>
-
-      <ScrollArea className="flex-1 bg-white/50 custom-scrollbar">
-        <div className="min-h-full flex flex-col items-center gap-12 py-10 origin-top" style={{ transform: `scale(${previewZoom})` }}>
-          {previewPages.length > 0 ? previewPages.map((page, idx) => (
-            <div key={idx} className="relative group max-w-full">
-              <div className="bg-white border rounded shadow-sm transition-all duration-300" style={{ transform: `rotate(${page.rotation || 0}deg)` }}>
-                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="w-full h-auto max-w-[500px]" loading="lazy" decoding="async" />
-              </div>
-              <div className="mt-4 text-center">
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground bg-white px-2 py-1 border rounded shadow-sm">
-                  {page.label}
-                </span>
-              </div>
-            </div>
-          )) : (
-            <div className="flex flex-col items-center justify-center py-40 opacity-20">
-              <FileText className="h-20 w-20 mb-4" />
-              <p className="text-lg font-black uppercase tracking-tighter">No Preview Available</p>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
-  );
 
   const ConfigurationPanel = () => (
-    <div className="flex-1 flex flex-col overflow-hidden bg-background">
-      <div className="h-14 border-b border-border bg-secondary/5 flex justify-between items-center px-4 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 bg-primary/10 rounded-lg">
-            {mergeMode === 'full' ? <FileText className="h-3.5 w-3.5 text-primary" /> : <LayoutGrid className="h-3.5 w-3.5 text-primary" />}
-          </div>
-          <div>
-            <h2 className="text-[10px] font-black text-foreground tracking-widest uppercase">
-              {mergeMode === 'full' ? "File Sequence" : "Page Sequence"}
-            </h2>
-            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-0.5">
-              {mergeMode === 'full' ? `${files.length} Files Uploaded` : `${pages.length} Pages in document`}
-            </p>
-          </div>
-        </div>
-        <Button variant="outline" size="sm" className="h-7 text-[9px] font-black uppercase tracking-widest border border-border px-3" onClick={() => fileInputRef.current?.click()}>
-          <Plus className="h-3 w-3 mr-1.5" /> <span className="hidden sm:inline">Add Files</span><span className="sm:hidden">Add</span>
-        </Button>
-      </div>
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-background relative">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] lg:w-[600px] lg:h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0" />
+
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId={mergeMode === 'full' ? "files" : "pages"} type={mergeMode === 'full' ? "FILES" : "PAGES"}>
+        <Droppable droppableId={mergeMode === 'full' ? "files" : "pages"} type={mergeMode === 'full' ? "FILES" : "PAGES"} direction="horizontal">
           {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3"
+              className="flex-1 overflow-y-auto min-h-0 p-6 sm:p-8 custom-scrollbar relative z-10"
             >
-              {mergeMode === 'full' ? (
-                files.map((file, idx) => (
-                  <Draggable key={file.id} draggableId={file.id} index={idx}>
-                    {(draggableProvided, snapshot) => (
-                      <div
-                        ref={draggableProvided.innerRef}
-                        {...draggableProvided.draggableProps}
-                        className={cn(
-                          "p-3 rounded-xl border transition-all duration-300 flex items-center gap-3 group relative cursor-pointer",
-                          snapshot.isDragging ? "border-primary bg-primary/[0.03] shadow-lg z-50 scale-[1.02]" :
-                            activeFileId === file.id ? "border-primary/50 bg-primary/5 shadow-sm" : "border-border bg-background hover:border-primary/20"
-                        )}
-                        onClick={() => setActiveFileId(file.id)}
-                      >
-                        {activeFileId === file.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />}
-                        <div {...draggableProvided.dragHandleProps} className="text-muted-foreground/30 hover:text-primary transition-colors">
-                          <GripVertical className="h-5 w-5" />
-                        </div>
-                        <div className="w-12 h-16 bg-secondary/50 rounded-lg border border-border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                          <img src={file.thumbnails[0]} alt="file" className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-black truncate text-foreground group-hover:text-primary transition-colors">{file.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
-                            {file.pageCount} Pg • {(file.size / (1024 * 1024)).toFixed(2)} MB
-                          </p>
-                        </div>
-                        <button
-                          className="p-2 hover:bg-red-50 text-muted-foreground hover:text-red-500 rounded-xl transition-all shrink-0"
-                          onClick={(e) => { e.stopPropagation(); removeFile(file.id); }}
+              <div className="flex flex-wrap gap-4 sm:gap-8 justify-center items-start max-w-5xl mx-auto pb-20">
+                {mergeMode === 'full' ? (
+                  files.map((file, idx) => (
+                    <Draggable key={file.id} draggableId={file.id} index={idx}>
+                      {(draggableProvided, snapshot) => (
+                        <div
+                          ref={draggableProvided.innerRef}
+                          {...draggableProvided.draggableProps}
+                          className={cn(
+                            "group relative bg-card border rounded-2xl shadow-sm w-[140px] sm:w-[180px] lg:w-[200px] overflow-hidden transition-all duration-300 flex-shrink-0 cursor-pointer",
+                            snapshot.isDragging ? "border-primary shadow-glow ring-2 ring-primary/20 scale-105 z-50" :
+                              activeFileId === file.id ? "border-primary shadow-md ring-1 ring-primary/10" : "border-border hover:border-primary/40 hover:shadow-lg hover:-translate-y-1"
+                          )}
+                          onClick={() => setActiveFileId(file.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-                  </Draggable>
-                ))
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {pages.map((page, idx) => (
+                          {/* Drag Handle Overlay */}
+                          <div {...draggableProvided.dragHandleProps} className="absolute top-2 left-2 z-20 p-1.5 bg-black/60 backdrop-blur-md rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <GripVertical className="h-3 w-3" />
+                          </div>
+
+                          {/* Quick Actions Overlay */}
+                          <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); removeFile(file.id); }}
+                              className="p-1.5 bg-red-500 text-white rounded-lg hover:scale-110 transition-transform shadow-elevated"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          {/* Thumbnail Area */}
+                          <div className="w-full aspect-[3/4] bg-secondary/20 flex items-center justify-center p-3 relative overflow-hidden">
+                            {file.thumbnails[0] ? (
+                              <img src={file.thumbnails[0]} alt={file.name} className="max-w-full max-h-full object-contain rounded shadow-sm group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                            ) : (
+                              <FileText className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
+                            )}
+                            {activeFileId === file.id && <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />}
+                          </div>
+
+                          {/* File Info Footer */}
+                          <div className="p-3 bg-secondary/5 border-t border-border/50">
+                            <p className={cn("text-[11px] font-black truncate transition-colors", activeFileId === file.id ? "text-primary" : "text-foreground")}>
+                              {file.name}
+                            </p>
+                            <div className="flex justify-between items-center mt-1">
+                              <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{file.pageCount} Pages</span>
+                              <span className="text-[9px] text-muted-foreground font-bold uppercase">{(file.size / (1024 * 1024)).toFixed(1)}MB</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))
+                ) : (
+                  pages.map((page, idx) => (
                     <Draggable key={page.id} draggableId={page.id} index={idx}>
                       {(draggableProvided, snapshot) => (
                         <div
                           ref={draggableProvided.innerRef}
                           {...draggableProvided.draggableProps}
                           className={cn(
-                            "relative group rounded-xl border-2 overflow-hidden transition-all duration-300",
-                            snapshot.isDragging ? "border-primary shadow-glow scale-105 z-50" : "border-border bg-background hover:border-primary/40"
+                            "group relative bg-card border rounded-2xl shadow-sm w-[130px] sm:w-[150px] lg:w-[170px] overflow-hidden transition-all duration-300 flex-shrink-0 cursor-pointer",
+                            snapshot.isDragging ? "border-primary shadow-glow ring-2 ring-primary/20 scale-105 z-50" : "border-border hover:border-primary/40 hover:shadow-lg hover:-translate-y-1"
                           )}
                         >
-                          <div {...draggableProvided.dragHandleProps} className="absolute top-2 left-2 z-10 p-1.5 bg-black/60 rounded-lg text-white opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity">
+                          <div {...draggableProvided.dragHandleProps} className="absolute top-2 left-2 z-20 p-1.5 bg-black/60 backdrop-blur-md rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity">
                             <GripVertical className="h-3 w-3" />
                           </div>
-                          <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 lg:opacity-0 transition-opacity md:opacity-100">
-                            <button onClick={() => rotatePage(page.id)} className="p-1.5 bg-primary text-white rounded-lg hover:scale-110 transition-transform shadow-elevated">
+
+                          <div className="absolute top-2 right-2 z-20 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); rotatePage(page.id); }} className="p-1.5 bg-primary text-white rounded-lg hover:scale-110 transition-transform shadow-elevated">
                               <RotateCw className="h-3 w-3" />
                             </button>
-                            <button onClick={() => duplicatePage(page.id)} className="p-1.5 bg-secondary text-foreground rounded-lg hover:bg-white transition-all shadow-sm">
-                              <Copy className="h-3 w-3" />
-                            </button>
-                            <button onClick={() => removePage(page.id)} className="p-1.5 bg-red-500 text-white rounded-lg hover:scale-110 transition-transform shadow-elevated">
+                            <button onClick={(e) => { e.stopPropagation(); removePage(page.id); }} className="p-1.5 bg-destructive text-white rounded-lg hover:scale-110 transition-transform shadow-elevated">
                               <Trash2 className="h-3 w-3" />
                             </button>
                           </div>
-                          <div className="aspect-[3/4] p-2 flex items-center justify-center bg-secondary/20" style={{ transform: `rotate(${page.rotation}deg)` }}>
-                            <img src={page.thumbnail} alt={`p${idx}`} className="w-full h-full object-contain shadow-sm" loading="lazy" decoding="async" />
+
+                          <div className="w-full aspect-[3/4] p-3 flex items-center justify-center bg-secondary/10 relative overflow-hidden">
+                            <img
+                              src={page.thumbnail}
+                              alt={`p${idx}`}
+                              className="max-w-full max-h-full object-contain shadow-sm group-hover:scale-105 transition-transform duration-500"
+                              style={{ transform: `rotate(${page.rotation}deg)` }}
+                              loading="lazy"
+                            />
                           </div>
-                          <div className="p-2 bg-secondary/30 flex justify-center">
-                            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">{idx + 1}</span>
+                          <div className="p-2 bg-secondary/30 flex justify-center border-t border-border/50">
+                            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Page {idx + 1}</span>
                           </div>
                         </div>
                       )}
                     </Draggable>
-                  ))}
-                </div>
-              )}
-              {provided.placeholder}
+                  ))
+                )}
+
+                {/* Trailing "Add More" Card */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-[140px] sm:w-[180px] lg:w-[200px] aspect-[3/4] border-2 border-dashed border-border hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all group flex-shrink-0"
+                >
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm">
+                    <Plus className="h-6 w-6" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest">Add More</p>
+                    <p className="text-[9px] font-bold uppercase opacity-50">Files or Pages</p>
+                  </div>
+                </motion.button>
+
+                {provided.placeholder}
+              </div>
             </div>
           )}
         </Droppable>
@@ -473,86 +420,80 @@ const MergePdf = () => {
   );
 
   const OptionsPanel = () => (
-    <div className="flex flex-col h-full bg-background">
-      <div className="h-14 border-b border-border bg-secondary/5 flex items-center px-4 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 bg-primary/10 rounded-lg">
-            <Settings className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-[10px] font-black text-foreground tracking-widest uppercase">Merge Parameters</h2>
-            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-0.5">Control the output engine</p>
-          </div>
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      <div className="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
+        <h2 className="text-xl sm:text-2xl font-black text-foreground text-center border-b border-border pb-4 mb-6">Merge PDF</h2>
+
+        <div className="space-y-1">
+          {[
+            { id: 'full', label: 'FULL DOCUMENT MERGE', desc: 'Merge entire PDFs in selected order' },
+            { id: 'pages', label: 'CUSTOM PAGE MERGE', desc: 'Reorder, delete, and build custom PDF' }
+          ].map(m => (
+            <button
+              key={m.id}
+              onClick={() => setMergeMode(m.id as "full" | "pages")}
+              className={cn(
+                "w-full text-left px-3 sm:px-4 py-3 sm:py-4 rounded-lg border-l-4 transition-all",
+                mergeMode === m.id
+                  ? "border-l-primary bg-primary/5 shadow-sm"
+                  : "border-l-transparent hover:bg-secondary/30"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn("text-xs sm:text-sm font-bold tracking-wide transition-colors", mergeMode === m.id ? "text-primary" : "text-foreground")}>
+                    {m.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
+                </div>
+                {mergeMode === m.id && (
+                  <motion.div
+                    layoutId="merge-mode-check"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 ml-3"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                  </motion.div>
+                )}
+              </div>
+            </button>
+          ))}
         </div>
-      </div>
 
-      <ScrollArea className="flex-1 pr-2 -mr-2">
-        <div className="space-y-3 sm:space-y-4 relative z-10 pb-4 pr-1">
-          <button
-            onClick={() => setMergeMode('full')}
-            className={cn(
-              "w-full p-6 rounded-2xl border transition-all duration-500 group relative overflow-hidden flex flex-col items-start gap-1",
-              mergeMode === 'full'
-                ? "border-primary bg-primary/[0.03]"
-                : "border-border bg-background hover:border-primary/20"
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className={cn("p-2.5 rounded-2xl transition-all duration-500", mergeMode === 'full' ? "bg-primary text-white scale-110 shadow-glow" : "bg-secondary text-muted-foreground")}>
-                <FileBox className="h-5 w-5" />
+        {/* Merge Summary */}
+        <div className="mt-8 pt-0">
+          <div className="p-3 sm:p-4 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-0.5">Merge Summary</h3>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-medium text-muted-foreground">Original Files</span>
+                <span className="font-bold text-foreground">{files.length}</span>
               </div>
-              {mergeMode === 'full' && <CheckCircle2 className="h-5 w-5 text-primary" />}
-            </div>
-            <h3 className={cn("text-xs font-black uppercase tracking-widest mt-4 transition-colors", mergeMode === 'full' ? "text-primary" : "text-muted-foreground")}>Full Document Merge</h3>
-            <p className="text-[10px] text-muted-foreground opacity-60 leading-tight text-left">Merge entire PDFs in selected order</p>
-          </button>
-
-          <button
-            onClick={() => setMergeMode('pages')}
-            className={cn(
-              "w-full p-6 rounded-2xl border transition-all duration-500 group relative overflow-hidden flex flex-col items-start gap-1",
-              mergeMode === 'pages'
-                ? "border-primary bg-primary/[0.03]"
-                : "border-border bg-background hover:border-primary/20"
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className={cn("p-2.5 rounded-2xl transition-all duration-500", mergeMode === 'pages' ? "bg-primary text-white scale-110 shadow-glow" : "bg-secondary text-muted-foreground")}>
-                <Layers className="h-5 w-5" />
-              </div>
-              {mergeMode === 'pages' && <CheckCircle2 className="h-5 w-5 text-primary" />}
-            </div>
-            <h3 className={cn("text-xs font-black uppercase tracking-widest mt-4 transition-colors", mergeMode === 'pages' ? "text-primary" : "text-muted-foreground")}>Custom Page Merge</h3>
-            <p className="text-[10px] text-muted-foreground opacity-60 leading-tight text-left">Reorder, delete, and build custom PDF</p>
-          </button>
-
-          <div className="mt-4 pt-6 border-t border-border border-dashed">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 px-1">Merge Summary</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs px-1">
-                <span className="font-bold text-muted-foreground">Original Files</span>
-                <span className="font-black text-foreground">{files.length}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs px-1">
-                <span className="font-bold text-muted-foreground">Target Pages</span>
-                <span className="font-black text-primary">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-medium text-muted-foreground">Target Pages</span>
+                <span className="font-bold text-primary">
                   {mergeMode === 'full' ? files.reduce((acc, f) => acc + f.pageCount, 0) : pages.length}
                 </span>
               </div>
             </div>
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="hidden xl:block shrink-0 p-6 border-t border-border bg-background">
+      {/* Action Button */}
+      <div className="hidden xl:block p-4 sm:p-6 border-t border-border flex-shrink-0 bg-background">
         <Button
           size="lg"
-          className="w-full h-14 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/25 rounded-2xl group relative overflow-hidden"
+          className="w-full h-12 sm:h-14 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
           onClick={startMerging}
+          disabled={files.length === 0}
         >
           <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
           Merge PDF
-          <Merge className="h-4 w-4 ml-3 group-hover:rotate-12 transition-transform" />
+          <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:bg-white/30 transition-colors">
+            <ArrowRight className="h-3.5 w-3.5 text-white" />
+          </div>
         </Button>
       </div>
     </div>
@@ -590,48 +531,21 @@ const MergePdf = () => {
             />
           </div>
         ) : results ? (
-          <div className="mt-8 mx-auto max-w-2xl w-full text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-background border border-border p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-bl-full pointer-events-none"></div>
-              <div className="flex flex-col items-center gap-5 relative z-10">
-                <div className="w-20 h-20 bg-green-500/10 rounded-2xl flex items-center justify-center border border-green-500/20">
-                  <CheckCircle2 className="h-10 w-10 text-green-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight uppercase">Merge Completed!</h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">Your PDFs have been successfully combined.</p>
-                </div>
-              </div>
-
-              <div className="mt-8 grid grid-cols-2 gap-px bg-border border border-border overflow-hidden rounded-xl">
-                <div className="bg-secondary/10 p-5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Total Pages</p>
-                  <p className="text-2xl font-black text-primary leading-none">{results.pages}</p>
-                </div>
-                <div className="bg-secondary/10 p-5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">File Size</p>
-                  <p className="text-2xl font-black text-primary leading-none">{results.size}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 px-4">
-              <Button size="lg" className="flex-1 h-16 text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/25 rounded-2xl group relative overflow-hidden" onClick={() => {
-                const a = document.createElement('a');
-                a.href = results.url;
-                a.download = results.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-              }}>
-                <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                <Download className="mr-3 h-5 w-5" /> Download PDF
-              </Button>
-              <Button size="lg" variant="outline" className="flex-1 h-16 text-[11px] font-black uppercase tracking-[0.2em] border-2 rounded-2xl" onClick={resetAll}>
-                <RefreshCw className="mr-3 h-5 w-5" /> Merge New
-              </Button>
-            </div>
-          </div>
+          <DownloadScreen
+            title="PDFs merged successfully!"
+            downloadLabel="DOWNLOAD MERGED PDF"
+            resultUrl={results.url}
+            resultName={results.name}
+            onReset={resetAll}
+            recommendedTools={[
+              { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+              { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+              { name: "Rotate PDF", path: "/rotate-pdf", icon: RotateCw },
+              { name: "Add Page Numbers", path: "/page-numbers", icon: FileText },
+              { name: "Protect PDF", path: "/protect-pdf", icon: ShieldCheck },
+              { name: "Organize PDF", path: "/organize-pdf", icon: LayoutGrid },
+            ]}
+          />
         ) : (
           <>
             <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden select-none">
@@ -649,16 +563,6 @@ const MergePdf = () => {
                     <span className="text-[10px] font-black uppercase tracking-widest">Manage</span>
                   </button>
                   <button
-                    onClick={() => setActiveTab("preview")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all duration-300",
-                      activeTab === "preview" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-secondary"
-                    )}
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Preview</span>
-                  </button>
-                  <button
                     onClick={() => setActiveTab("options")}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all duration-300",
@@ -672,12 +576,8 @@ const MergePdf = () => {
 
                 {/* Content Logic */}
                 <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
-                  {/* DESKTOP LAYOUT (Always visible on xl) */}
                   <div className="hidden xl:flex flex-1 gap-0 h-full overflow-hidden">
-                    <div className="flex-1 border-r border-border">
-                      <PreviewPanel />
-                    </div>
-                    <div className="w-[400px] border-r border-border">
+                    <div className="flex-1 min-h-0 flex flex-col border-r border-border">
                       <ConfigurationPanel />
                     </div>
                     <div className="w-[350px]">
@@ -688,24 +588,13 @@ const MergePdf = () => {
                   {/* MOBILE LAYOUT (Tabbed) */}
                   <div className="xl:hidden flex-1 flex flex-col overflow-hidden">
                     <AnimatePresence mode="wait">
-                      {activeTab === "preview" && (
-                        <motion.div
-                          key="preview"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          className="flex-1 flex flex-col h-full"
-                        >
-                          <PreviewPanel />
-                        </motion.div>
-                      )}
                       {activeTab === "configure" && (
                         <motion.div
                           key="configure"
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -20 }}
-                          className="flex-1 flex flex-col h-full"
+                          className="flex-1 flex flex-col min-h-0"
                         >
                           <ConfigurationPanel />
                         </motion.div>
@@ -729,11 +618,14 @@ const MergePdf = () => {
                 <div className="xl:hidden shrink-0 pt-4 pb-6 px-4 bg-background border-t border-border">
                   <Button
                     size="lg"
-                    className="w-full h-14 text-sm font-black uppercase tracking-[0.2em] shadow-glow rounded-2xl group relative overflow-hidden"
+                    className="w-full h-12 sm:h-14 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
                     onClick={startMerging}
                   >
+                    <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     Merge PDF
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <ArrowRight className="h-3.5 w-3.5 text-white" />
+                    </div>
                   </Button>
                 </div>
               </div>
@@ -754,26 +646,28 @@ const MergePdf = () => {
           </>
         )}
       </div>
-      <ToolSeoSection
-        toolName="Merge PDF"
-        category="merge"
-        intro="MagicDocx Merge PDF lets you combine multiple PDF files into a single, organized document in seconds. Whether you're assembling reports, collating contracts, or joining presentation slides, our free online tool handles it all. Simply drag and drop your PDFs, arrange the order you need, and merge with one click | no software installation required, no file size limits for basic use, and no sign-up needed."
-        steps={[
-          "Upload two or more PDF files by dragging and dropping or clicking the upload area.",
-          "Reorder files or individual pages by dragging them into your desired sequence.",
-          "Choose between Full Document Merge or Custom Page Merge mode.",
-          "Click \"Merge PDF\" and your combined file will download automatically."
-        ]}
-        formats={["PDF"]}
-        relatedTools={[
-          { name: "Split PDF", path: "/split-pdf", icon: Scissors },
-          { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
-          { name: "Organize Pages", path: "/organize-pdf", icon: LayoutGrid },
-          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-        ]}
-        schemaName="Merge PDF Online"
-        schemaDescription="Free online tool to merge multiple PDF files into one document. Drag, drop, and combine PDFs instantly."
-      />
+      {files.length === 0 && (
+        <ToolSeoSection
+          toolName="Merge PDF"
+          category="merge"
+          intro="MagicDocx Merge PDF lets you combine multiple PDF files into a single, organized document in seconds. Whether you're assembling reports, collating contracts, or joining presentation slides, our free online tool handles it all. Simply drag and drop your PDFs, arrange the order you need, and merge with one click | no software installation required, no file size limits for basic use, and no sign-up needed."
+          steps={[
+            "Upload two or more PDF files by dragging and dropping or clicking the upload area.",
+            "Reorder files or individual pages by dragging them into your desired sequence.",
+            "Choose between Full Document Merge or Custom Page Merge mode.",
+            "Click \"Merge PDF\" and your combined file will download automatically."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+            { name: "Organize Pages", path: "/organize-pdf", icon: LayoutGrid },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          schemaName="Merge PDF Online"
+          schemaDescription="Free online tool to merge multiple PDF files into one document. Drag, drop, and combine PDFs instantly."
+        />
+      )}
     </ToolLayout>
   );
 };

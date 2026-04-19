@@ -736,7 +736,7 @@ export const toolSchemas: Record<string, ToolSchema> = {
       },
       {
         name: "Ask a question",
-        text: "Type your question in the chat box — for example, 'What are the key conclusions?' or 'Summarize chapter 3'.",
+        text: "Type your question in the chat box, for example, 'What are the key conclusions?' or 'Summarize chapter 3'.",
       },
       {
         name: "Get instant AI answers",

@@ -52,7 +52,6 @@ import {
 import ToolLayout from "@/components/ToolLayout";
 import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
-import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -146,7 +145,7 @@ const RatingBar = () => {
         })}
       </div>
       <span className="text-sm text-muted-foreground font-medium">
-        {userRating ? `${userRating}.0 / 5` : `${fixed} / 5`} —{" "}
+        {userRating ? `${userRating}.0 / 5` : `${fixed} / 5`} -{" "}
         <span className="text-foreground font-semibold">{votes.toLocaleString()} votes</span>
       </span>
     </div>
@@ -260,44 +259,7 @@ const CompressPdf = () => {
     }
   }, [globalFiles, handleFilesChange, clearGlobalFiles]);
 
-  const compressSinglePdf = async (file: File, m: CompressMode, onP: (p: number) => void) => {
-    const bytes = await file.arrayBuffer();
-
-    // Basic mode: no rasterization — just re-save with pdf-lib stream optimisation
-    if (m === 'basic') {
-      onP(50);
-      const doc = await PDFDocument.load(bytes);
-      const raw = await doc.save({ useObjectStreams: true, addDefaultPage: false });
-      onP(100);
-      return new Blob([new Uint8Array(raw)], { type: "application/pdf" });
-    }
-
-    // Extreme / Recommended: rasterise pages at ≤ 1× native resolution so output is never larger
-    const config = m === 'extreme'
-      ? { scale: 0.6, q: 0.35 }   // aggressive: 60 % size, 35 % JPEG quality
-      : { scale: 0.85, q: 0.65 };  // recommended: 85 % size, 65 % JPEG quality
-
-    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-    const out = await PDFDocument.create();
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      onP(Math.round((i / pdf.numPages) * 90));
-      const page = await pdf.getPage(i);
-      const origVp = page.getViewport({ scale: 1 });
-      const vp = page.getViewport({ scale: config.scale });
-      const canvas = document.createElement("canvas");
-      canvas.width = vp.width; canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
-      const jpg = await new Promise<Blob>(r => canvas.toBlob(blob => r(blob!), "image/jpeg", config.q));
-      const img = await out.embedJpg(await jpg.arrayBuffer());
-      const p = out.addPage([origVp.width, origVp.height]);
-      p.drawImage(img, { x: 0, y: 0, width: origVp.width, height: origVp.height });
-    }
-    const raw = await out.save({ useObjectStreams: true });
-    return new Blob([new Uint8Array(raw)], { type: "application/pdf" });
-  };
-
-  // ── Backend compression (Ghostscript via Express API) ──────────────────────
+  // ── Backend compression (Ghostscript / qpdf via Express API) ────────────────
   const compressViaBackend = async (
     file: File,
     m: CompressMode,
@@ -322,6 +284,11 @@ const CompressPdf = () => {
 
     if (!data.success) throw new Error(data.error || "Compression failed");
 
+    // If server had no compression engine (just copied the file), fall back to client-side
+    if (data.engine === 'copy') {
+      throw new Error('No server compression engine available');
+    }
+
     return {
       name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
       originalSize: data.originalSize,
@@ -335,26 +302,53 @@ const CompressPdf = () => {
     };
   };
 
-  // ── Client-side fallback (pdf-lib + pdfjs) ──────────────────────────────────
+  // ── Client-side fallback, strict lossless optimisation (pdf-lib) ───────────
+  // Applies ONLY: object-stream packing + optional metadata cleanup.
+  // No rasterisation, no image re-encoding, no DPI change.
+  // Output is visually pixel-identical to the input.
   const compressViaClient = async (
     file: File,
     m: CompressMode,
     onProgress: (p: number) => void
   ): Promise<ProcessedFile> => {
-    const blob = await compressSinglePdf(file, m, onProgress);
-    // If compressed is larger or equal, serve the original file unchanged
-    const actuallySmaller = blob.size < file.size;
-    const reductionPct = actuallySmaller ? ((file.size - blob.size) / file.size) * 100 : 0;
-    const meaningfulReduction = actuallySmaller && reductionPct >= 1;
-    const finalBlob = meaningfulReduction ? blob : file;
+    const bytes = await file.arrayBuffer();
+    onProgress(20);
+
+    const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    onProgress(50);
+
+    // ── Metadata cleanup (lossless, page content unaffected) ──────────────
+    try {
+      if (m === 'recommended' || m === 'extreme') {
+        doc.setProducer('');
+        doc.setCreator('');
+      }
+      if (m === 'extreme') {
+        doc.setTitle('');
+        doc.setAuthor('');
+        doc.setSubject('');
+        doc.setKeywords([]);
+      }
+    } catch { /* metadata fields may not exist, safe to ignore */ }
+
+    onProgress(80);
+
+    // ── Structural re-pack with object streams (lossless Flate compression) ─
+    const raw = await doc.save({ useObjectStreams: true, addDefaultPage: false });
+    onProgress(100);
+
+    const blob = new Blob([new Uint8Array(raw)], { type: "application/pdf" });
+    // Never return a larger file, serve original if re-pack gained nothing
+    const finalBlob = blob.size < file.size ? blob : file;
+
     return {
       name: file.name.replace(/\.pdf$/, "_compressed.pdf"),
       originalSize: file.size,
-      compressedSize: meaningfulReduction ? blob.size : file.size,
+      compressedSize: finalBlob.size,
       url: URL.createObjectURL(finalBlob),
       blob: finalBlob,
       engine: "client",
-      alreadyOptimized: !meaningfulReduction,
+      alreadyOptimized: blob.size >= file.size,
     };
   };
 
@@ -388,7 +382,7 @@ const CompressPdf = () => {
 
       const anyOptimized = newRes.some(r => r.alreadyOptimized);
       if (anyOptimized && newRes.length === 1) {
-        toast.info("This PDF is already optimized — no further compression possible.");
+        toast.info("This PDF is already optimized, no further compression possible.");
       } else {
         toast.success("PDFs compressed successfully!");
       }
@@ -419,7 +413,7 @@ const CompressPdf = () => {
     setFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // All size calculations use raw bytes — never KB/MB strings
+  // All size calculations use raw bytes, never KB/MB strings
   const totalOriginal   = results.reduce((acc, r) => acc + r.originalSize, 0);
   const totalCompressed = results.reduce((acc, r) => acc + r.compressedSize, 0);
 
@@ -439,7 +433,7 @@ const CompressPdf = () => {
   };
 
   // Dynamic estimate based on mode
-  const getEstimateRatio = () => mode === 'extreme' ? 0.25 : mode === 'recommended' ? 0.55 : 0.90;
+  const getEstimateRatio = () => mode === 'extreme' ? 0.30 : mode === 'recommended' ? 0.45 : 0.65;
   const totalInFlight = fileDataList.reduce((acc, f) => acc + f.file.size, 0);
   const estimatedSize = totalInFlight * getEstimateRatio();
   const estimatedSavings = totalInFlight > 0 ? Math.round(((totalInFlight - estimatedSize) / totalInFlight) * 100) : 0;
@@ -673,7 +667,7 @@ const CompressPdf = () => {
         ) : files.length === 0 ? (
           /* ── UPLOAD SCREEN + INFO SECTIONS ── */
           <div className="w-full">
-            {/* Upload widget — unchanged */}
+            {/* Upload widget, unchanged */}
             <ToolUploadScreen
               title="Compress PDF"
               description="Reduce file size while optimizing quality"
@@ -712,14 +706,14 @@ const CompressPdf = () => {
                 </div>
               </section>
 
-              {/* ── SECTION 3: Why MagicDOCX — freepdfconvert style ── */}
+              {/* ── SECTION 3: Why MagicDOCX, freepdfconvert style ── */}
               <section>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-12">
                   {[
                     {
                       icon: Minimize2,
                       title: "The Best Free PDF Compressor Online",
-                      desc: "Need to send or upload a PDF that's too large? With MagicDOCX, you can compress PDF files online free without losing quality. Our PDF size reducer is fast, reliable, and easy to use — the perfect choice for email attachments, web uploads, and document storage.",
+                      desc: "Need to send or upload a PDF that's too large? With MagicDOCX, you can compress PDF files online free without losing quality. Our PDF size reducer is fast, reliable, and easy to use, the perfect choice for email attachments, web uploads, and document storage.",
                     },
                     {
                       icon: Lock,
@@ -729,17 +723,17 @@ const CompressPdf = () => {
                     {
                       icon: ShieldCheck,
                       title: "Encrypted & Secure PDF Compression",
-                      desc: "Every file is handled with the highest security standards. Even the most sensitive documents stay completely private while reducing PDF file size — giving you peace of mind.",
+                      desc: "Every file is handled with the highest security standards. Even the most sensitive documents stay completely private while reducing PDF file size, giving you peace of mind.",
                     },
                     {
                       icon: Monitor,
                       title: "Access & Compress PDFs Anywhere",
-                      desc: "Our PDF compressor works online across all devices and operating systems. Whether you're on Windows, Mac, Linux, iOS, or Android, you can compress a PDF online free anytime, anywhere — no software needed.",
+                      desc: "Our PDF compressor works online across all devices and operating systems. Whether you're on Windows, Mac, Linux, iOS, or Android, you can compress a PDF online free anytime, anywhere, no software needed.",
                     },
                     {
                       icon: Zap,
                       title: "Free PDF Compressor with Unlimited Use",
-                      desc: "Compress as many PDF files as you like instantly with no limits. Fast, free, and always available — no account or subscription required.",
+                      desc: "Compress as many PDF files as you like instantly with no limits. Fast, free, and always available, no account or subscription required.",
                     },
                     {
                       icon: Merge,
@@ -1034,13 +1028,15 @@ const CompressPdf = () => {
             {/* Right: Compression Level Sidebar */}
             <div className="w-full lg:w-[350px] lg:border-l border-border bg-card flex flex-col overflow-hidden">
               <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
-                <h2 className="text-base sm:text-lg font-bold text-foreground mb-4 sm:mb-6">Compression level</h2>
+                <div className="mb-6 shrink-0">
+                  <h2 className="text-xl sm:text-2xl font-black text-foreground text-center border-b border-border pb-4 tracking-tighter">Compress PDF</h2>
+                </div>
 
                 <div className="space-y-1">
                   {[
-                    { id: 'extreme' as CompressMode, label: 'EXTREME COMPRESSION', desc: 'Less quality, high compression' },
-                    { id: 'recommended' as CompressMode, label: 'RECOMMENDED COMPRESSION', desc: 'Good quality, good compression' },
-                    { id: 'basic' as CompressMode, label: 'LESS COMPRESSION', desc: 'High quality, less compression' }
+                    { id: 'extreme' as CompressMode, label: 'Extreme Compression', desc: 'Less quality, high compression' },
+                    { id: 'recommended' as CompressMode, label: 'Recommended Compression', desc: 'Good quality, good compression' },
+                    { id: 'basic' as CompressMode, label: 'Less compression', desc: 'High quality, less compression' }
                   ].map(m => (
                     <button
                       key={m.id}

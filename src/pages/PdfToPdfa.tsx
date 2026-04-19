@@ -275,26 +275,28 @@ const PdfToPdfa = () => {
           onFilesSelected={setFiles}
         />
       )}
-      <ToolSeoSection
-        toolName="PDF to PDF/A Converter"
-        category="convert"
-        intro="MagicDocx PDF to PDF/A converter transforms your standard PDF documents into ISO 19005-compliant PDF/A files for long-term archiving. PDF/A ensures that documents remain readable and self-contained for decades by embedding all fonts, color profiles, and metadata. Choose between PDF/A-1b (basic compliance) and PDF/A-2b (recommended for modern systems) based on your regulatory requirements."
-        steps={[
-          "Upload a PDF file using the file upload area.",
-          "Select your compliance standard: PDF/A-1b or PDF/A-2b.",
-          "Click \"Initiate Archival\" | the tool embeds all required metadata.",
-          "Download your ISO-compliant PDF/A file immediately."
-        ]}
-        formats={["PDF", "PDF/A-1b", "PDF/A-2b"]}
-        relatedTools={[
-          { name: "Compress PDF", path: "/compress-pdf", icon: FileCheck },
-          { name: "Merge PDF", path: "/merge-pdf", icon: Archive },
-          { name: "Edit PDF", path: "/edit-pdf", icon: FileText },
-          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-        ]}
-        schemaName="PDF to PDF/A Converter Online"
-        schemaDescription="Free online PDF to PDF/A converter. Convert PDF documents to ISO-compliant PDF/A-1b and PDF/A-2b formats for long-term archiving."
-      />
+      {files.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="PDF to PDF/A Converter"
+          category="convert"
+          intro="MagicDocx PDF to PDF/A converter transforms your standard PDF documents into ISO 19005-compliant PDF/A files for long-term archiving. PDF/A ensures that documents remain readable and self-contained for decades by embedding all fonts, color profiles, and metadata. Choose between PDF/A-1b (basic compliance) and PDF/A-2b (recommended for modern systems) based on your regulatory requirements."
+          steps={[
+            "Upload a PDF file using the file upload area.",
+            "Select your compliance standard: PDF/A-1b or PDF/A-2b.",
+            "Click \"Initiate Archival\" | the tool embeds all required metadata.",
+            "Download your ISO-compliant PDF/A file immediately."
+          ]}
+          formats={["PDF", "PDF/A-1b", "PDF/A-2b"]}
+          relatedTools={[
+            { name: "Compress PDF", path: "/compress-pdf", icon: FileCheck },
+            { name: "Merge PDF", path: "/merge-pdf", icon: Archive },
+            { name: "Edit PDF", path: "/edit-pdf", icon: FileText },
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+          ]}
+          schemaName="PDF to PDF/A Converter Online"
+          schemaDescription="Free online PDF to PDF/A converter. Convert PDF documents to ISO-compliant PDF/A-1b and PDF/A-2b formats for long-term archiving."
+        />
+      )}
     </ToolLayout>
   );
 };

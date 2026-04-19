@@ -27,7 +27,7 @@ const formatSize = (bytes: number): string => {
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Per-Page Canvas Component — solves race condition completely
+// Per-Page Canvas Component, solves race condition completely
 // Each page manages its own lifecycle mount → render → display
 // ─────────────────────────────────────────────────────────────────────────────
 interface PdfPageProps {
@@ -55,7 +55,7 @@ const PdfPageCanvas: React.FC<PdfPageProps> = ({ pdfDoc, pageNumber, containerWi
       if (!canvas) return;
 
       try {
-        // PDF.js pages are 1-indexed — always correct
+        // PDF.js pages are 1-indexed, always correct
         const page = await pdfDoc.getPage(pageNumber);
 
         const unscaledViewport = page.getViewport({ scale: 1.0 });
@@ -82,7 +82,7 @@ const PdfPageCanvas: React.FC<PdfPageProps> = ({ pdfDoc, pageNumber, containerWi
 
         if (cancelled) return;
 
-        // Validate — check if canvas has non-white pixels (retry once if blank first page)
+        // Validate, check if canvas has non-white pixels (retry once if blank first page)
         const imageData = ctx.getImageData(0, 0, Math.min(canvas.width, 50), Math.min(canvas.height, 50));
         const hasContent = imageData.data.some((v, i) => i % 4 !== 3 && v !== 255);
         
@@ -132,7 +132,7 @@ const PdfPageCanvas: React.FC<PdfPageProps> = ({ pdfDoc, pageNumber, containerWi
         </div>
       )}
 
-      {/* The actual canvas — hidden while loading to avoid flash of white */}
+      {/* The actual canvas, hidden while loading to avoid flash of white */}
       <canvas
         ref={canvasRef}
         className={cn("block rounded-sm max-w-full shadow-2xl bg-white", status === "done" ? "opacity-100" : "opacity-0 absolute inset-0 pointer-events-none")}
@@ -149,7 +149,7 @@ const PdfPageCanvas: React.FC<PdfPageProps> = ({ pdfDoc, pageNumber, containerWi
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Friendly error message — no fake "check internet connection"
+// Friendly error message, no fake "check internet connection"
 // ─────────────────────────────────────────────────────────────────────────────
 function friendlyConversionError(err: any): string {
   const msg = (err?.message || "").toLowerCase();
@@ -338,7 +338,7 @@ const PdfToWord = () => {
                   <div className="flex flex-col">
                     <h4 className="text-xs font-black uppercase tracking-widest text-foreground">{files[0]?.name}</h4>
                     <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                      {isAnalyzing ? "Loading preview…" : `${numPages} page${numPages !== 1 ? "s" : ""} — PDF Preview`}
+                      {isAnalyzing ? "Loading preview…" : `${numPages} page${numPages !== 1 ? "s" : ""}, PDF Preview`}
                     </span>
                   </div>
                 </div>
@@ -378,11 +378,11 @@ const PdfToWord = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-4 bg-secondary/30 rounded-xl border flex flex-col">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">File Size</span>
-                          <span className="text-sm font-black">{files[0] ? formatSize(files[0].size) : "—"}</span>
+                          <span className="text-sm font-black">{files[0] ? formatSize(files[0].size) : "-"}</span>
                         </div>
                         <div className="p-4 bg-secondary/30 rounded-xl border flex flex-col">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Pages</span>
-                          <span className="text-sm font-black">{numPages === 0 ? "—" : numPages}</span>
+                          <span className="text-sm font-black">{numPages === 0 ? "-" : numPages}</span>
                         </div>
                       </div>
 
@@ -467,7 +467,7 @@ const PdfToWord = () => {
         />
       )}
 
-      {!files.length && !processing && (
+      {!files.length && !processing && results.length === 0 && (
         <ToolSeoSection
           toolName="PDF to Word Converter Online"
           category="convert"

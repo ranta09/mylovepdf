@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DownloadScreen from "@/components/DownloadScreen";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -25,12 +26,17 @@ import {
   Search,
   Check,
   ChevronRight,
-  RotateCw,
   RotateCcw,
+  RotateCw,
   ZoomIn,
   ZoomOut,
   Files,
-  Archive
+  Archive,
+  Merge,
+  Minimize2,
+  Scissors,
+  Lock,
+  Trash2
 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import ToolUploadScreen from "@/components/ToolUploadScreen";
@@ -77,6 +83,7 @@ const ExtractPages = () => {
   } | null>(null);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const [activeTab, setActiveTab] = useState<"configure" | "options">("configure");
+  const [extractionTargetTab, setExtractionTargetTab] = useState<"interactive" | "range">("interactive");
   const { setDisableGlobalFeatures } = useGlobalUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -235,11 +242,6 @@ const ExtractPages = () => {
           mode: "merge",
           size: (blob.size / (1024 * 1024)).toFixed(2) + " MB"
         });
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = name;
-        a.click();
       } else {
         // ZIP Mode
         const { default: JSZip } = await import("jszip");
@@ -273,11 +275,6 @@ const ExtractPages = () => {
           mode: "zip",
           size: (zipBlob.size / (1024 * 1024)).toFixed(2) + " MB"
         });
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = name;
-        a.click();
       }
 
       toast.success("Extraction complete!");
@@ -298,6 +295,7 @@ const ExtractPages = () => {
     setRangeInput("");
     setZoom(1);
     setActiveTab("configure");
+    setExtractionTargetTab("interactive");
   };
 
   useEffect(() => {
@@ -353,286 +351,298 @@ const ExtractPages = () => {
             </div>
           </div>
         ) : results ? (
-          <div className="mt-4 mx-auto max-w-2xl w-full text-center space-y-6">
-            <div className="bg-card border-2 border-green-500/20 shadow-elevated rounded-2xl p-6 sm:p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-bl-full pointer-events-none" />
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 sm:w-20 h-16 sm:h-20 bg-green-500/10 rounded-3xl flex items-center justify-center border border-green-500/20 shadow-sm">
-                  <CheckCircle2 className="h-8 sm:h-10 w-8 sm:w-10 text-green-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight uppercase">Pages Extracted Successfully</h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">Your extracted files are ready.</p>
-                </div>
-              </div>
-              <div className="mt-8 grid grid-cols-2 gap-3 text-center">
-                <div className="bg-secondary/40 p-3 rounded-xl border border-border/50">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Original Pages</p>
-                  <p className="text-lg font-black text-foreground">{results.originalCount}</p>
-                </div>
-                <div className="bg-secondary/40 p-3 rounded-xl border border-border/50">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Extracted</p>
-                  <p className="text-lg font-black text-primary">{results.extractedCount}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" className="flex-1 h-14 text-sm font-black uppercase tracking-widest shadow-glow" onClick={() => {
-                const a = document.createElement('a');
-                a.href = results.url;
-                a.download = results.name;
-                a.click();
-              }}>
-                <Download className="mr-2 h-5 w-5" />
-                {results.mode === "merge" ? "Download Extracted PDF" : "Download All Files (ZIP)"}
-              </Button>
-              <Button size="lg" variant="outline" className="flex-1 h-14 text-sm font-black uppercase tracking-widest border-2" onClick={resetAll}>
-                <RefreshCw className="mr-2 h-5 w-5" /> Extract Pages from Another PDF
-              </Button>
-            </div>
-          </div>
+          <DownloadScreen
+            title="Pages extracted successfully!"
+            downloadLabel={results.mode === "merge" ? "DOWNLOAD EXTRACTED PDF" : "DOWNLOAD ALL FILES (ZIP)"}
+            resultUrl={results.url}
+            resultName={results.name}
+            onReset={resetAll}
+            recommendedTools={[
+              { name: "Delete Pages", path: "/delete-pages", icon: Trash2 },
+              { name: "Merge PDF", path: "/merge-pdf", icon: Merge },
+              { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+              { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+              { name: "Protect PDF", path: "/protect-pdf", icon: Lock },
+              { name: "Organize PDF", path: "/organize-pdf", icon: LayoutGrid },
+            ]}
+          />
         ) : (
           <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-            <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
               {/* MOBILE TAB CONTROL */}
-              <div className="xl:hidden bg-card border-b border-border p-2 flex gap-1 shadow-sm shrink-0">
-                <button onClick={() => setActiveTab("configure")} className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all", activeTab === "configure" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-secondary")}>
+              <div className="lg:hidden bg-card border-b border-border p-2 flex gap-1 shadow-sm shrink-0">
+                <button
+                  onClick={() => setActiveTab("configure")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                    activeTab === "configure" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
                   <LayoutGrid className="h-4 w-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Select Pages</span>
                 </button>
-                <button onClick={() => setActiveTab("options")} className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all", activeTab === "options" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-secondary")}>
+                <button
+                  onClick={() => setActiveTab("options")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                    activeTab === "options" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
                   <Settings className="h-4 w-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Controls</span>
                 </button>
               </div>
 
-              {/* LEFT PANEL: GRID */}
-              <div className={cn("flex-1 bg-card border-r border-border flex flex-col overflow-hidden", activeTab !== "configure" && "hidden xl:flex")}>
-                <div className="p-4 border-b border-border bg-secondary/20 flex justify-between items-center shrink-0">
-                  <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary transition-colors -ml-1" onClick={resetAll}>
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-xl border border-primary/20 shadow-sm">
-                        <LayoutGrid className="h-4 w-4 text-primary" />
+              {/* SHARED CONTENT AREA */}
+              <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
+                
+                {/* Tab 1: Manage Pages (Gallery) */}
+                <div className={cn(
+                  "flex-1 flex flex-col min-h-0 overflow-hidden bg-background relative border-r border-border",
+                  activeTab !== "configure" && "hidden lg:flex"
+                )}>
+                  {/* Background Glow */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] lg:w-[600px] lg:h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0" />
+                  
+                  <div className="flex-1 overflow-y-auto min-h-0 p-6 sm:p-8 custom-scrollbar relative z-10">
+                    {loadingThumbnails && pages.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
+                        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground animate-pulse">Scanning Document...</p>
                       </div>
-                      <div>
-                        <h2 className="text-sm font-black text-foreground tracking-tight uppercase">Document Preview</h2>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">
-                          {pages.length} Pages • {selectedPageIds.size} Selected
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="hidden sm:flex items-center bg-secondary/30 rounded-full px-2 py-1 gap-1 border border-border/50">
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => setZoom(prev => Math.max(0.6, prev - 0.2))}>
-                        <ZoomOut className="h-3 w-3" />
-                      </Button>
-                      <span className="text-[9px] font-black w-8 text-center">{Math.round(zoom * 100)}%</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => setZoom(prev => Math.min(1.6, prev + 0.2))}>
-                        <ZoomIn className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <Button variant="outline" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest border-2" onClick={selectAll}>
-                      {selectedPageIds.size === pages.length ? "Deselect All" : "Select All"}
-                    </Button>
-                  </div>
-                </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 xxl:grid-cols-4 gap-4 sm:gap-6 justify-center items-start max-w-7xl mx-auto pb-20">
+                        <AnimatePresence mode="popLayout">
+                          {pages.map((page, idx) => {
+                            const isSelected = selectedPageIds.has(page.id);
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-secondary/10 custom-scrollbar">
-                  {loadingThumbnails && pages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                      <p className="text-xs font-bold uppercase tracking-widest">Loading Document...</p>
-                    </div>
-                  ) : (
-                    <div
-                      className="grid gap-6 pb-20 justify-items-center"
-                      style={{
-                        gridTemplateColumns: `repeat(auto-fill, minmax(${200 * zoom}px, 1fr))`
-                      }}
-                    >
-                      <AnimatePresence mode="popLayout">
-                        {pages.map((page, idx) => (
-                          <motion.div
-                            key={page.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="relative group cursor-pointer w-full max-w-[280px]"
-                            onClick={(e) => togglePageSelection(e, page.id)}
-                          >
-                            <div className={cn(
-                              "relative aspect-[3/4.2] w-full bg-white border-2 rounded-2xl shadow-elevated transition-all duration-300 overflow-hidden ring-offset-2",
-                              selectedPageIds.has(page.id) ? "border-primary ring-2 ring-primary shadow-glow bg-primary/5" : "border-border hover:border-primary/40"
-                            )}>
-                              {/* Actions Overlay */}
-                              <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2">
-                                <Button
-                                  size="icon"
-                                  variant="secondary"
-                                  className="h-8 w-8 rounded-xl shadow-lg hover:bg-primary hover:text-white transition-all"
-                                  onClick={(e) => rotateSingle(e, page.id, 90)}
-                                >
-                                  <RotateCw className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              {/* Checkbox Overlay */}
-                              <div className="absolute top-2 left-2 z-10">
-                                {selectedPageIds.has(page.id) ? (
-                                  <div className="bg-primary text-white rounded-lg p-1 shadow-md">
-                                    <CheckSquare className="h-4 w-4" />
-                                  </div>
-                                ) : (
-                                  <div className="bg-white/80 border border-border/80 rounded-lg p-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                    <Square className="h-4 w-4 text-muted-foreground/30" />
-                                  </div>
+                            return (
+                              <motion.div
+                                key={page.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.5 }}
+                                className={cn(
+                                  "group relative bg-card border rounded-2xl shadow-sm w-full overflow-hidden transition-all duration-300 cursor-pointer",
+                                  isSelected ? "border-primary shadow-glow ring-2 ring-primary/20 scale-[1.02] z-20" : "border-border hover:border-primary/40 hover:shadow-lg hover:-translate-y-1"
                                 )}
-                              </div>
-
-                              <div
-                                className="w-full h-full p-2 flex items-center justify-center bg-white/50 transition-transform duration-500"
-                                style={{ transform: `rotate(${page.rotation}deg)` }}
+                                onClick={(e) => togglePageSelection(e, page.id)}
                               >
-                                <img src={page.thumbnail} alt={`Page ${idx + 1}`} className="max-w-[85%] max-h-[85%] object-contain" loading="lazy" decoding="async" />
-                              </div>
+                                {/* Selection Indicator */}
+                                <div className="absolute top-2 left-2 z-20">
+                                  {isSelected ? (
+                                    <div className="bg-primary text-white rounded-md p-1 shadow-sm animate-success-pop">
+                                      <CheckCircle2 className="h-3.5 w-3.5" />
+                                    </div>
+                                  ) : (
+                                    <div className="bg-white/90 text-muted-foreground/30 rounded-md p-1 opacity-0 group-hover:opacity-100 transition-opacity border border-border/50">
+                                      <Square className="h-3.5 w-3.5" />
+                                    </div>
+                                  )}
+                                </div>
 
-                              <div className="absolute bottom-0 left-0 right-0 py-2 bg-secondary/90 backdrop-blur-sm border-t border-border flex items-center justify-center gap-1.5">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Page {idx + 1}</span>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-              </div>
+                                {/* Quick Rotate Button */}
+                                <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    className="bg-secondary text-primary rounded-md p-1 shadow-elevated hover:bg-primary hover:text-primary-foreground hover:scale-110 transition-all"
+                                    onClick={(e) => rotateSingle(e, page.id, 90)}
+                                    title="Rotate page"
+                                  >
+                                    <RotateCw className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
 
-              {/* RIGHT PANEL: ACTIONS */}
-              <div className={cn("w-full xl:w-[380px] shrink-0 flex flex-col overflow-hidden", activeTab !== "options" && "hidden xl:flex")}>
-                <div className="bg-card p-6 flex flex-col relative overflow-hidden flex-1">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full pointer-events-none" />
-                  <div className="mb-8 relative z-10">
-                    <h2 className="text-lg font-black text-foreground tracking-tight flex items-center gap-2 uppercase">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                      Extract Settings
-                    </h2>
-                    <p className="text-[10px] text-muted-foreground font-bold mt-0.5 ml-4 uppercase tracking-widest leading-relaxed">Customize your output</p>
+                                {/* Thumbnail Area */}
+                                <div className="w-full aspect-[3/4.2] bg-secondary/10 flex items-center justify-center p-3 relative overflow-hidden">
+                                  {page.thumbnail ? (
+                                    <img 
+                                      src={page.thumbnail} 
+                                      alt={`Page ${idx + 1}`} 
+                                      className="max-w-[95%] max-h-[95%] object-contain rounded shadow-sm group-hover:scale-105 transition-transform duration-500" 
+                                      style={{ transform: `rotate(${page.rotation}deg)` }}
+                                      loading="lazy" 
+                                    />
+                                  ) : (
+                                    <div className="flex flex-col items-center gap-1 opacity-20">
+                                      <FileText className="h-8 w-8" />
+                                      <div className="w-8 h-1 bg-current rounded-full animate-pulse" />
+                                    </div>
+                                  )}
+                                  {isSelected && <div className="absolute inset-0 bg-primary/5 pointer-events-none" />}
+                                </div>
+
+                                {/* Page Number Footer */}
+                                <div className="p-2 bg-secondary/30 flex justify-center border-t border-border/50">
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {idx + 1}</span>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </AnimatePresence>
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  <ScrollArea className="flex-1 pr-2 -mr-2">
-                    <div className="space-y-8 relative z-10 pb-6 pr-1">
-                      {/* Range Input */}
-                      <div className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-l-2 border-primary/40 pl-2">Pages to Extract</h3>
-                        <div className="space-y-3">
-                          <div className="relative group">
-                            <Input
-                              placeholder="e.g. 1-3, 5, 8"
-                              value={rangeInput}
-                              onChange={(e) => setRangeInput(e.target.value)}
-                              className="h-12 rounded-xl border-2 pl-10 font-bold"
-                            />
-                            <LayoutGrid className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                {/* Tab 2: Controls Sidebar */}
+                <div className={cn(
+                  "w-full lg:w-[350px] xl:w-[380px] shrink-0 flex flex-col min-h-0 bg-background overflow-hidden",
+                  activeTab !== "options" && "hidden lg:flex"
+                )}>
+                  <div className="flex-1 flex flex-col min-h-0 p-6 relative">
+                    <div className="mb-6 shrink-0">
+                      <h2 className="text-xl sm:text-2xl font-black text-foreground text-center border-b border-border pb-4 tracking-tighter capitalize transition-all">Extract Settings</h2>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 touch-pan-y">
+                      <div className="space-y-8 pb-20">
+                        {/* Main Category Tabs */}
+                        <div className="flex bg-secondary/50 p-1 rounded-2xl relative z-10 border border-border/50">
+                          <button 
+                            onClick={() => setExtractionTargetTab("interactive")}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 text-[10px] font-black uppercase tracking-widest",
+                                extractionTargetTab === "interactive" 
+                                  ? "bg-background text-primary shadow-sm" 
+                                  : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <LayoutGrid className="h-3.5 w-3.5" />
+                            Interactive
+                          </button>
+                          <button 
+                            onClick={() => setExtractionTargetTab("range")}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 text-[10px] font-black uppercase tracking-widest",
+                                extractionTargetTab === "range" 
+                                  ? "bg-background text-primary shadow-sm" 
+                                  : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            By Range
+                          </button>
+                        </div>
+
+                        {/* Context-Aware Settings */}
+                        <div className="pt-2">
+                          <AnimatePresence mode="wait">
+                            {extractionTargetTab === 'interactive' ? (
+                              <motion.div 
+                                key="interactive"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="space-y-8"
+                              >
+                                <div className="space-y-4">
+                                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 border-l-2 border-primary/50 ml-1">Selection Tools</h3>
+                                  <div className="flex gap-2">
+                                    <Button variant="outline" className="flex-1 h-10 text-[9px] font-black uppercase tracking-widest border-2 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={selectAll}>{selectedPageIds.size === pages.length ? "Deselect All" : "Select All"}</Button>
+                                    <Button variant="outline" className="h-10 px-4 text-[9px] font-black uppercase tracking-widest border-2 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setSelectedPageIds(new Set())} disabled={selectedPageIds.size === 0}>Clear</Button>
+                                  </div>
+                                </div>
+
+                              </motion.div>
+                            ) : (
+                              <motion.div 
+                                key="range"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="space-y-6"
+                              >
+                                <div className="space-y-4">
+                                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 border-l-2 border-primary/50 ml-1">Quick Range</h3>
+                                  <div className="relative group">
+                                    <Input value={rangeInput} onChange={(e) => setRangeInput(e.target.value)} placeholder="Example: 1-3, 5" className="h-12 border-2 rounded-xl font-bold placeholder:font-medium placeholder:text-muted-foreground/40 pl-10 group-hover:border-primary/30 transition-colors" />
+                                    <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Extraction Mode */}
+                        <div className="pt-6 border-t border-border border-dashed space-y-4">
+                          <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-l-2 border-primary/50 ml-1 px-1">Extraction Mode</h3>
+                          <div className="grid grid-cols-1 gap-2">
+                            <button
+                              onClick={() => setMode("merge")}
+                              className={cn(
+                                "p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden",
+                                mode === "merge" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30"
+                              )}
+                            >
+                              <div className="flex items-center gap-3 relative z-10">
+                                <div className={cn("p-2 rounded-lg transition-colors", mode === "merge" ? "bg-primary text-white" : "bg-secondary text-muted-foreground")}>
+                                  <Files className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="text-[11px] font-black uppercase tracking-tight">Merge Extracted Pages</p>
+                                  <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Single PDF document</p>
+                                </div>
+                              </div>
+                              {mode === "merge" && <div className="absolute top-2 right-2"><CheckCircle2 className="h-3 w-3 text-primary animate-success-pop" /></div>}
+                            </button>
+
+                            <button
+                              onClick={() => setMode("zip")}
+                              className={cn(
+                                "p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden",
+                                mode === "zip" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30"
+                              )}
+                            >
+                              <div className="flex items-center gap-3 relative z-10">
+                                <div className={cn("p-2 rounded-lg transition-colors", mode === "zip" ? "bg-primary text-white" : "bg-secondary text-muted-foreground")}>
+                                  <Archive className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="text-[11px] font-black uppercase tracking-tight">Extract Separate PDFs</p>
+                                  <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Download as ZIP archive</p>
+                                </div>
+                              </div>
+                              {mode === "zip" && <div className="absolute top-2 right-2"><CheckCircle2 className="h-3 w-3 text-primary animate-success-pop" /></div>}
+                            </button>
                           </div>
-                          <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">Enter specific pages or ranges to auto-select.</p>
-                        </div>
-                      </div>
-
-                      {/* Extraction Mode */}
-                      <div className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-l-2 border-primary/40 pl-2">Extraction Mode</h3>
-                        <div className="grid grid-cols-1 gap-2">
-                          <button
-                            onClick={() => setMode("merge")}
-                            className={cn(
-                              "p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden",
-                              mode === "merge" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 relative z-10">
-                              <div className={cn("p-2 rounded-lg", mode === "merge" ? "bg-primary text-white" : "bg-secondary text-muted-foreground")}>
-                                <Files className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-black uppercase tracking-tight">Merge Extracted Pages</p>
-                                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Single PDF document</p>
-                              </div>
-                            </div>
-                            {mode === "merge" && <div className="absolute top-2 right-2"><Check className="h-3 w-3 text-primary" /></div>}
-                          </button>
-
-                          <button
-                            onClick={() => setMode("zip")}
-                            className={cn(
-                              "p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden",
-                              mode === "zip" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 relative z-10">
-                              <div className={cn("p-2 rounded-lg", mode === "zip" ? "bg-primary text-white" : "bg-secondary text-muted-foreground")}>
-                                <Archive className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-black uppercase tracking-tight">Extract as Separate PDFs</p>
-                                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Download as ZIP archive</p>
-                              </div>
-                            </div>
-                            {mode === "zip" && <div className="absolute top-2 right-2"><Check className="h-3 w-3 text-primary" /></div>}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Bulk Tools */}
-                      <div className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-l-2 border-primary/40 pl-2">Selection Options</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="outline" className="h-11 rounded-xl gap-2 text-[10px] font-black uppercase tracking-widest border-2" onClick={() => rotateSelected(90)}>
-                            <RotateCw className="h-3.5 w-3.5" /> Rotate
-                          </Button>
-                          <Button variant="outline" className="h-11 rounded-xl gap-2 text-[10px] font-black uppercase tracking-widest border-2" onClick={() => setSelectedPageIds(new Set())}>
-                            <X className="h-3.5 w-3.5" /> Clear
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Info */}
-                      <div className="bg-secondary/30 p-4 rounded-2xl border border-border/50 space-y-3">
-                        <div className="flex items-start gap-3">
-                          <ShieldCheck className="h-4 w-4 text-primary mt-0.5" />
-                          <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">Extract Pages is non-destructive and maintains 100% of original data quality.</p>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <Zap className="h-4 w-4 text-primary mt-0.5" />
-                          <p className="text-[10px] text-muted-foreground leading-relaxed font-medium italic">High performance: Optimized for documents up to 500 pages.</p>
                         </div>
                       </div>
                     </div>
-                  </ScrollArea>
 
-                  <div className="hidden xl:block shrink-0 pt-4 border-t border-border mt-auto">
-                    <Button
-                      size="lg"
-                      className="w-full h-16 text-md font-black uppercase tracking-[0.2em] shadow-elevated rounded-[1.5rem] group relative bg-primary"
-                      disabled={selectedPageIds.size === 0}
-                      onClick={applyExtraction}
-                    >
-                      Extract Pages
-                      <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1.5 transition-transform" />
-                    </Button>
+                    {/* Desktop Execution Button */}
+                    <div className="hidden lg:block shrink-0 pt-6 border-t border-border bg-background">
+                      <Button
+                        size="lg"
+                        className="w-full h-14 sm:h-16 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
+                        onClick={applyExtraction}
+                        disabled={selectedPageIds.size === 0}
+                      >
+                        <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                        Extract Pages
+                        <div className="bg-white/20 h-6 w-6 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                          <ArrowRight className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* MOBILE ACTION FOOTER */}
-              <div className="xl:hidden shrink-0 pt-2 pb-6 px-4 mb-4 mt-auto border-t border-border bg-background">
-                <Button size="lg" className="w-full h-14 text-sm font-black uppercase tracking-[0.2em] shadow-glow rounded-2xl" disabled={selectedPageIds.size === 0} onClick={applyExtraction}>
+              <div className="lg:hidden shrink-0 pt-4 pb-6 px-4 bg-background border-t border-border">
+                <Button
+                  size="lg"
+                  className="w-full h-12 sm:h-14 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
+                  onClick={applyExtraction}
+                  disabled={selectedPageIds.size === 0}
+                >
+                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   Extract Pages
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <div className="bg-white/20 h-6 w-6 rounded-full flex items-center justify-center">
+                    <ArrowRight className="h-3.5 w-3.5 text-white" />
+                  </div>
                 </Button>
               </div>
             </div>
@@ -643,26 +653,28 @@ const ExtractPages = () => {
       <input ref={fileInputRef} type="file" className="hidden" multiple={false} accept=".pdf" onChange={(e) => {
         if (e.target.files?.length) handleFilesChange(Array.from(e.target.files));
       }} />
-      <ToolSeoSection
-        toolName="Extract PDF Pages"
-        category="edit"
-        intro="MagicDocx Extract PDF Pages lets you pull specific pages from any PDF document and save them as a new PDF or as individual files packaged in a ZIP archive. Use the visual grid to click-select pages, type a range like '1-3, 5', or use Select All. You can also rotate pages before extracting. All processing happens entirely in your browser | no uploads, no servers, no data retention."
-        steps={[
-          "Upload your PDF using the drag-and-drop area.",
-          "Click thumbnails to select pages, or type a range (e.g. '1-3, 5') to auto-select.",
-          "Choose your output mode: merge extracted pages into one PDF, or get each page as a separate PDF in a ZIP.",
-          "Click 'Extract Pages' to download your extracted document(s)."
-        ]}
-        formats={["PDF"]}
-        relatedTools={[
-          { name: "Delete Pages", path: "/delete-pages", icon: FileDown },
-          { name: "Split PDF", path: "/split-pdf", icon: FileDown },
-          { name: "Organize PDF", path: "/organize-pdf", icon: FileDown },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileDown },
-        ]}
-        schemaName="Extract PDF Pages Online"
-        schemaDescription="Free online tool to extract specific pages from a PDF. Download as a merged PDF or individual pages in a ZIP archive."
-      />
+      {files.length === 0 && !results && !processing && (
+        <ToolSeoSection
+          toolName="Extract PDF Pages"
+          category="edit"
+          intro="MagicDocx Extract PDF Pages lets you pull specific pages from any PDF document and save them as a new PDF or as individual files packaged in a ZIP archive. Use the visual grid to click-select pages, type a range like '1-3, 5', or use Select All. You can also rotate pages before extracting. All processing happens entirely in your browser | no uploads, no servers, no data retention."
+          steps={[
+            "Upload your PDF using the drag-and-drop area.",
+            "Click thumbnails to select pages, or type a range (e.g. '1-3, 5') to auto-select.",
+            "Choose your output mode: merge extracted pages into one PDF, or get each page as a separate PDF in a ZIP.",
+            "Click 'Extract Pages' to download your extracted document(s)."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Delete Pages", path: "/delete-pages", icon: FileDown },
+            { name: "Split PDF", path: "/split-pdf", icon: FileDown },
+            { name: "Organize PDF", path: "/organize-pdf", icon: FileDown },
+            { name: "Merge PDF", path: "/merge-pdf", icon: FileDown },
+          ]}
+          schemaName="Extract PDF Pages Online"
+          schemaDescription="Free online tool to extract specific pages from a PDF. Download as a merged PDF or individual pages in a ZIP archive."
+        />
+      )}
     </ToolLayout>
   );
 };

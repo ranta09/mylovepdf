@@ -77,7 +77,7 @@ const OcrPdf = () => {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // processItem for BatchProcessingView — captures the current language/outputFormat
+  // processItem for BatchProcessingView, captures the current language/outputFormat
   const processItem = useCallback(async (file: File, onProgress: (p: number) => void): Promise<BatchProcessingResult> => {
     const bytes = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
@@ -329,7 +329,7 @@ const OcrPdf = () => {
                       size="lg" 
                       onClick={handleProcess} 
                       disabled={processing}
-                      className="w-full h-16 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-green-500/20 hover:shadow-green-500/40 bg-green-600 hover:bg-green-700 transition-all gap-4 group"
+                      className="w-full h-16 rounded-none text-xs font-bold uppercase tracking-[0.2em] shadow-xl shadow-green-500/20 hover:shadow-green-500/40 bg-green-600 hover:bg-green-700 transition-all gap-4 group"
                     >
                       {processing ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Initiate Synthesis <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}
                     </Button>
@@ -353,27 +353,29 @@ const OcrPdf = () => {
         />
       )}
 
-      <ToolSeoSection
-        toolName="OCR PDF Online"
-        category="edit"
-        intro="MagicDocx OCR PDF transforms scanned documents and images into editable, searchable PDF, Word, and Text files. Using advanced neural-network-based character recognition (OCR), our engine processes each page at high resolution to ensure pixel-perfect text extraction. Features include multi-language support, automatic document analysis, and 100% secure in-browser processing."
-        steps={[
-          "Upload your scanned or image-based PDF to the secure workbench.",
-          "Our system automatically analyzes the document for text layers and scanned segments.",
-          "Select the document language and your preferred output format (PDF, Word, or TXT).",
-          "Click 'Initiate Synthesis' to run the high-accuracy OCR engine.",
-          "Instantly download your searchable PDF or editable document."
-        ]}
-        formats={["PDF (scanned)", "PDF (searchable)", "DOCX", "TXT"]}
-        relatedTools={[
-          { name: "PDF to Word", path: "/pdf-to-word", icon: FileCode },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileBox },
-          { name: "Compress PDF", path: "/compress-pdf", icon: Layout },
-          { name: "Edit PDF", path: "/edit-pdf", icon: FileText },
-        ]}
-        schemaName="OCR PDF Converter Online"
-        schemaDescription="Professional online OCR tool to convert scanned PDFs into searchable text. Support for multi-language recognition and local private processing."
-      />
+      {files.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="OCR PDF Online"
+          category="edit"
+          intro="MagicDocx OCR PDF transforms scanned documents and images into editable, searchable PDF, Word, and Text files. Using advanced neural-network-based character recognition (OCR), our engine processes each page at high resolution to ensure pixel-perfect text extraction. Features include multi-language support, automatic document analysis, and 100% secure in-browser processing."
+          steps={[
+            "Upload your scanned or image-based PDF to the secure workbench.",
+            "Our system automatically analyzes the document for text layers and scanned segments.",
+            "Select the document language and your preferred output format (PDF, Word, or TXT).",
+            "Click 'Initiate Synthesis' to run the high-accuracy OCR engine.",
+            "Instantly download your searchable PDF or editable document."
+          ]}
+          formats={["PDF (scanned)", "PDF (searchable)", "DOCX", "TXT"]}
+          relatedTools={[
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileCode },
+            { name: "Merge PDF", path: "/merge-pdf", icon: FileBox },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Layout },
+            { name: "Edit PDF", path: "/edit-pdf", icon: FileText },
+          ]}
+          schemaName="OCR PDF Converter Online"
+          schemaDescription="Professional online OCR tool to convert scanned PDFs into searchable text. Support for multi-language recognition and local private processing."
+        />
+      )}
     </ToolLayout>
   );
 };

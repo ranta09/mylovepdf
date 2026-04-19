@@ -351,27 +351,29 @@ const ExcelToPdf = () => {
           onFilesSelected={handleFilesChange}
         />
       )}
-      <ToolSeoSection
-        toolName="Excel to PDF Converter"
-        category="convert"
-        intro="MagicDocx Excel to PDF converter transforms your complex spreadsheets (XLS, XLSX) into professional, high-fidelity PDF documents. Our precision engine preserves table formatting, colors, and row alignment with pixel-perfect accuracy. Support for multi-sheet selection, scaling options, and document merging makes it the ultimate professional utility for high-resolution financial reports and data synthesis."
-        steps={[
-          "Upload one or more Excel files (XLS or XLSX) to the secure workspace.",
-          "Select specific sheets to convert or export the entire workbook.",
-          "Configure page layout including orientation, scaling, and paper format in the workbench.",
-          "Toggle the 'Merge' option if you wish to combine multiple workbooks into a single PDF.",
-          "Click 'Initiate Synthesis' and download your professional-grade PDF instantly."
-        ]}
-        formats={["XLS", "XLSX", "PDF"]}
-        relatedTools={[
-          { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileSpreadsheet },
-          { name: "Word to PDF", path: "/word-to-pdf", icon: FileSpreadsheet },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileSpreadsheet },
-          { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
-        ]}
-        schemaName="Excel to PDF Converter Online"
-        schemaDescription="Free online Excel to PDF converter. Convert XLS and XLSX spreadsheets to high-fidelity PDF with formatting, tables, and structure preserved."
-      />
+      {files.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="Excel to PDF Converter"
+          category="convert"
+          intro="MagicDocx Excel to PDF converter transforms your complex spreadsheets (XLS, XLSX) into professional, high-fidelity PDF documents. Our precision engine preserves table formatting, colors, and row alignment with pixel-perfect accuracy. Support for multi-sheet selection, scaling options, and document merging makes it the ultimate professional utility for high-resolution financial reports and data synthesis."
+          steps={[
+            "Upload one or more Excel files (XLS or XLSX) to the secure workspace.",
+            "Select specific sheets to convert or export the entire workbook.",
+            "Configure page layout including orientation, scaling, and paper format in the workbench.",
+            "Toggle the 'Merge' option if you wish to combine multiple workbooks into a single PDF.",
+            "Click 'Initiate Synthesis' and download your professional-grade PDF instantly."
+          ]}
+          formats={["XLS", "XLSX", "PDF"]}
+          relatedTools={[
+            { name: "PDF to Excel", path: "/pdf-to-excel", icon: FileSpreadsheet },
+            { name: "Word to PDF", path: "/word-to-pdf", icon: FileSpreadsheet },
+            { name: "Merge PDF", path: "/merge-pdf", icon: FileSpreadsheet },
+            { name: "Compress PDF", path: "/compress-pdf", icon: FileSpreadsheet },
+          ]}
+          schemaName="Excel to PDF Converter Online"
+          schemaDescription="Free online Excel to PDF converter. Convert XLS and XLSX spreadsheets to high-fidelity PDF with formatting, tables, and structure preserved."
+        />
+      )}
     </ToolLayout>
   );
 };

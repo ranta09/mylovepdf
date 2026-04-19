@@ -449,6 +449,6 @@ export async function convertPdfToWord(
   });
 
   const blob = await Packer.toBlob(doc);
-  onProgress?.(100, "Done — your Word file is ready.");
+  onProgress?.(100, "Done, your Word file is ready.");
   return blob;
 }

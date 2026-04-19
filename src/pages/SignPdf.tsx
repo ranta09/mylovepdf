@@ -398,7 +398,7 @@ const SignPdf = () => {
       description="Draw, type, or upload your signature to instantly sign documents."
       category="edit"
       icon={<PenTool className="h-7 w-7" />}
-      metaTitle="Sign PDF Online Free — Draw, Type or Upload Signature | MagicDOCX"
+      metaTitle="Sign PDF Online Free, Draw, Type or Upload Signature | MagicDOCX"
       metaDescription="Add your signature to any PDF online for free. Draw, type, or upload an image signature. Secure, browser-based, no sign-up required."
       toolId="sign"
       hideHeader={files.length > 0}

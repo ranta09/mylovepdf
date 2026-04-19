@@ -654,37 +654,39 @@ const QuizGenerator = () => {
         )}
 
         {/* ── SEO Content ──────────────────────────────────────────────── */}
-        <ToolSeoSection
-          toolName="AI Quiz Generator"
-          category="ai"
-          intro="The most powerful AI quiz generator online. Create MCQ, true/false, fill-in-the-blank, and scenario-based quizzes from any document, video, or website in seconds."
-          features={[
-            { icon: BrainCircuit, title: "7 Question Types", desc: "MCQ, True/False, Fill-in-blank, Short answer, Scenario, Conceptual" },
-            { icon: Timer, title: "Exam Mode", desc: "Timed exam with question navigator and streak counter" },
-            { icon: BookOpen, title: "Flashcard Mode", desc: "Flip-card study with Know It / Still Learning tracking" },
-            { icon: Youtube, title: "YouTube Quizzes", desc: "Paste any YouTube link and generate a quiz from the video" },
-          ]}
-          steps={[
-            "Upload a document, paste a URL, or enter a YouTube link",
-            "Choose difficulty, question count, and question types",
-            "Click Generate Questions",
-            "Take the quiz in Review or Exam mode"
-          ]}
-          formats={["PDF", "DOCX", "PPTX", "XLSX", "CSV", "TXT", "PNG", "JPG", "YouTube videos", "URLs"]}
-          relatedTools={[
-            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
-            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
-            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
-            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          ]}
-          faqs={[
-            { q: "How does the AI quiz generator work?", a: "MagicDocx extracts text from your uploaded file, URL, or YouTube transcript, then sends it to an AI model that generates questions tailored to your chosen difficulty and question types." },
-            { q: "Can I generate quizzes from PDFs?", a: "Yes | PDFs are fully supported. The tool extracts text from text-based PDFs automatically, and uses OCR for scanned or image-based PDFs." },
-            { q: "Can teachers use this tool for exams?", a: "Absolutely. You can generate up to 50 questions per quiz, customize difficulty to Exam level, and download the full quiz with answer key as a formatted PDF." },
-            { q: "Is the quiz generator free?", a: "Yes, MagicDocx AI Quiz Generator is completely free to use. No account required." },
-            { q: "Can I generate a quiz from a YouTube video?", a: "Yes | paste any YouTube video URL (with English captions enabled) and the tool will extract the transcript and generate a quiz from the video content." },
-          ]}
-        />
+        {phase === "setup" && files.length === 0 && urlInput.trim() === "" && textInput.trim() === "" && (
+          <ToolSeoSection
+            toolName="AI Quiz Generator"
+            category="ai"
+            intro="The most powerful AI quiz generator online. Create MCQ, true/false, fill-in-the-blank, and scenario-based quizzes from any document, video, or website in seconds."
+            features={[
+              { icon: BrainCircuit, title: "7 Question Types", desc: "MCQ, True/False, Fill-in-blank, Short answer, Scenario, Conceptual" },
+              { icon: Timer, title: "Exam Mode", desc: "Timed exam with question navigator and streak counter" },
+              { icon: BookOpen, title: "Flashcard Mode", desc: "Flip-card study with Know It / Still Learning tracking" },
+              { icon: Youtube, title: "YouTube Quizzes", desc: "Paste any YouTube link and generate a quiz from the video" },
+            ]}
+            steps={[
+              "Upload a document, paste a URL, or enter a YouTube link",
+              "Choose difficulty, question count, and question types",
+              "Click Generate Questions",
+              "Take the quiz in Review or Exam mode"
+            ]}
+            formats={["PDF", "DOCX", "PPTX", "XLSX", "CSV", "TXT", "PNG", "JPG", "YouTube videos", "URLs"]}
+            relatedTools={[
+              { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+              { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+              { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+              { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            ]}
+            faqs={[
+              { q: "How does the AI quiz generator work?", a: "MagicDocx extracts text from your uploaded file, URL, or YouTube transcript, then sends it to an AI model that generates questions tailored to your chosen difficulty and question types." },
+              { q: "Can I generate quizzes from PDFs?", a: "Yes | PDFs are fully supported. The tool extracts text from text-based PDFs automatically, and uses OCR for scanned or image-based PDFs." },
+              { q: "Can teachers use this tool for exams?", a: "Absolutely. You can generate up to 50 questions per quiz, customize difficulty to Exam level, and download the full quiz with answer key as a formatted PDF." },
+              { q: "Is the quiz generator free?", a: "Yes, MagicDocx AI Quiz Generator is completely free to use. No account required." },
+              { q: "Can I generate a quiz from a YouTube video?", a: "Yes | paste any YouTube video URL (with English captions enabled) and the tool will extract the transcript and generate a quiz from the video content." },
+            ]}
+          />
+        )}
       </div>
     </ToolLayout>
   );

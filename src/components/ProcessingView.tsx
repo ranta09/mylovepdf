@@ -16,7 +16,7 @@ const DID_YOU_KNOW_TIPS = [
   "Split large PDFs into smaller files for easy sharing",
   "Convert your PDFs to PowerPoint for editable presentations",
   "Remove pages from a PDF without any software installation",
-  "Our tools process files locally — your data never leaves your browser",
+  "Our tools process files locally, your data never leaves your browser",
 ];
 
 interface ProcessingViewProps {

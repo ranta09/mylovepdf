@@ -4,7 +4,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import {
   Scissors, Loader2, ShieldCheck, Download, Trash2, Plus, ArrowRight,
   CheckCircle2, FileBox, FileText, X, LayoutGrid, Layers, Zap, Merge,
-  FileOutput, ChevronRight, ChevronDown, Star, ArrowLeft, Lock, Monitor,
+  FileOutput, ChevronRight, ChevronDown, Star, ArrowLeft, Lock, Monitor, Eye, Settings,
   Minimize2, RotateCcw, Hash, Droplets, Edit3, Copy, Scan,
   FileSpreadsheet, Presentation, PenTool, Unlock, Square, Globe,
   ShieldAlert, Wrench, GitCompare, Crop, Image as ImageIcon,
@@ -13,7 +13,6 @@ import {
 import ToolLayout from "@/components/ToolLayout";
 import ToolUploadScreen from "@/components/ToolUploadScreen";
 import ProcessingView from "@/components/ProcessingView";
-import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useGlobalUpload } from "@/components/GlobalUploadContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Set worker path for pdfjs
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -80,7 +80,7 @@ const RatingBar = () => {
         })}
       </div>
       <span className="text-sm text-muted-foreground font-medium">
-        {userRating ? `${userRating}.0 / 5` : `${fixed} / 5`} —{" "}
+        {userRating ? `${userRating}.0 / 5` : `${fixed} / 5`} -{" "}
         <span className="text-foreground font-semibold">{votes.toLocaleString()} votes</span>
       </span>
     </div>
@@ -99,7 +99,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is my file secure?",
-    a: "All splitting happens locally in your browser — your files are never uploaded to any server.",
+    a: "All splitting happens locally in your browser, your files are never uploaded to any server.",
   },
   {
     q: "Can I split a large PDF?",
@@ -155,6 +155,7 @@ const SplitPdf = () => {
   const [results, setResults] = useState<SplitResult[]>([]);
   const [zipUrl, setZipUrl] = useState<string | null>(null);
   const { setDisableGlobalFeatures } = useGlobalUpload();
+  const [activeTab, setActiveTab] = useState<'preview' | 'configure'>('preview');
 
   useEffect(() => {
     setDisableGlobalFeatures(files.length > 0);
@@ -182,9 +183,12 @@ const SplitPdf = () => {
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       setTotalPages(pdf.numPages);
 
-      // Generate thumbnails for all pages
+      // Generate thumbnails (cap at 100 pages to prevent memory crashes/freezes on large PDFs)
+      const MAX_PAGES = 100;
+      const pagesToRender = Math.min(pdf.numPages, MAX_PAGES);
       const thumbList: PageThumbnail[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
+      
+      for (let i = 1; i <= pagesToRender; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 0.3 }); // Small thumbnail
         const canvas = document.createElement('canvas');
@@ -195,13 +199,18 @@ const SplitPdf = () => {
         await page.render({ canvasContext: context!, viewport }).promise;
         thumbList.push({
           pageIndex: i - 1,
-          dataUrl: canvas.toDataURL()
+          dataUrl: canvas.toDataURL('image/jpeg', 0.6) // Compress to save high RAM usage
         });
 
-        // Update incrementally for perceived speed
-        if (i % 5 === 0 || i === pdf.numPages) {
+        // Update incrementally and yield thread to prevent UI blocking
+        if (i % 5 === 0 || i === pagesToRender) {
           setThumbnails([...thumbList]);
+          await new Promise(resolve => setTimeout(resolve, 0));
         }
+      }
+      
+      if (pdf.numPages > MAX_PAGES) {
+        toast.info(`Preview limited to the first ${MAX_PAGES} pages for performance. You can still type higher ranges in manual split modes.`);
       }
     } catch (err) {
       console.error("Failed to load PDF thumbnails", err);
@@ -397,7 +406,7 @@ const SplitPdf = () => {
   ];
 
   return (
-    <ToolLayout title="Split PDF Online" description="Extract specific pages or split one PDF into multiple files" category="split" icon={<Scissors className="h-7 w-7" />}
+    <ToolLayout title="Split PDF Online" description="Separate pages or extract specific sections from your PDF" category="split" icon={<Scissors className="h-7 w-7" />}
       metaTitle="Split PDF Online Free – Fast & Secure | MagicDocx" metaDescription="Split PDF files into multiple documents online for free. Extract pages, define ranges, or split every page. Fast and secure | no software needed." toolId="split" hideHeader={files.length > 0}>
 
       <div className="mt-2 flex flex-col h-full">
@@ -428,29 +437,26 @@ const SplitPdf = () => {
                 </button>
 
                 {/* Main download button */}
-                <button
-                  className="h-20 px-8 md:px-20 w-full md:w-auto md:min-w-[420px] rounded-2xl font-bold text-lg md:text-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-3 justify-center uppercase tracking-wider"
-                  onClick={() => {
-                    if (zipUrl) {
-                      const a = document.createElement("a");
-                      a.href = zipUrl;
-                      a.download = "MagicDOCX_Split_PDFs.zip";
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    } else if (results.length === 1) {
-                      const a = document.createElement("a");
-                      a.href = results[0].url;
-                      a.download = results[0].filename;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }
-                  }}
-                >
+                <Button size="lg" className="h-20 px-8 md:px-20 w-full md:w-auto md:min-w-[420px] rounded-2xl font-bold text-lg md:text-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-3 justify-center uppercase tracking-wider" onClick={() => {
+                  if (zipUrl) {
+                    const a = document.createElement("a");
+                    a.href = zipUrl;
+                    a.download = "MagicDOCX_Split_PDFs.zip";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  } else if (results.length === 1) {
+                    const a = document.createElement("a");
+                    a.href = results[0].url;
+                    a.download = results[0].filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }
+                }}>
                   <Download className="h-6 w-6" />
                   {results.length > 1 ? "Download All (ZIP)" : "Download PDF"}
-                </button>
+                </Button>
               </div>
 
               {/* ── FILE LIST ── */}
@@ -461,7 +467,7 @@ const SplitPdf = () => {
                 </div>
                 <div className="divide-y divide-border max-h-80 overflow-y-auto custom-scrollbar">
                   {results.slice(0, 50).map((res, idx) => (
-                    <div key={idx} className="flex items-center gap-3 px-5 py-3.5 group hover:bg-secondary/30 transition-colors">
+                    <div key={idx} className="flex items-center gap-3 px-3 sm:px-5 py-3 sm:py-3.5 group hover:bg-secondary/30 transition-colors">
                       <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                         <FileText className="h-4 w-4 text-primary" />
                       </div>
@@ -500,7 +506,8 @@ const SplitPdf = () => {
                       className={cn(
                         "flex items-center gap-3 px-5 py-4 hover:bg-secondary/40 transition-colors group",
                         i % 3 !== 2 && "sm:border-r border-border",
-                        i >= 3 && "border-t border-border"
+                        i > 0 && "border-t border-border sm:border-t-0",
+                        i >= 3 && "sm:border-t sm:border-border"
                       )}
                     >
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -542,12 +549,7 @@ const SplitPdf = () => {
                 </div>
               </div>
 
-              {/* Split Another */}
-              <div className="flex justify-center">
-                <Button variant="outline" className="h-12 px-8 text-sm font-bold border-2" onClick={resetAll}>
-                  Split Another PDF
-                </Button>
-              </div>
+
 
             </div>
           </motion.div>
@@ -602,7 +604,7 @@ const SplitPdf = () => {
                     {
                       icon: Lock,
                       title: "Permanent File Deletion for Privacy",
-                      desc: "Your security matters. All splitting happens locally in your browser — files are never uploaded to any server. No copies are retained, ensuring your documents remain 100% private.",
+                      desc: "Your security matters. All splitting happens locally in your browser, files are never uploaded to any server. No copies are retained, ensuring your documents remain 100% private.",
                     },
                     {
                       icon: ShieldCheck,
@@ -612,17 +614,17 @@ const SplitPdf = () => {
                     {
                       icon: Monitor,
                       title: "Split PDFs on Any Device",
-                      desc: "Our PDF splitter works online across all devices and operating systems. Whether you're on Windows, Mac, Linux, iOS, or Android — no software download needed.",
+                      desc: "Our PDF splitter works online across all devices and operating systems. Whether you're on Windows, Mac, Linux, iOS, or Android, no software download needed.",
                     },
                     {
                       icon: Zap,
                       title: "Free PDF Splitter with Unlimited Use",
-                      desc: "Split as many PDF files as you like instantly — no limits, no account required. Completely free and always available.",
+                      desc: "Split as many PDF files as you like instantly, no limits, no account required. Completely free and always available.",
                     },
                     {
                       icon: Merge,
                       title: "All-in-One PDF Tools Beyond Splitting",
-                      desc: "More than just a splitter — MagicDOCX offers powerful tools to merge, compress, rotate, and convert PDFs. Everything you need for working with PDFs, in one place.",
+                      desc: "More than just a splitter, MagicDOCX offers powerful tools to merge, compress, rotate, and convert PDFs. Everything you need for working with PDFs, in one place.",
                     },
                   ].map((f) => (
                     <div key={f.title} className="flex items-start gap-5">
@@ -753,7 +755,7 @@ const SplitPdf = () => {
                       bg: "from-primary to-primary/70",
                       category: "HOW TO SPLIT PDF",
                       title: "How to Extract Pages from a PDF Online",
-                      desc: "Step-by-step guide to extracting specific pages from any PDF document — free, fast, and without installing any software.",
+                      desc: "Step-by-step guide to extracting specific pages from any PDF document, free, fast, and without installing any software.",
                       path: "/blog",
                     },
                     {
@@ -767,7 +769,7 @@ const SplitPdf = () => {
                       bg: "from-rose-400 to-rose-300",
                       category: "HOW TO SPLIT PDF",
                       title: "How to Split a PDF by Page Range",
-                      desc: "Define custom page ranges to divide a large PDF into exactly the sections you need — no extra software required.",
+                      desc: "Define custom page ranges to divide a large PDF into exactly the sections you need, no extra software required.",
                       path: "/blog",
                     },
                   ].map((article, i) => (
@@ -820,272 +822,340 @@ const SplitPdf = () => {
 
         ) : (
           /* ── WORKSPACE: thumbnail grid + settings sidebar ── */
-          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-              {/* LEFT SIDE: PREVIEW PANEL */}
-              <div className="flex-1 bg-card border-r border-border flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-border bg-secondary/20 flex justify-between items-center shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
-                      <LayoutGrid className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-black text-foreground tracking-tight uppercase">Page Preview</h2>
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{totalPages} Pages Total</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase mr-2">
-                      {selectedPages.length} selected
-                    </span>
-                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary" onClick={() => setSelectedPages(Array.from({ length: totalPages }, (_, i) => i))}>
-                      Select All
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-500" onClick={() => setSelectedPages([])}>
-                      Clear
-                    </Button>
+          <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden select-none">
+            <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
+              {/* MOBILE TAB CONTROL */}
+              <div className="xl:hidden bg-card border-b border-border p-2 flex gap-1 shadow-sm shrink-0">
+                <button
+                  onClick={() => setActiveTab("configure")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                    activeTab === "configure" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Manage Pages</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("preview")} // Using preview as "options" tab for compatibility with current logic or just renaming
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                    activeTab === "preview" ? "bg-primary text-white shadow-elevated" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Controls</span>
+                </button>
+              </div>
+
+              {/* SHARED CONTENT AREA */}
+              <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
+                {/* DESKTOP SIDE-BY-SIDE + MOBILE ANIMATED TABS */}
+                
+                {/* Tab 1: Manage Pages (Gallery) */}
+                <div className={cn(
+                  "flex-1 flex flex-col min-h-0 overflow-hidden bg-background relative border-r border-border",
+                  activeTab !== "configure" && "hidden xl:flex"
+                )}>
+                  {/* Background Glow */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] lg:w-[600px] lg:h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0" />
+                  
+                  <div className="flex-1 overflow-y-auto min-h-0 p-6 sm:p-8 custom-scrollbar relative z-10">
+                    {loadingThumbnails && thumbnails.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
+                        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground animate-pulse">Initializing Preview...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-4 sm:gap-8 justify-center items-start max-w-5xl mx-auto pb-20">
+                        {Array.from({ length: totalPages }).map((_, idx) => {
+                          const thumb = thumbnails.find(t => t.pageIndex === idx);
+                          const isSelected = selectedPages.includes(idx);
+
+                          return (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "group relative bg-card border rounded-2xl shadow-sm w-[130px] sm:w-[155px] lg:w-[175px] overflow-hidden transition-all duration-300 flex-shrink-0 cursor-pointer",
+                                isSelected ? "border-primary shadow-glow ring-2 ring-primary/20 scale-[1.02] z-20" : "border-border hover:border-primary/40 hover:shadow-lg hover:-translate-y-1"
+                              )}
+                              onClick={(e) => togglePageSelection(idx, e)}
+                            >
+                              {/* Selection Indicator */}
+                              <div className="absolute top-2 left-2 z-20">
+                                {isSelected ? (
+                                  <div className="bg-primary text-white rounded-md p-1 shadow-sm">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                  </div>
+                                ) : (
+                                  <div className="bg-white/90 text-muted-foreground/30 rounded-md p-1 opacity-0 group-hover:opacity-100 transition-opacity border border-border/50">
+                                    <Square className="h-3.5 w-3.5" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Thumbnail Area */}
+                              <div className="w-full aspect-[3/4.2] bg-secondary/10 flex items-center justify-center p-3 relative overflow-hidden">
+                                {thumb ? (
+                                  <img src={thumb.dataUrl} alt={`Page ${idx + 1}`} className="max-w-[95%] max-h-[95%] object-contain rounded shadow-sm group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                                ) : (
+                                  <div className="flex flex-col items-center gap-1 opacity-20">
+                                    <FileText className="h-8 w-8" />
+                                    <div className="w-8 h-1 bg-current rounded-full animate-pulse" />
+                                  </div>
+                                )}
+                                {isSelected && <div className="absolute inset-0 bg-primary/5 pointer-events-none" />}
+                              </div>
+
+                              {/* Page Number Footer */}
+                              <div className="p-2 bg-secondary/30 flex justify-center border-t border-border/50">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {idx + 1}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 bg-secondary/10 custom-scrollbar">
-                  {loadingThumbnails && thumbnails.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
-                      <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground animate-pulse">Loading thumbnails...</p>
+                {/* Tab 2: Controls Sidebar */}
+                <div className={cn(
+                  "w-full xl:w-[380px] shrink-0 flex flex-col min-h-0 bg-background overflow-hidden",
+                  activeTab !== "preview" && "hidden xl:flex"
+                )}>
+                  <div className="p-6 flex flex-col relative h-full">
+                    <div className="mb-6 shrink-0">
+                      <h2 className="text-xl sm:text-2xl font-black text-foreground text-center border-b border-border pb-4 tracking-tighter capitalize transition-all">Split PDF</h2>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 pb-20">
-                      {Array.from({ length: totalPages }).map((_, idx) => {
-                        const thumb = thumbnails.find(t => t.pageIndex === idx);
-                        const isSelected = selectedPages.includes(idx);
 
-                        return (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: (idx % 10) * 0.03 }}
+                    <ScrollArea className="flex-1 -mx-2 px-2">
+                      <div className="space-y-8 pb-10">
+                        {/* Main Category Tabs */}
+                        <div className="flex bg-secondary/50 p-1 rounded-2xl mb-8 relative z-10 border border-border/50">
+                          <button 
+                            onClick={() => setSplitMode(splitMode === 'fixed' ? 'fixed' : 'range')}
                             className={cn(
-                              "relative group cursor-pointer transition-all duration-300 transform-gpu",
-                              isSelected ? "scale-[1.02]" : "hover:scale-[1.05]"
+                              "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 text-[10px] font-black uppercase tracking-widest",
+                              (splitMode === 'range' || splitMode === 'fixed') 
+                                ? "bg-background text-primary shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground"
                             )}
-                            onClick={(e) => togglePageSelection(idx, e)}
                           >
-                            <div className={cn(
-                              "aspect-[3/4] rounded-xl border-2 overflow-hidden shadow-sm transition-all duration-300",
-                              isSelected
-                                ? "border-primary bg-primary/[0.03] ring-4 ring-primary/10 shadow-glow"
-                                : "border-background bg-background hover:border-primary/40 hover:shadow-md"
-                            )}>
-                              {thumb ? (
-                                <img src={thumb.dataUrl} alt={`Page ${idx + 1}`} className="w-full h-full object-contain" loading="lazy" decoding="async" />
-                              ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/30 scale-110">
-                                  <FileText className="h-8 w-8 text-muted-foreground/20 mb-2" />
-                                  <div className="w-8 h-1 bg-muted-foreground/10 rounded-full animate-pulse"></div>
-                                </div>
-                              )}
+                            <LayoutGrid className="h-3.5 w-3.5" />
+                            Ranges
+                          </button>
+                          <button 
+                            onClick={() => setSplitMode(splitMode === 'every' ? 'every' : 'extract')}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 text-[10px] font-black uppercase tracking-widest",
+                              (splitMode === 'extract' || splitMode === 'every') 
+                                ? "bg-background text-primary shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <Layers className="h-3.5 w-3.5" />
+                            Extract
+                          </button>
+                        </div>
 
-                              {/* Overlay for selection */}
-                              {isSelected && (
-                                <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                                  <div className="bg-primary text-white p-2 rounded-full shadow-glow transform scale-110">
-                                    <CheckCircle2 className="h-6 w-6" />
+                        {/* Sub-Mode Selector */}
+                        <div className="space-y-1">
+                          {(splitMode === 'range' || splitMode === 'fixed') && (
+                            <div className="flex gap-2 mb-4">
+                              <button 
+                                onClick={() => setSplitMode('range')}
+                                className={cn(
+                                  "flex-1 h-9 rounded-xl border-2 transition-all text-[9px] font-black uppercase tracking-widest",
+                                  splitMode === 'range' ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+                                )}
+                              >
+                                Custom Ranges
+                              </button>
+                              <button 
+                                onClick={() => setSplitMode('fixed')}
+                                className={cn(
+                                  "flex-1 h-9 rounded-xl border-2 transition-all text-[9px] font-black uppercase tracking-widest",
+                                  splitMode === 'fixed' ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+                                )}
+                              >
+                                Fixed Split
+                              </button>
+                            </div>
+                          )}
+
+                          {(splitMode === 'extract' || splitMode === 'every') && (
+                            <div className="flex gap-2 mb-4">
+                              <button 
+                                onClick={() => setSplitMode('extract')}
+                                className={cn(
+                                  "flex-1 h-9 rounded-xl border-2 transition-all text-[9px] font-black uppercase tracking-widest",
+                                  splitMode === 'extract' ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+                                )}
+                              >
+                                Select Pages
+                              </button>
+                              <button 
+                                onClick={() => setSplitMode('every')}
+                                className={cn(
+                                  "flex-1 h-9 rounded-xl border-2 transition-all text-[9px] font-black uppercase tracking-widest",
+                                  splitMode === 'every' ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+                                )}
+                              >
+                                Split Every Page
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mode Specific Settings */}
+                        <div className="pt-2">
+                          <AnimatePresence mode="wait">
+                            {splitMode === 'extract' && (
+                              <motion.div
+                                key="extract"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="space-y-6"
+                              >
+                                <div className="space-y-3">
+                                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 border-l-2 border-primary/50 ml-1">Selection Tools</h3>
+                                  <div className="flex gap-2">
+                                    <Button variant="outline" className="flex-1 h-10 text-[9px] font-black uppercase tracking-widest border-2 rounded-xl hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors" onClick={() => setSelectedPages(Array.from({ length: totalPages }, (_, i) => i))}>Select All</Button>
+                                    <Button variant="outline" className="h-10 px-4 text-[9px] font-black uppercase tracking-widest border-2 rounded-xl hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors" onClick={() => setSelectedPages([])} disabled={selectedPages.length === 0}>Clear</Button>
                                   </div>
                                 </div>
-                              )}
-                            </div>
+                                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-foreground">Merge into one PDF</span>
+                                    <Switch checked={mergeSelected} onCheckedChange={setMergeSelected} />
+                                  </div>
+                                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter leading-relaxed italic opacity-70 italic">Extract selected pages into a single combined file.</p>
+                                </div>
+                              </motion.div>
+                            )}
 
-                            <div className="mt-3 flex items-center justify-between px-1">
-                              <span className={cn(
-                                "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter transition-colors",
-                                isSelected ? "bg-primary text-white" : "bg-secondary text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
-                              )}>
-                                Page {idx + 1}
-                              </span>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
+                            {splitMode === 'range' && (
+                              <motion.div
+                                key="range"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="space-y-4"
+                              >
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 border-l-2 border-primary/50 ml-1">Page Ranges</h3>
+                                <div className="space-y-2">
+                                  {ranges.map((r, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 group">
+                                      <div className="flex-1 flex items-center gap-2 bg-secondary/30 p-2 rounded-xl border border-border/50 group-hover:border-primary/30 transition-all">
+                                        <Input
+                                          placeholder="From"
+                                          value={r.from}
+                                          onChange={(e) => updateRange(idx, 'from', e.target.value)}
+                                          className="h-8 text-[11px] font-black bg-transparent border-none focus-visible:ring-0 text-center uppercase"
+                                        />
+                                        <div className="h-px w-2 bg-muted-foreground/30"></div>
+                                        <Input
+                                          placeholder="To"
+                                          value={r.to}
+                                          onChange={(e) => updateRange(idx, 'to', e.target.value)}
+                                          className="h-8 text-[11px] font-black bg-transparent border-none focus-visible:ring-0 text-center uppercase"
+                                        />
+                                      </div>
+                                      {ranges.length > 1 && (
+                                        <button onClick={() => removeRange(idx)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                                <Button variant="outline" className="w-full h-11 border-dashed border-2 text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 rounded-xl border-primary/30" onClick={handleAddRange}>
+                                  <Plus className="h-3.5 w-3.5 mr-2" /> Add Another Range
+                                </Button>
+                              </motion.div>
+                            )}
+
+                            {splitMode === 'fixed' && (
+                              <motion.div
+                                key="fixed"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="p-6 bg-primary/5 border border-primary/20 rounded-2xl text-center space-y-5"
+                              >
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Fixed Range Split</h3>
+                                <div className="flex items-center justify-center gap-8">
+                                  <button onClick={() => setFixedPageCount(Math.max(1, fixedPageCount - 1))} className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center hover:border-primary/50 hover:text-primary transition-all text-muted-foreground"><X className="h-4 w-4 rotate-45" /></button>
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-4xl font-black text-primary leading-none">{fixedPageCount}</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mt-1">Pages</span>
+                                  </div>
+                                  <button onClick={() => setFixedPageCount(Math.min(totalPages, fixedPageCount + 1))} className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center hover:border-primary/50 hover:text-primary transition-all text-muted-foreground"><Plus className="h-4 w-4" /></button>
+                                </div>
+                                <div className="pt-2 border-t border-primary/10">
+                                  <p className="text-[9px] font-black text-primary uppercase tracking-widest">Expected Files: {Math.ceil(totalPages / fixedPageCount)}</p>
+                                </div>
+                              </motion.div>
+                            )}
+
+                            {splitMode === 'every' && (
+                              <motion.div
+                                key="every"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="p-6 bg-primary/5 border border-primary/20 rounded-2xl text-center space-y-3"
+                              >
+                                <FileBox className="h-10 w-10 text-primary/30 mx-auto" />
+                                <h4 className="text-[11px] font-black text-foreground uppercase tracking-tight">One File Per Page</h4>
+                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter leading-relaxed italic opacity-70">Splits the entire PDF into {totalPages} separate individual pages.</p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    </ScrollArea>
+
+                    {/* Desktop Execution Button */}
+                    <div className="hidden xl:block shrink-0 pt-6 border-t border-border bg-background">
+                      <Button
+                        size="lg"
+                        className="w-full h-14 sm:h-16 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
+                        onClick={startSplitting}
+                        disabled={splitMode === 'extract' && selectedPages.length === 0}
+                      >
+                        <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                        Split PDF
+                        <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:bg-white/30 transition-colors">
+                          <ArrowRight className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
-              {/* RIGHT SIDE: CONFIGURATION PANEL */}
-              <div className="w-full lg:w-[400px] flex flex-col shrink-0 bg-card overflow-hidden">
-                <div className="bg-card p-6 flex flex-col relative overflow-hidden flex-1 min-h-0">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full pointer-events-none"></div>
-
-                  <div className="mb-6 relative z-10 shrink-0">
-                    <h2 className="text-lg font-black text-foreground tracking-tight flex items-center gap-2 uppercase">
-                      <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-                      Split Settings
-                    </h2>
-                    <p className="text-[10px] text-muted-foreground font-bold mt-0.5 ml-3.5 uppercase tracking-widest leading-relaxed">Choose how you want to split your file</p>
+              {/* MOBILE ACTION FOOTER */}
+              <div className="xl:hidden shrink-0 pt-4 pb-6 px-4 bg-background border-t border-border">
+                <Button
+                  size="lg"
+                  className="w-full h-12 sm:h-14 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
+                  onClick={startSplitting}
+                  disabled={splitMode === 'extract' && selectedPages.length === 0}
+                >
+                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  Split PDF
+                  <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5 text-white" />
                   </div>
-
-                  <div className="space-y-4 relative z-10 overflow-y-auto pr-1 flex-1 custom-scrollbar">
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'extract', label: 'Extract', icon: Layers },
-                        { id: 'range', label: 'Ranges', icon: LayoutGrid },
-                        { id: 'every', label: 'Every Page', icon: FileBox },
-                        { id: 'fixed', label: 'Fixed Split', icon: Scissors }
-                      ].map((m) => (
-                        <button
-                          key={m.id}
-                          onClick={() => setSplitMode(m.id as SplitMode)}
-                          className={cn(
-                            "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 gap-2 group",
-                            splitMode === m.id
-                              ? "border-primary bg-primary/[0.03] shadow-inner-sm text-primary"
-                              : "border-border bg-background hover:border-primary/30 hover:shadow-sm text-muted-foreground"
-                          )}
-                        >
-                          <m.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", splitMode === m.id ? "text-primary" : "text-muted-foreground")} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">{m.label}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="pt-6 border-t border-border mt-4">
-                      <AnimatePresence mode="wait">
-                        {splitMode === 'extract' && (
-                          <motion.div
-                            key="extract"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="space-y-4"
-                          >
-                            <div className="p-4 bg-secondary/30 rounded-2xl border border-border/50">
-                              <div className="flex justify-between items-center mb-3">
-                                <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Extraction Mode</Label>
-                              </div>
-                              <div className="flex items-center justify-between p-3 bg-card border border-border rounded-xl">
-                                <span className="text-xs font-bold text-foreground">Merge into one PDF</span>
-                                <Switch checked={mergeSelected} onCheckedChange={setMergeSelected} />
-                              </div>
-                            </div>
-                            <p className="text-[10px] font-medium text-muted-foreground text-center px-4 leading-relaxed italic">
-                              Tip: Click page thumbnails on the left to select pages or Shift-Click for a range.
-                            </p>
-                          </motion.div>
-                        )}
-
-                        {splitMode === 'range' && (
-                          <motion.div
-                            key="range"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="space-y-3"
-                          >
-                            <div className="space-y-2">
-                              <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-1">Define Custom Ranges</Label>
-                              {ranges.map((r, idx) => (
-                                <div key={idx} className="flex items-center gap-2 group animate-in fade-in slide-in-from-right-1">
-                                  <div className="flex-1 flex items-center gap-2 bg-secondary/30 p-1.5 rounded-xl border border-border/50 transition-all hover:border-primary/30">
-                                    <Input
-                                      placeholder="From"
-                                      value={r.from}
-                                      onChange={(e) => updateRange(idx, 'from', e.target.value)}
-                                      className="h-8 text-xs font-black bg-transparent border-none focus-visible:ring-0 text-center"
-                                    />
-                                    <div className="h-px w-2 bg-muted-foreground/30"></div>
-                                    <Input
-                                      placeholder="To"
-                                      value={r.to}
-                                      onChange={(e) => updateRange(idx, 'to', e.target.value)}
-                                      className="h-8 text-xs font-black bg-transparent border-none focus-visible:ring-0 text-center"
-                                    />
-                                  </div>
-                                  {ranges.length > 1 && (
-                                    <button onClick={() => removeRange(idx)} className="p-2 hover:bg-red-50 text-muted-foreground hover:text-red-500 rounded-lg transition-colors">
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            <Button variant="outline" size="sm" className="w-full h-10 border-dashed border-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 rounded-xl" onClick={handleAddRange}>
-                              <Plus className="h-3.5 w-3.5 mr-2" /> Add Range
-                            </Button>
-                          </motion.div>
-                        )}
-
-                        {splitMode === 'every' && (
-                          <motion.div
-                            key="every"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="p-6 bg-primary/[0.03] border border-primary/20 rounded-2xl text-center"
-                          >
-                            <FileBox className="h-10 w-10 text-primary/40 mx-auto mb-3" />
-                            <h4 className="text-sm font-black text-foreground uppercase tracking-tight">Split Every Page</h4>
-                            <p className="text-[10px] text-muted-foreground mt-2 font-medium leading-relaxed italic">
-                              Every page of your PDF will be extracted into a separate document.
-                              A {totalPages} page PDF will result in {totalPages} separate files.
-                            </p>
-                          </motion.div>
-                        )}
-
-                        {splitMode === 'fixed' && (
-                          <motion.div
-                            key="fixed"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="space-y-6"
-                          >
-                            <div className="p-6 bg-secondary/30 rounded-2xl border border-border/50 text-center space-y-4">
-                              <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Split Every N Pages</Label>
-                              <div className="flex items-center justify-center gap-6">
-                                <button
-                                  className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center hover:border-primary/50 text-foreground transition-all"
-                                  onClick={() => setFixedPageCount(Math.max(1, fixedPageCount - 1))}
-                                >
-                                  <X className="h-4 w-4 rotate-45" />
-                                </button>
-                                <span className="text-3xl font-black text-primary tracking-tighter w-12">{fixedPageCount}</span>
-                                <button
-                                  className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center hover:border-primary/50 text-foreground transition-all"
-                                  onClick={() => setFixedPageCount(Math.min(totalPages, fixedPageCount + 1))}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </button>
-                              </div>
-                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
-                                Result: {Math.ceil(totalPages / fixedPageCount)} files
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 pt-4 pb-6 mt-auto border-t border-border bg-card">
-                    <Button
-                      size="lg"
-                      className="w-full h-14 text-sm font-black uppercase tracking-[0.1em] shadow-elevated rounded-2xl group relative overflow-hidden"
-                      onClick={startSplitting}
-                      disabled={splitMode === 'extract' && selectedPages.length === 0}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground/20 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                      Split PDF
-                      <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1.5 transition-transform" />
-                    </Button>
-                  </div>
-                </div>
+                </Button>
               </div>
             </div>
           </div>
         )}
       </div>
-      <Footer />
     </ToolLayout>
   );
 };

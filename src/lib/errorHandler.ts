@@ -75,7 +75,7 @@ export const handleConversionError = (error: any): string => {
   }
   
   // IMPORTANT: Do NOT use "check internet connection" for browser-side errors.
-  // This app processes files entirely in-browser — network is not involved.
+  // This app processes files entirely in-browser, network is not involved.
   return 'File generation failed. Please try again. If the problem persists, try a different or simpler file.';
 };
 

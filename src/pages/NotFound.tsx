@@ -5,6 +5,8 @@ import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Home, Search } from "lucide-react";
 import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const NotFound = () => {
   const location = useLocation();
@@ -16,7 +18,7 @@ const NotFound = () => {
   return (
     <>
       <SEOHead
-        title="Page Not Found — MagicDOCX"
+        title="Page Not Found, MagicDOCX"
         description="The page you're looking for doesn't exist. Go back to MagicDOCX to use free PDF and document tools."
       />
       <Helmet>
@@ -24,6 +26,7 @@ const NotFound = () => {
       </Helmet>
 
       <div className="flex min-h-screen flex-col bg-background selection:bg-primary/30 relative overflow-hidden">
+        <Navbar />
         {/* Background Decorative Gradients */}
         <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none -translate-x-1/2" />
@@ -80,6 +83,7 @@ const NotFound = () => {
             </div>
           </motion.div>
         </main>
+        <Footer />
       </div>
     </>
   );

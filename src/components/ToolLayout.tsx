@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import SEOHead from "./SEOHead";
 import { ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import Footer from "./Footer";
+
 
 
 import { useGlobalUpload } from "./GlobalUploadContext";
@@ -73,7 +75,7 @@ const ToolLayout = ({
   return (
     <>
       <SEOHead
-        title={metaTitle || `${title} — MagicDOCX`}
+        title={metaTitle || `${title}, MagicDOCX`}
         description={metaDescription || description}
         canonicalUrl={resolvedCanonical}
         ogImage={ogImage}
@@ -104,7 +106,9 @@ const ToolLayout = ({
             </motion.div>
           </section>
         </main>
+        <Footer />
       </div>
+
     </>
   );
 };

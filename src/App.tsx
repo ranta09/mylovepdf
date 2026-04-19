@@ -18,7 +18,7 @@ import PageSkeleton from "./components/PageSkeleton";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-// ── Tool Pages — lazy-loaded per route ───────────────────────────────────────
+// ── Tool Pages, lazy-loaded per route ───────────────────────────────────────
 const MergePdf        = lazy(() => import("./pages/MergePdf"));
 const SplitPdf        = lazy(() => import("./pages/SplitPdf"));
 const CompressPdf     = lazy(() => import("./pages/CompressPdf"));
@@ -57,6 +57,11 @@ const PrivacyPolicy   = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService  = lazy(() => import("./pages/TermsOfService"));
 const AboutUs         = lazy(() => import("./pages/AboutUs"));
 const ContactUs       = lazy(() => import("./pages/ContactUs"));
+const Security        = lazy(() => import("./pages/Security"));
+const Business        = lazy(() => import("./pages/Business"));
+const Education       = lazy(() => import("./pages/Education"));
+const Help            = lazy(() => import("./pages/Help"));
+const Tools           = lazy(() => import("./pages/Tools"));
 
 // ── SEO Landing Pages ─────────────────────────────────────────────────────────
 const SummarizePdf           = lazy(() => import("./pages/seo/SummarizePdf"));
@@ -78,7 +83,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
-    <ThemeProvider defaultTheme="light" storageKey="magicdocx-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="magicdocx-ui-theme">
       <LanguageProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
@@ -89,7 +94,7 @@ const App = () => (
                 <ScrollToTop />
                 <Suspense fallback={<PageSkeleton />}>
                   <Routes>
-                    {/* Home — eagerly loaded (no Suspense overhead on landing page) */}
+                    {/* Home, eagerly loaded (no Suspense overhead on landing page) */}
                     <Route path="/" element={<Index />} />
 
                     <Route element={<SiteErrorBoundary><Outlet /></SiteErrorBoundary>}>
@@ -129,8 +134,13 @@ const App = () => (
                     <Route path="/privacy"         element={<PrivacyPolicy />} />
                     <Route path="/privacy-policy"  element={<PrivacyPolicy />} />
                     <Route path="/terms"           element={<TermsOfService />} />
-                    <Route path="/about"    element={<AboutUs />} />
-                    <Route path="/contact"  element={<ContactUs />} />
+                    <Route path="/about"           element={<AboutUs />} />
+                    <Route path="/contact"         element={<ContactUs />} />
+                    <Route path="/security"        element={<Security />} />
+                    <Route path="/business"        element={<Business />} />
+                    <Route path="/education"       element={<Education />} />
+                    <Route path="/help"            element={<Help />} />
+                    <Route path="/tools"           element={<Tools />} />
 
                     {/* SEO Landing Pages */}
                     <Route path="/summarize-pdf"                  element={<SummarizePdf />} />

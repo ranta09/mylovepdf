@@ -406,27 +406,29 @@ const JpgToPdf = () => {
         />
       )}
 
-      <ToolSeoSection
-        toolName="JPG to PDF Converter"
-        category="convert"
-        intro="MagicDocx JPG to PDF converter transforms your images (JPG, JPEG) into professional PDF documents. Our precision engine preserves resolution and color accuracy with pixel-perfect results. Support for multiple images, custom margins, page sizes, and drag-and-drop reordering makes it a professional utility for high-quality document synthesis."
-        steps={[
-          "Upload your JPG or JPEG images to the secure workspace.",
-          "Reorder images by dragging them into your preferred sequence.",
-          "Configure page layout including orientation, margins, and paper format in the workbench.",
-          "All uploaded images will be automatically combined into a single multi-page PDF.",
-          "Click 'Initiate Synthesis' and download your professional-grade PDF instantly."
-        ]}
-        formats={["JPG", "JPEG", "PDF"]}
-        relatedTools={[
-          { name: "PNG to PDF", path: "/png-to-pdf", icon: ImageIcon },
-          { name: "PDF to JPG", path: "/pdf-to-jpg", icon: FileImage },
-          { name: "Merge PDF", path: "/merge-pdf", icon: Layers },
-          { name: "Compress PDF", path: "/compress-pdf", icon: Scan },
-        ]}
-        schemaName="JPG to PDF Converter Online"
-        schemaDescription="Free professional online JPG to PDF converter. Combine multiple images into a high-fidelity PDF with custom layout preservation."
-      />
+      {files.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="JPG to PDF Converter"
+          category="convert"
+          intro="MagicDocx JPG to PDF converter transforms your images (JPG, JPEG) into professional PDF documents. Our precision engine preserves resolution and color accuracy with pixel-perfect results. Support for multiple images, custom margins, page sizes, and drag-and-drop reordering makes it a professional utility for high-quality document synthesis."
+          steps={[
+            "Upload your JPG or JPEG images to the secure workspace.",
+            "Reorder images by dragging them into your preferred sequence.",
+            "Configure page layout including orientation, margins, and paper format in the workbench.",
+            "All uploaded images will be automatically combined into a single multi-page PDF.",
+            "Click 'Initiate Synthesis' and download your professional-grade PDF instantly."
+          ]}
+          formats={["JPG", "JPEG", "PDF"]}
+          relatedTools={[
+            { name: "PNG to PDF", path: "/png-to-pdf", icon: ImageIcon },
+            { name: "PDF to JPG", path: "/pdf-to-jpg", icon: FileImage },
+            { name: "Merge PDF", path: "/merge-pdf", icon: Layers },
+            { name: "Compress PDF", path: "/compress-pdf", icon: Scan },
+          ]}
+          schemaName="JPG to PDF Converter Online"
+          schemaDescription="Free professional online JPG to PDF converter. Combine multiple images into a high-fidelity PDF with custom layout preservation."
+        />
+      )}
     </ToolLayout>
   );
 };

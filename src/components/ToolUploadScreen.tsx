@@ -104,7 +104,6 @@ const ToolUploadScreen = ({
     if (valid.length > 0) {
       if (isSubscribed) {
         processFiles(valid);
-        toast.info(`Assigning ${valid.length} file(s)...`);
       }
     } else if (isSubscribed) {
       const types = acceptedExtensions.map((e) => e.replace(".", "").toUpperCase()).join(", ");
@@ -216,7 +215,7 @@ const ToolUploadScreen = ({
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4 px-2">
           {title}
         </h1>
-        <p className="text-base md:text-lg lg:text-xl text-muted-foreground mb-8 max-w-lg mx-auto px-4">
+        <p className="text-base md:text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
           {description}
         </p>
 

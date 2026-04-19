@@ -4,7 +4,7 @@ const BASE_URL = "https://magicdocx.com";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
 
 interface SEOHeadProps {
-  /** Full page title, e.g. "PDF to Word Converter — Free, Fast, No Signup | MagicDOCX" */
+  /** Full page title, e.g. "PDF to Word Converter, Free, Fast, No Signup | MagicDOCX" */
   title: string;
   /** Meta description, max 160 characters */
   description: string;

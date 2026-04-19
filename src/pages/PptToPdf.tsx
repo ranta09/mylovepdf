@@ -333,25 +333,27 @@ const PptToPdf = () => {
         />
       )}
 
-      <ToolSeoSection
-        toolName="PowerPoint to PDF Converter"
-        category="convert"
-        intro="Transform your presentations into high-quality PDF documents with MagicDocx. Our professional engine preserves slide layouts, images, and formatting perfectly."
-        steps={[
-          "Upload your PPT or PPTX files to the secure workspace.",
-          "Configure page size, orientation, and scaling settings.",
-          "Optionally merge multiple presentations into a single PDF.",
-          "Click 'Initiate Synthesis' to generate and download your PDF."
-        ]}
-        formats={["PPT", "PPTX", "PDF"]}
-        relatedTools={[
-          { name: "PDF to PPT", path: "/pdf-to-ppt", icon: Presentation },
-          { name: "Word to PDF", path: "/word-to-pdf", icon: Layout },
-          { name: "Excel to PDF", path: "/excel-to-pdf", icon: Layout },
-        ]}
-        schemaName="PowerPoint to PDF Converter"
-        schemaDescription="Free professional online PowerPoint to PDF converter. High-fidelity slide preservation."
-      />
+      {files.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="PowerPoint to PDF Converter"
+          category="convert"
+          intro="Transform your presentations into high-quality PDF documents with MagicDocx. Our professional engine preserves slide layouts, images, and formatting perfectly."
+          steps={[
+            "Upload your PPT or PPTX files to the secure workspace.",
+            "Configure page size, orientation, and scaling settings.",
+            "Optionally merge multiple presentations into a single PDF.",
+            "Click 'Initiate Synthesis' to generate and download your PDF."
+          ]}
+          formats={["PPT", "PPTX", "PDF"]}
+          relatedTools={[
+            { name: "PDF to PPT", path: "/pdf-to-ppt", icon: Presentation },
+            { name: "Word to PDF", path: "/word-to-pdf", icon: Layout },
+            { name: "Excel to PDF", path: "/excel-to-pdf", icon: Layout },
+          ]}
+          schemaName="PowerPoint to PDF Converter"
+          schemaDescription="Free professional online PowerPoint to PDF converter. High-fidelity slide preservation."
+        />
+      )}
     </ToolLayout>
   );
 };

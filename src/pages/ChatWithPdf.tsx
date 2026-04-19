@@ -610,37 +610,39 @@ const ChatWithPdf = () => {
           </div>
         )}
 
-        <ToolSeoSection
-          toolName="Chat With PDF"
-          category="ai"
-          intro="The best free online tool to chat with PDF. Ask questions, get summaries, and extract insights from your documents instantly using advanced AI."
-          features={[
-            { icon: MessageSquare, title: "Intelligent Chat", desc: "Natural conversation with your documents | ask anything and get accurate answers" },
-            { icon: Zap, title: "Instant Summaries", desc: "Get a high-level overview of long documents in seconds" },
-            { icon: ShieldCheck, title: "Privacy First", desc: "Your documents are processed securely and never stored on our servers" },
-            { icon: Layout, title: "Interactive Interface", desc: "Clean, fast, and easy-to-use chat interface with file preview" },
-          ]}
-          steps={[
-            "Upload your PDF document",
-            "Wait for the AI to analyze the content",
-            "Type your questions in the chat box",
-            "Get instant, accurate answers based on the document"
-          ]}
-          formats={["PDF", "DOCX", "PPTX", "XLSX", "TXT", "PNG", "JPG", "URLs"]}
-          relatedTools={[
-            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
-            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
-            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
-            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          ]}
-          faqs={[
-            { q: "Is Chat with PDF free?", a: "Yes, MagicDocx Chat With PDF is completely free to use. There are no limits on the number of questions you can ask." },
-            { q: "Can it handle large PDF files?", a: "Yes, our AI can process large documents. For extremely long PDFs, it focuses on the most relevant sections to provide accurate answers." },
-            { q: "Are my files secure?", a: "Absolutely. Files are processed securely, and we do not store your documents permanently. Your privacy is our priority." },
-            { q: "Do I need to create an account?", a: "No account or sign-up is required to use the Chat with PDF tool." },
-            { q: "Which languages are supported?", a: "You can chat with your PDF in any language supported by the AI, including English, Spanish, French, German, and many more." },
-          ]}
-        />
+        {!documentText && !extracting && (!messages || messages.length === 0) && (
+          <ToolSeoSection
+            toolName="Chat With PDF"
+            category="ai"
+            intro="The best free online tool to chat with PDF. Ask questions, get summaries, and extract insights from your documents instantly using advanced AI."
+            features={[
+              { icon: MessageSquare, title: "Intelligent Chat", desc: "Natural conversation with your documents | ask anything and get accurate answers" },
+              { icon: Zap, title: "Instant Summaries", desc: "Get a high-level overview of long documents in seconds" },
+              { icon: ShieldCheck, title: "Privacy First", desc: "Your documents are processed securely and never stored on our servers" },
+              { icon: Layout, title: "Interactive Interface", desc: "Clean, fast, and easy-to-use chat interface with file preview" },
+            ]}
+            steps={[
+              "Upload your PDF document",
+              "Wait for the AI to analyze the content",
+              "Type your questions in the chat box",
+              "Get instant, accurate answers based on the document"
+            ]}
+            formats={["PDF", "DOCX", "PPTX", "XLSX", "TXT", "PNG", "JPG", "URLs"]}
+            relatedTools={[
+              { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+              { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+              { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+              { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            ]}
+            faqs={[
+              { q: "Is Chat with PDF free?", a: "Yes, MagicDocx Chat With PDF is completely free to use. There are no limits on the number of questions you can ask." },
+              { q: "Can it handle large PDF files?", a: "Yes, our AI can process large documents. For extremely long PDFs, it focuses on the most relevant sections to provide accurate answers." },
+              { q: "Are my files secure?", a: "Absolutely. Files are processed securely, and we do not store your documents permanently. Your privacy is our priority." },
+              { q: "Do I need to create an account?", a: "No account or sign-up is required to use the Chat with PDF tool." },
+              { q: "Which languages are supported?", a: "You can chat with your PDF in any language supported by the AI, including English, Spanish, French, German, and many more." },
+            ]}
+          />
+        )}
       </div>
     </ToolLayout>
   );

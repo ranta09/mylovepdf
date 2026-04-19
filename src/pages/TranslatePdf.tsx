@@ -381,7 +381,7 @@ const TranslatePdf = () => {
             {/* Translate button */}
             {files.length > 0 && (
               <Button onClick={translate} disabled={processing} size="lg"
-                className="w-full rounded-2xl py-6 text-base font-bold shadow-lg shadow-primary/20 gap-2.5">
+                className="w-full rounded-none py-6 text-base font-bold shadow-lg shadow-primary/20 gap-2.5">
                 {processing
                   ? <><Loader2 className="h-5 w-5 animate-spin" />{statusText || "Translating…"}</>
                   : <><Languages className="h-5 w-5" />Translate {files.length > 1 ? `${files.length} Documents` : "Document"} → {targetLang}</>
@@ -500,38 +500,40 @@ const TranslatePdf = () => {
         )}
 
         {/* ── SEO Content ─────────────────────────────────────────────────── */}
-        <ToolSeoSection
-          toolName="Translate PDF"
-          category="ai"
-          intro="The most powerful free AI PDF translator. Upload any document and translate it into 65+ languages while preserving headings, paragraphs, bullet points, and tables."
-          features={[
-            { icon: Languages, title: "65+ Languages", desc: "All major languages including right-to-left languages (Arabic, Hebrew)" },
-            { icon: Zap, title: "Precision Machine Learning", desc: "Context-aware AI translation that understands technical and academic terms" },
-            { icon: ShieldCheck, title: "Secure & Private", desc: "Your documents are never stored or used to train AI models" },
-            { icon: Layout, title: "Layout Preservation", desc: "Automatically keeps your document's original formatting and structure" },
-          ]}
-          steps={[
-            "Upload your document (PDF, DOCX, PPTX, etc.)",
-            "MagicDocx automatically detects the source language",
-            "Select your target language from the list",
-            "Download your professional translation as a PDF or TXT"
-          ]}
-          formats={["PDF", "DOCX", "PPTX", "XLSX", "TXT", "RTF", "ODT"]}
-          relatedTools={[
-            { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
-            { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
-            { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
-            { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
-            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          ]}
-          faqs={[
-            { q: "Is the PDF translator free?", a: "Yes, MagicDocx PDF Translator is 100% free to use with no hidden costs." },
-            { q: "Will the layout of my document change?", a: "No. Our AI engine is specifically designed to maintain the original layout, including tables, lists, and headings." },
-            { q: "What is the maximum file size?", a: "We support documents up to 50MB and several hundred pages long." },
-            { q: "Do I need to sign up?", a: "No account or login is required. You can start translating immediately." },
-            { q: "Are my documents secure?", a: "Yes. All processing happens over SSL, and files are automatically deleted as soon as you finish your session." },
-          ]}
-        />
+        {results.length === 0 && files.length === 0 && !processing && (
+          <ToolSeoSection
+            toolName="Translate PDF"
+            category="ai"
+            intro="The most powerful free AI PDF translator. Upload any document and translate it into 65+ languages while preserving headings, paragraphs, bullet points, and tables."
+            features={[
+              { icon: Languages, title: "65+ Languages", desc: "All major languages including right-to-left languages (Arabic, Hebrew)" },
+              { icon: Zap, title: "Precision Machine Learning", desc: "Context-aware AI translation that understands technical and academic terms" },
+              { icon: ShieldCheck, title: "Secure & Private", desc: "Your documents are never stored or used to train AI models" },
+              { icon: Layout, title: "Layout Preservation", desc: "Automatically keeps your document's original formatting and structure" },
+            ]}
+            steps={[
+              "Upload your document (PDF, DOCX, PPTX, etc.)",
+              "MagicDocx automatically detects the source language",
+              "Select your target language from the list",
+              "Download your professional translation as a PDF or TXT"
+            ]}
+            formats={["PDF", "DOCX", "PPTX", "XLSX", "TXT", "RTF", "ODT"]}
+            relatedTools={[
+              { name: "AI Document Summarizer", path: "/summarizer", icon: Wand2 },
+              { name: "AI Quiz Generator", path: "/quiz-generator", icon: BrainCircuit },
+              { name: "Chat With PDF", path: "/chat-with-pdf", icon: MessageSquare },
+              { name: "ATS Resume Checker", path: "/ats-checker", icon: Search },
+              { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            ]}
+            faqs={[
+              { q: "Is the PDF translator free?", a: "Yes, MagicDocx PDF Translator is 100% free to use with no hidden costs." },
+              { q: "Will the layout of my document change?", a: "No. Our AI engine is specifically designed to maintain the original layout, including tables, lists, and headings." },
+              { q: "What is the maximum file size?", a: "We support documents up to 50MB and several hundred pages long." },
+              { q: "Do I need to sign up?", a: "No account or login is required. You can start translating immediately." },
+              { q: "Are my documents secure?", a: "Yes. All processing happens over SSL, and files are automatically deleted as soon as you finish your session." },
+            ]}
+          />
+        )}
       </div>
     </ToolLayout>
   );

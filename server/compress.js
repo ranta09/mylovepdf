@@ -1,169 +1,169 @@
 /**
- * compress.js — Production PDF compression engine
- * Uses Ghostscript (gs) as primary engine with qpdf as fallback.
+ * compress.js — PDF compressor
  *
- * Ghostscript must be installed:
- *   macOS:  brew install ghostscript
- *   Ubuntu: sudo apt-get install ghostscript
- *   Windows: https://www.ghostscript.com/download/gsdnld.html
+ * Strategy (priority order):
+ *   1. Python (pypdf + Pillow) — lossy image recompression, ilovepdf-style
+ *   2. qpdf  — lossless structural repack + Flate
+ *   3. Ghostscript — lossy profiles (screen/ebook/printer)
+ *   4. Copy original unchanged
+ *
+ * Compression profiles:
+ *   extreme     — 100 DPI max, JPEG quality 45
+ *   recommended — 150 DPI max, JPEG quality 72
+ *   basic       — 200 DPI max, JPEG quality 85
  */
 
 const { execFile, exec } = require("child_process");
 const { promisify } = require("util");
-const fs = require("fs");
+const fs   = require("fs");
 const path = require("path");
 
 const execFileAsync = promisify(execFile);
-const execAsync = promisify(exec);
+const execAsync    = promisify(exec);
 
-// ── Ghostscript settings per compression mode ─────────────────────────────────
-const GS_PROFILES = {
-  extreme: {
-    pdfSettings: "/screen",      // Lowest quality, maximum compression
-    colorDpi: 72,
-    grayDpi: 72,
-    monoDpi: 72,
-    jpegQuality: 40,
-    removeMetadata: true,
-  },
-  recommended: {
-    pdfSettings: "/printer",     // High-quality preset — still compresses well
-    colorDpi: 200,
-    grayDpi: 200,
-    monoDpi: 300,
-    jpegQuality: 85,
-    removeMetadata: false,
-  },
-  basic: {
-    pdfSettings: "/printer",     // High quality, minimal compression
-    colorDpi: 300,
-    grayDpi: 300,
-    monoDpi: 300,
-    jpegQuality: 85,
-    removeMetadata: false,
-  },
+// ── GS profiles (fallback when Python unavailable) ───────────────────────────
+const GS_SETTINGS = {
+  extreme:     "/screen",   // ~72 dpi, heavy compression
+  recommended: "/ebook",    // ~150 dpi, balanced
+  basic:       "/printer",  // ~300 dpi, near-lossless
 };
 
-// ── Detect available Ghostscript binary ───────────────────────────────────────
+// ── Binary detectors ──────────────────────────────────────────────────────────
 async function getGsBinary() {
-  const candidates = ["gs", "gswin64c", "gswin32c"];
-  for (const bin of candidates) {
-    try {
-      await execAsync(`${bin} --version`);
-      return bin;
-    } catch {
-      // try next
-    }
+  for (const bin of ["gs", "gswin64c", "gswin32c"]) {
+    try { await execAsync(`${bin} --version`); return bin; } catch { /* next */ }
   }
   return null;
 }
 
-// ── Get PDF page count via Ghostscript ────────────────────────────────────────
+async function getQpdfBinary() {
+  try { await execAsync("qpdf --version"); return "qpdf"; } catch { return null; }
+}
+
+async function getPythonBinary() {
+  for (const bin of ["python3", "python"]) {
+    try {
+      const { stdout } = await execAsync(`${bin} -c "import pypdf, PIL; print('ok')"`);
+      if (stdout.trim() === "ok") return bin;
+    } catch { /* next */ }
+  }
+  return null;
+}
+
+// ── Page count via Ghostscript ────────────────────────────────────────────────
 async function getPdfPageCount(gs, filePath) {
   try {
-    const escapedPath = filePath.replace(/\\/g, "/");
+    const escaped = filePath.replace(/\\/g, "/");
     const { stdout } = await execAsync(
-      `${gs} -q -dNODISPLAY -dBATCH -dNOPAUSE -c "(${escapedPath}) (r) file runpdfbegin pdfpagecount = quit"`
+      `${gs} -q -dNODISPLAY -dBATCH -dNOPAUSE -c "(${escaped}) (r) file runpdfbegin pdfpagecount = quit"`
     );
     const n = parseInt(stdout.trim(), 10);
     return Number.isFinite(n) && n > 0 ? n : 1;
-  } catch {
-    return 1;
-  }
+  } catch { return 1; }
 }
 
-// ── Detect whether PDF is scanned (image-heavy) or digital ───────────────────
-async function detectFileType(gs, filePath) {
+// ── PRIMARY: Python — lossy image recompression ───────────────────────────────
+async function compressWithPython(python, inputPath, outputPath, mode) {
+  const script = path.join(__dirname, "compress_pdf.py");
   try {
-    // Count embedded images — if many per page, it's likely scanned
-    const escapedPath = filePath.replace(/\\/g, "/");
-    const { stdout } = await execAsync(
-      `${gs} -q -dNODISPLAY -dBATCH -dNOPAUSE -c "/${escapedPath} (r) file runpdfbegin { /Page pdfdict begin /Resources known { Resources /XObject known { Resources /XObject get { pop 3 1 roll /Subtype get /Image eq { 1 add } if } forall } if } if end } 0 1 pdfpagecount 1 sub { pdfgetpage exch } for = quit"`,
-      { timeout: 5000 }
+    const { stdout, stderr } = await execFileAsync(
+      python, [script, inputPath, outputPath, mode],
+      { timeout: 180_000 }
     );
-    const imageCount = parseInt(stdout.trim(), 10) || 0;
-    return imageCount > 3 ? "scanned" : "digital";
-  } catch {
-    return "digital";
+    const result = JSON.parse(stdout.trim());
+    if (result.error) throw new Error(result.error);
+    return result;
+  } catch (err) {
+    return null;
   }
 }
 
-// ── Main compression with Ghostscript ─────────────────────────────────────────
+// ── SECONDARY: qpdf — lossless structural ────────────────────────────────────
+async function compressWithQpdf(qpdf, inputPath, outputPath, mode) {
+  const linearize = mode !== "basic";
+  const baseArgs  = [
+    "--object-streams=generate",
+    "--compress-streams=y",
+    "--stream-data=compress",
+    inputPath,
+    outputPath,
+  ];
+  if (linearize) baseArgs.unshift("--linearize");
+
+  try {
+    await execFileAsync(qpdf, ["--recompress-flate", ...baseArgs], { timeout: 120_000 });
+    return true;
+  } catch {
+    try {
+      await execFileAsync(qpdf, baseArgs, { timeout: 120_000 });
+      return true;
+    } catch { return false; }
+  }
+}
+
+// ── TERTIARY: Ghostscript — lossy profiles ────────────────────────────────────
 async function compressWithGhostscript(gs, inputPath, outputPath, mode) {
-  const profile = GS_PROFILES[mode] || GS_PROFILES.recommended;
+  const pdfSettings = GS_SETTINGS[mode] || "/ebook";
 
   const args = [
     "-sDEVICE=pdfwrite",
-    "-dCompatibilityLevel=1.4",
-    `-dPDFSETTINGS=${profile.pdfSettings}`,
-    "-dNOPAUSE",
-    "-dQUIET",
-    "-dBATCH",
-    // ── Image downsampling ──────────────────────────────────────────────────
-    "-dDownsampleColorImages=true",
-    "-dDownsampleGrayImages=true",
-    "-dDownsampleMonoImages=true",
-    `-dColorImageResolution=${profile.colorDpi}`,
-    `-dGrayImageResolution=${profile.grayDpi}`,
-    `-dMonoImageResolution=${profile.monoDpi}`,
-    // ── Compression filters ─────────────────────────────────────────────────
-    "-dAutoFilterColorImages=false",
-    "-dColorImageFilter=/DCTEncode",
-    "-dAutoFilterGrayImages=false",
-    "-dGrayImageFilter=/DCTEncode",
-    // ── JPEG quality ────────────────────────────────────────────────────────
-    `-dJPEGQ=${profile.jpegQuality}`,
-    // ── Font embedding ──────────────────────────────────────────────────────
+    "-dCompatibilityLevel=1.5",
+    "-dNOPAUSE", "-dQUIET", "-dBATCH",
+    `-dPDFSETTINGS=${pdfSettings}`,
     "-dEmbedAllFonts=true",
     "-dSubsetFonts=true",
-    // ── Metadata removal (extreme mode) ────────────────────────────────────
-    ...(profile.removeMetadata
-      ? ["-dFastWebView=false"]
-      : ["-dFastWebView=true"]),
-    // ── Output ─────────────────────────────────────────────────────────────
+    "-dDetectDuplicateImages=true",
     `-sOutputFile=${outputPath}`,
     inputPath,
   ];
 
-  await execFileAsync(gs, args, { timeout: 120_000 }); // 2-min timeout
+  await execFileAsync(gs, args, { timeout: 120_000 });
 }
 
-// ── Fallback: qpdf (lossless linearisation) ───────────────────────────────────
-async function compressWithQpdf(inputPath, outputPath) {
-  try {
-    await execAsync(`qpdf --linearize "${inputPath}" "${outputPath}"`, {
-      timeout: 60_000,
-    });
-    return true;
-  } catch {
-    return false;
-  }
+function safeDelete(p) {
+  try { if (fs.existsSync(p)) fs.unlinkSync(p); } catch { /* ignore */ }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
-
 /**
- * Compresses a PDF file.
- * @param {string} inputPath  Absolute path to uploaded PDF
- * @param {string} outputPath Absolute path for compressed output
- * @param {'extreme'|'recommended'|'basic'} mode Compression level
- * @returns {{ pages: number, fileType: string, engine: string }}
+ * @param {string} inputPath
+ * @param {string} outputPath
+ * @param {'extreme'|'recommended'|'basic'} mode
+ * @returns {{ pages, fileType, engine }}
  */
 async function compressPdf(inputPath, outputPath, mode = "recommended") {
-  const gs = await getGsBinary();
+  const [gs, qpdf, python] = await Promise.all([
+    getGsBinary(),
+    getQpdfBinary(),
+    getPythonBinary(),
+  ]);
 
-  // ── Gather pre-compression metadata ────────────────────────────────────────
-  let pages = 1;
+  let pages    = 1;
   let fileType = "digital";
 
   if (gs) {
-    [pages, fileType] = await Promise.all([
-      getPdfPageCount(gs, inputPath),
-      detectFileType(gs, inputPath),
-    ]);
+    try { pages = await getPdfPageCount(gs, inputPath); } catch { /* ok */ }
   }
 
-  // ── Attempt Ghostscript compression ────────────────────────────────────────
+  // ── 1. Python — lossy image recompression (ilovepdf-style) ─────────────────
+  if (python) {
+    const result = await compressWithPython(python, inputPath, outputPath, mode);
+    if (result && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
+      return { pages: result.pages || pages, fileType, engine: "python" };
+    }
+    safeDelete(outputPath);
+  }
+
+  // ── 2. qpdf — structural lossless ──────────────────────────────────────────
+  if (qpdf) {
+    const ok = await compressWithQpdf(qpdf, inputPath, outputPath, mode);
+    if (ok && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
+      return { pages, fileType, engine: "qpdf" };
+    }
+    safeDelete(outputPath);
+  }
+
+  // ── 3. Ghostscript — lossy profiles ────────────────────────────────────────
   if (gs) {
     try {
       await compressWithGhostscript(gs, inputPath, outputPath, mode);
@@ -173,32 +173,20 @@ async function compressPdf(inputPath, outputPath, mode = "recommended") {
     } catch (err) {
       console.warn("[compress] Ghostscript failed:", err.message);
     }
+    safeDelete(outputPath);
   }
 
-  // ── Fallback: qpdf ──────────────────────────────────────────────────────────
-  const qpdfOk = await compressWithQpdf(inputPath, outputPath);
-  if (qpdfOk && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
-    return { pages, fileType, engine: "qpdf" };
-  }
-
-  // ── Last resort: copy original ──────────────────────────────────────────────
+  // ── 4. No engine — copy unchanged ──────────────────────────────────────────
   fs.copyFileSync(inputPath, outputPath);
   return { pages, fileType, engine: "copy" };
 }
 
-/**
- * Quick health-check: returns true if at least one compression engine is found.
- */
 async function checkEngineAvailability() {
-  const gs = await getGsBinary();
-  if (gs) return { available: true, engine: "ghostscript", binary: gs };
-
-  try {
-    await execAsync("qpdf --version");
-    return { available: true, engine: "qpdf" };
-  } catch {
-    return { available: false, engine: "none" };
-  }
+  const [gs, qpdf, python] = await Promise.all([getGsBinary(), getQpdfBinary(), getPythonBinary()]);
+  if (python) return { available: true, engine: "python",      binary: python };
+  if (qpdf)   return { available: true, engine: "qpdf",        binary: qpdf   };
+  if (gs)     return { available: true, engine: "ghostscript", binary: gs     };
+  return { available: false, engine: "none" };
 }
 
 module.exports = { compressPdf, checkEngineAvailability };

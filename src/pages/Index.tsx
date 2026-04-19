@@ -56,7 +56,7 @@ const features = [
   { icon: Trophy, title: "The Premium Free PDF Toolkit", desc: "Whether you need to merge reports, edit text, or convert spreadsheets, MagicDOCX is your all-in-one productivity powerhouse designed for seamless document management." },
   { icon: Cpu, title: "AI-Powered PDF Intelligence", desc: "Beyond standard merging and splitting, MagicDOCX empowers you with cutting-edge AI. Summarize lengthy reports, generate interactive quizzes, bypass ATS filters, and translate documents instantly." },
   { icon: Lock, title: "Unhackable Local Privacy", desc: "Your data never leaves your device. MagicDOCX leverages WebAssembly to process your sensitive documents directly in your browser, guaranteeing absolute privacy without cloud uploads." },
-  { icon: Trash2, title: "Zero Data Retention", desc: "Because processing happens directly on your device, there are no files left behind on external servers. You don't have to worry about manual deletion—your data simply never existed off-device." },
+  { icon: Trash2, title: "Zero Data Retention", desc: "Because processing happens directly on your device, there are no files left behind on external servers. You don't have to worry about manual deletion-your data simply never existed off-device." },
   { icon: MonitorSmartphone, title: "Cross-Platform Access", desc: "MagicDOCX runs flawlessly on Windows, macOS, Linux, and even mobile devices. Enjoy enterprise-grade PDF processing anywhere without downloading hefty software installations." },
   { icon: Wrench, title: "No Signup Required", desc: "Say goodbye to paywalls and premium subscriptions. MagicDOCX provides its entire suite of over 30 professional tools completely free of charge, with rapid processing and no restrictive limits." },
 ];
@@ -118,7 +118,7 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="MagicDOCX — Free PDF & DOCX Tools Online"
+        title="MagicDOCX, Free PDF & DOCX Tools Online"
         description="Free online PDF tools: merge, split, compress, convert, edit, protect PDFs plus AI-powered summarizer and translator. No sign-up."
         canonicalUrl="/"
       />

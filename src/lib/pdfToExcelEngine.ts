@@ -48,11 +48,11 @@ export interface ExcelConversionOptions {
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LINE_Y_TOLERANCE = 3;       // px — elements within this Y delta are on the same line
+const LINE_Y_TOLERANCE = 3;       // px, elements within this Y delta are on the same line
 const COL_GAP_MIN_FACTOR = 1.8;  // minimum gap to qualify as a column separator (× avg char width)
 const MIN_TABLE_ROWS = 2;         // minimum rows to recognise a table
 const MIN_TABLE_COLS = 2;         // minimum columns to recognise a table
-const COL_BUCKET_TOLERANCE = 8;   // px — two X positions within this are same column
+const COL_BUCKET_TOLERANCE = 8;   // px, two X positions within this are same column
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Entry
@@ -136,7 +136,7 @@ export async function convertPdfToExcel(
     });
   }
 
-  onProgress?.(100, "Done — your Excel file is ready.");
+  onProgress?.(100, "Done, your Excel file is ready.");
   return blob;
 }
 
@@ -462,7 +462,7 @@ function buildTableSheet(table: DetectedTable): XLSX.WorkSheet {
   return ws;
 }
 
-/** Fallback when no tables are found — produce structured text rows */
+/** Fallback when no tables are found, produce structured text rows */
 function buildFallbackSheet(allPageElements: RawElement[][]): XLSX.WorkSheet {
   const rows: string[][] = [["Page", "Text Content"]];
 

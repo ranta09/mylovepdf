@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
+import DownloadScreen from "@/components/DownloadScreen";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -25,12 +26,21 @@ import {
   Search,
   Check,
   ChevronRight,
+  ChevronLeft,
   ZoomIn,
   ZoomOut,
   GripVertical,
   CheckSquare,
   Square,
-  Zap
+  Zap,
+  Minimize2,
+  Scissors,
+  Lock,
+  FileText,
+  FilePlus,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import ToolLayout from "@/components/ToolLayout";
@@ -75,8 +85,23 @@ interface HistoryState {
   pages: PageData[];
 }
 
+const FILE_COLORS = [
+  { solid: "bg-primary", light: "bg-primary/20", hover: "hover:bg-primary/40", border: "border-primary", text: "text-primary" },
+  { solid: "bg-rose-600", light: "bg-rose-600/20", hover: "hover:bg-rose-600/40", border: "border-rose-600", text: "text-rose-600" },
+  { solid: "bg-emerald-600", light: "bg-emerald-600/20", hover: "hover:bg-emerald-600/40", border: "border-emerald-600", text: "text-emerald-600" },
+  { solid: "bg-amber-600", light: "bg-amber-600/20", hover: "hover:bg-amber-600/40", border: "border-amber-600", text: "text-amber-600" },
+  { solid: "bg-indigo-600", light: "bg-indigo-600/20", hover: "hover:bg-indigo-600/40", border: "border-indigo-600", text: "text-indigo-600" },
+  { solid: "bg-purple-600", light: "bg-purple-600/20", hover: "hover:bg-purple-600/40", border: "border-purple-600", text: "text-purple-600" },
+];
+
+interface FileWithMetadata {
+  file: File;
+  id: string;
+  colorIndex: number;
+}
+
 const OrganizePdf = () => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileWithMetadata[]>([]);
   const [pages, setPages] = useState<PageData[]>([]);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [history, setHistory] = useState<HistoryState[]>([]);
@@ -84,14 +109,17 @@ const OrganizePdf = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.7);
+  const [loadingThumbnails, setLoadingThumbnails] = useState(false);
+  const [baselinePages, setBaselinePages] = useState<PageData[]>([]);
   const [results, setResults] = useState<{
     url: string;
     name: string;
     pageCount: number;
     size: string;
   } | null>(null);
-  const [loadingThumbnails, setLoadingThumbnails] = useState(false);
+  const [activeTab, setActiveTab] = useState<"configure" | "options">("configure");
+  const [organizeTargetTab, setOrganizeTargetTab] = useState<"actions" | "selection">("actions");
   const { setDisableGlobalFeatures } = useGlobalUpload();
 
   useEffect(() => {
@@ -120,15 +148,23 @@ const OrganizePdf = () => {
     }
 
     setLoadingThumbnails(true);
-    const startIndex = files.length;
-    const updatedFiles = [...files, ...newFiles];
+    const startIdxCount = files.length;
+    
+    // Assign stable IDs and color indices to the new files
+    const newFilesWithMetadata: FileWithMetadata[] = newFiles.map((file, i) => ({
+      file,
+      id: generateId(),
+      colorIndex: (startIdxCount + i) % FILE_COLORS.length
+    }));
+
+    const updatedFiles = [...files, ...newFilesWithMetadata];
     setFiles(updatedFiles);
 
     try {
       const allNewPages: PageData[] = [];
-      for (let fIdx = 0; fIdx < newFiles.length; fIdx++) {
-        const file = newFiles[fIdx];
-        const arrayBuffer = await file.arrayBuffer();
+      for (let fIdx = 0; fIdx < newFilesWithMetadata.length; fIdx++) {
+        const fileData = newFilesWithMetadata[fIdx];
+        const arrayBuffer = await fileData.file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         const pageCount = pdf.numPages;
 
@@ -144,7 +180,7 @@ const OrganizePdf = () => {
 
           allNewPages.push({
             id: generateId(),
-            originalFileIndex: startIndex + fIdx,
+            originalFileIndex: startIdxCount + fIdx,
             originalPageIndex: i - 1,
             thumbnail: canvas.toDataURL('image/jpeg', 0.8),
             rotation: 0,
@@ -153,6 +189,7 @@ const OrganizePdf = () => {
       }
 
       const combinedPages = [...pages, ...allNewPages];
+      setBaselinePages(prev => [...prev, ...allNewPages]);
       pushToHistory(combinedPages);
     } catch (err) {
       console.error("Error loading PDF:", err);
@@ -205,7 +242,6 @@ const OrganizePdf = () => {
       const prevIndex = historyIndex - 1;
       setPages(history[prevIndex].pages);
       setHistoryIndex(prevIndex);
-      toast.info("Action undone");
     }
   };
 
@@ -214,7 +250,6 @@ const OrganizePdf = () => {
       const nextIndex = historyIndex + 1;
       setPages(history[nextIndex].pages);
       setHistoryIndex(nextIndex);
-      toast.info("Action redone");
     }
   };
 
@@ -237,6 +272,111 @@ const OrganizePdf = () => {
     pushToHistory(newPages);
   };
 
+  const deleteSingle = (e: React.MouseEvent, pageId: string) => {
+    e.stopPropagation();
+    const newPages = pages.filter(p => p.id !== pageId);
+    pushToHistory(newPages);
+  };
+
+  const insertBlankAfter = (e: React.MouseEvent, pageId: string) => {
+    e.stopPropagation();
+    const newPages = [...pages];
+    const canvas = document.createElement('canvas');
+    canvas.width = 400; canvas.height = 560;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 400, 560);
+
+    const blankPage: PageData = {
+      id: generateId(),
+      originalFileIndex: -1,
+      originalPageIndex: -1,
+      thumbnail: canvas.toDataURL('image/jpeg', 0.1),
+      rotation: 0,
+      isBlank: true
+    };
+    const idx = pages.findIndex(p => p.id === pageId);
+    newPages.splice(idx + 1, 0, blankPage);
+    pushToHistory(newPages);
+  };
+
+  const reverseOrder = () => {
+    if (pages.length < 2) return;
+    const newPages = [...pages].reverse();
+    pushToHistory(newPages);
+  };
+
+  const removeFile = (fIdx: number) => {
+    const fileToRemove = files[fIdx];
+    if (!fileToRemove) return;
+
+    // Filter out pages belonging to this file
+    const filteredPages = pages.filter(p => p.originalFileIndex !== fIdx);
+    
+    // Also remove from baseline so Reset All doesn't bring back the removed file
+    setBaselinePages(prev => {
+      const filtered = prev.filter(p => p.originalFileIndex !== fIdx);
+      return filtered.map(p => {
+        if (p.originalFileIndex > fIdx) return { ...p, originalFileIndex: p.originalFileIndex - 1 };
+        return p;
+      });
+    });
+
+    // Update indices for remaining pages
+    const adjustedPages = filteredPages.map(p => {
+      if (p.originalFileIndex > fIdx) {
+        return { ...p, originalFileIndex: p.originalFileIndex - 1 };
+      }
+      return p;
+    });
+
+    setFiles(prev => prev.filter((_, i) => i !== fIdx));
+    pushToHistory(adjustedPages);
+  };
+
+  const moveFile = (fIdx: number, direction: 'up' | 'down') => {
+    const targetIdx = fIdx + (direction === 'up' ? -1 : 1);
+    if (targetIdx < 0 || targetIdx >= files.length) return;
+
+    // 1. Swap in files array
+    const newFiles = [...files];
+    [newFiles[fIdx], newFiles[targetIdx]] = [newFiles[targetIdx], newFiles[fIdx]];
+    setFiles(newFiles);
+
+    // 2. Update page metadata (indices)
+    const updatedMetadataPages = pages.map(p => {
+      if (p.originalFileIndex === fIdx) return { ...p, originalFileIndex: targetIdx };
+      if (p.originalFileIndex === targetIdx) return { ...p, originalFileIndex: fIdx };
+      return p;
+    });
+
+    // 3. Physically reorder pages: bring all pages of the moved file to the target position
+    // We'll group them CONTIGUOUSLY based on the new file order to make it predictable.
+    const reorderedPages: PageData[] = [];
+    newFiles.forEach((_, fileIndex) => {
+      const filePages = updatedMetadataPages.filter(p => p.originalFileIndex === fileIndex);
+      reorderedPages.push(...filePages);
+    });
+    
+    // Also include any 'orphaned' pages (like blank pages with originalFileIndex: -1)
+    const blankPages = updatedMetadataPages.filter(p => p.originalFileIndex === -1);
+    reorderedPages.push(...blankPages);
+    
+    pushToHistory(reorderedPages);
+  };
+
+  const movePage = (e: React.MouseEvent, pageId: string, direction: 'forward' | 'backward') => {
+    e.stopPropagation();
+    const idx = pages.findIndex(p => p.id === pageId);
+    if (idx === -1) return;
+
+    const targetIdx = direction === 'forward' ? idx + 1 : idx - 1;
+    if (targetIdx < 0 || targetIdx >= pages.length) return;
+
+    const newPages = [...pages];
+    [newPages[idx], newPages[targetIdx]] = [newPages[targetIdx], newPages[idx]];
+    pushToHistory(newPages);
+  };
+
   const deleteSelected = () => {
     if (selectedPageIds.size === 0) {
       toast.error("Please select pages to delete");
@@ -249,7 +389,6 @@ const OrganizePdf = () => {
     const newPages = pages.filter(p => !selectedPageIds.has(p.id));
     setSelectedPageIds(new Set());
     pushToHistory(newPages);
-    toast.success(`${selectedPageIds.size} pages deleted`);
   };
 
   const duplicateSelected = () => {
@@ -302,7 +441,7 @@ const OrganizePdf = () => {
     try {
       const outDoc = await PDFDocument.create();
       const sourcePdfDocs = await Promise.all(
-        files.map(async f => PDFDocument.load(await f.arrayBuffer()))
+        files.map(async f => PDFDocument.load(await f.file.arrayBuffer()))
       );
 
       for (let i = 0; i < pages.length; i++) {
@@ -328,7 +467,7 @@ const OrganizePdf = () => {
       const pdfBytes = await outDoc.save();
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const name = files[0].name.replace(/\.pdf$/i, "_organized.pdf");
+      const name = files[0].file.name.replace(/\.pdf$/i, "_organized.pdf");
 
       setResults({
         url,
@@ -336,11 +475,6 @@ const OrganizePdf = () => {
         pageCount: pages.length,
         size: (blob.size / (1024 * 1024)).toFixed(2) + " MB"
       });
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      a.click();
       toast.success("PDF organized successfully!");
     } catch (err) {
       console.error("Organize failed", err);
@@ -351,14 +485,19 @@ const OrganizePdf = () => {
   };
 
   const resetAll = () => {
-    setFiles([]);
-    setPages([]);
-    setSelectedPageIds(new Set());
-    setHistory([]);
-    setHistoryIndex(-1);
-    setResults(null);
-    setProgress(0);
-    setZoom(1);
+    if (baselinePages.length > 0) {
+      pushToHistory([...baselinePages]);
+      setSelectedPageIds(new Set());
+    } else {
+      // If already at baseline or no files, actually clear everything
+      setFiles([]);
+      setPages([]);
+      setBaselinePages([]);
+      setHistory([]);
+      setHistoryIndex(-1);
+      setActiveTab("configure");
+    }
+    setOrganizeTargetTab("actions");
   };
 
   useEffect(() => {
@@ -414,220 +553,336 @@ const OrganizePdf = () => {
             </div>
           </div>
         ) : results ? (
-          <div className="mt-4 mx-auto max-w-2xl w-full text-center space-y-6">
-            <div className="bg-card border-2 border-green-500/20 shadow-elevated rounded-2xl p-6 sm:p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-bl-full pointer-events-none" />
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 sm:w-20 h-16 sm:h-20 bg-green-500/10 rounded-3xl flex items-center justify-center border border-green-500/20 shadow-sm">
-                  <CheckCircle2 className="h-8 sm:h-10 w-8 sm:w-10 text-green-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight uppercase">PDF Organized Successfully</h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-1">Changes have been applied permanently.</p>
-                </div>
-              </div>
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="bg-secondary/40 p-4 rounded-xl border border-border/50">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Pages</p>
-                  <p className="text-xl font-black text-primary">{results.pageCount}</p>
-                </div>
-                <div className="bg-secondary/40 p-4 rounded-xl border border-border/50">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">File Size</p>
-                  <p className="text-xl font-black text-primary">{results.size}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" className="flex-1 h-14 text-sm font-black uppercase tracking-widest shadow-glow" onClick={() => {
-                const a = document.createElement('a'); a.href = results.url; a.download = results.name; a.click();
-              }}>
-                <Download className="mr-2 h-5 w-5" /> Download Organized PDF
-              </Button>
-              <Button size="lg" variant="outline" className="flex-1 h-14 text-sm font-black uppercase tracking-widest border-2" onClick={resetAll}>
-                <RefreshCw className="mr-2 h-5 w-5" /> Organize Another PDF
-              </Button>
-            </div>
-          </div>
+          <DownloadScreen
+            title="PDF organized successfully!"
+            downloadLabel="DOWNLOAD ORGANIZED PDF"
+            resultUrl={results.url}
+            resultName={results.name}
+            onReset={resetAll}
+            recommendedTools={[
+              { name: "Merge PDF", path: "/merge-pdf", icon: LayoutGrid },
+              { name: "Compress PDF", path: "/compress-pdf", icon: Minimize2 },
+              { name: "Split PDF", path: "/split-pdf", icon: Scissors },
+              { name: "Delete Pages", path: "/delete-pages", icon: Trash2 },
+              { name: "Protect PDF", path: "/protect-pdf", icon: Lock },
+              { name: "Add Page Numbers", path: "/page-numbers", icon: FileText },
+            ]}
+          />
         ) : (
           <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-background flex flex-col overflow-hidden">
-            {/* WORKSPACE TOOLBAR */}
-            <div className="bg-card border-b border-border shadow-sm p-3 flex flex-wrap items-center gap-2 sm:gap-4 shrink-0 transition-all duration-300">
-              <div className="flex items-center gap-1.5 pr-2 border-r border-border h-8">
-                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={historyIndex <= 0} onClick={undo} title="Undo">
-                  <Undo2 className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={historyIndex >= history.length - 1} onClick={redo} title="Redo">
-                  <Redo2 className="h-4 w-4" />
-                </Button>
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+              {/* MOBILE TAB CONTROL */}
+              <div className="lg:hidden bg-[#16191E] border-b border-white/5 p-2 flex gap-1 shadow-sm shrink-0">
+                <button
+                  onClick={() => setActiveTab("configure")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                    activeTab === "configure" ? "bg-primary text-white shadow-elevated" : "text-white/40 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Organize</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("options")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                    activeTab === "options" ? "bg-primary text-white shadow-elevated" : "text-white/40 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Controls</span>
+                </button>
               </div>
 
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Button variant="outline" size="sm" className="h-9 px-3 text-[10px] font-black uppercase tracking-widest gap-2 bg-secondary/10 border-2" onClick={() => fileInputRef.current?.click()}>
-                  <Plus className="h-3 w-3" /> Add More PDF
-                </Button>
-                <Button variant="outline" size="sm" className="h-9 px-3 text-[10px] font-black uppercase tracking-widest gap-2 bg-secondary/10 border-2" onClick={insertBlankPage}>
-                  <PlusSquare className="h-3 w-3" /> Insert Blank
-                </Button>
-              </div>
+              {/* SHARED CONTENT AREA */}
+              <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative">
+                
+                <div className={cn(
+                  "flex-1 flex flex-col min-h-0 overflow-hidden bg-[#0B0D11] relative border-r border-white/5",
+                  activeTab !== "configure" && "hidden lg:flex"
+                )}>
+                  {/* Background Glow */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] lg:w-[600px] lg:h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-0" />
+                  
+                  
+                  {/* Zoom Toolbar */}
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[40] hidden sm:flex items-center gap-1 p-1.5 bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl">
+                    <button 
+                      onClick={() => setZoom(prev => Math.max(0.6, prev - 0.1))}
+                      className="h-8 w-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </button>
+                    <div className="h-4 w-px bg-white/10 mx-1" />
+                    <button 
+                      onClick={() => setZoom(0.7)}
+                      className="px-3 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white transition-colors"
+                    >
+                      {Math.round(zoom * 100)}%
+                    </button>
+                    <div className="h-4 w-px bg-white/10 mx-1" />
+                    <button 
+                      onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
+                      className="h-8 w-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </button>
+                  </div>
 
-              <div className="flex items-center gap-1.5 px-2 border-x border-border h-8">
-                <Button variant="secondary" size="sm" className="h-8 px-2 text-[9px] font-black uppercase tracking-tighter" disabled={selectedPageIds.size === 0} onClick={() => rotateSelected(90)}>
-                  <RotateCw className="h-3 w-3 mr-1" /> Rotate
-                </Button>
-                <Button variant="destructive" size="sm" className="h-8 px-2 text-[9px] font-black uppercase tracking-tighter" disabled={selectedPageIds.size === 0} onClick={deleteSelected}>
-                  <Trash2 className="h-3 w-3 mr-1" /> Delete
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 px-2 text-[9px] font-black uppercase tracking-tighter border-2" disabled={selectedPageIds.size === 0} onClick={duplicateSelected}>
-                  <Copy className="h-3 w-3 mr-1" /> Duplicate
-                </Button>
-              </div>
+                  <div className="flex-1 overflow-y-auto min-h-0 p-6 sm:p-12 sm:pt-20 custom-scrollbar relative z-10">
+                    {loadingThumbnails && pages.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
+                        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                        <p className="text-xs font-black uppercase tracking-widest text-white/40 animate-pulse">Initializing Workspace...</p>
+                      </div>
+                    ) : (
+                      <DragDropContext onDragEnd={onDragEnd}>
+                        <StrictDroppable droppableId="pages" direction="horizontal">
+                          {(provided: any) => (
+                            <div
+                              {...provided.droppableProps}
+                              ref={provided.innerRef}
+                              className="grid grid-cols-[repeat(auto-fill,minmax(theme(spacing.44),1fr))] gap-x-8 gap-y-12 items-start max-w-[100rem] mx-auto pb-20 px-4 sm:px-10"
+                              style={{ 
+                                gridTemplateColumns: `repeat(auto-fill, minmax(${220 * zoom}px, 1fr))` 
+                              }}
+                            >
+                              {pages.map((page, index) => {
+                                const isSelected = selectedPageIds.has(page.id);
+                                const fileColor = FILE_COLORS[files[page.originalFileIndex]?.colorIndex] || FILE_COLORS[0];
 
-              <div className="flex items-center gap-2 ml-auto">
-                <div className="flex items-center bg-secondary/30 rounded-full px-2 py-1 gap-1 border border-border/50">
-                  <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => setZoom(prev => Math.max(0.6, prev - 0.2))}>
-                    <ZoomOut className="h-3 w-3" />
-                  </Button>
-                  <span className="text-[9px] font-black w-8 text-center">{Math.round(zoom * 100)}%</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => setZoom(prev => Math.min(1.8, prev + 0.2))}>
-                    <ZoomIn className="h-3 w-3" />
-                  </Button>
-                </div>
-                <Button variant="outline" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2" onClick={selectAll}>
-                  {selectedPageIds.size === pages.length ? "Deselect All" : "Select All"}
-                </Button>
-              </div>
-            </div>
+                                return (
+                                  <Draggable key={page.id} draggableId={page.id} index={index}>
+                                    {(provided: any, snapshot: any) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        className={cn(
+                                          "relative flex flex-col items-center",
+                                          snapshot.isDragging ? "z-[100]" : "transition-all duration-300"
+                                        )}
+                                        style={{
+                                          ...provided.draggableProps.style,
+                                          width: '100%', maxWidth: `${220 * zoom}px`,
+                                        }}
+                                      >
+                                        <div
+                                           className={cn("relative aspect-[3/4.2] w-[95%] sm:w-full p-2.5 rounded-xl transition-all duration-500 overflow-visible cursor-pointer group flex flex-col",
+                                            isSelected ? fileColor.solid : `"bg-[#16191E] hover:border-white/10"`,
+                                            snapshot.isDragging ? `shadow-[0_20px_50px_rgba(0,0,0,0.3)] ring-4 ring-primary/60 scale-110 z-[101]` : `${fileColor.light}`
+                                          )}
+                                          onClick={(e) => togglePageSelection(e, page.id)}
+                                        >
+                                          {/* Selection Indicator inside the card */}
+                                          {isSelected && (
+                                            <div className="absolute top-4 left-4 z-20">
+                                              <div className={cn("bg-white rounded-md p-1 shadow-sm", fileColor.text)}>
+                                                <CheckCircle2 className="h-3 w-3" />
+                                              </div>
+                                            </div>
+                                          )}
 
-            {/* MAIN WORKSPACE GRID */}
-            <div className="flex-1 min-h-0 bg-background flex flex-col relative overflow-hidden transition-all duration-500">
-              <div className="p-4 border-b border-border bg-secondary/10 flex justify-between items-center sm:px-8 shrink-0">
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary transition-colors" onClick={resetAll}>
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
-                  <div>
-                    <h2 className="text-sm font-black text-foreground uppercase tracking-tight">Organization Workspace</h2>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">
-                      {pages.length} Pages • {selectedPageIds.size} Selected
-                    </p>
+                                          <div className="w-full flex-1 bg-black/20 rounded-lg flex flex-col overflow-hidden shadow-sm hover:shadow relative">
+                                            <div {...provided.dragHandleProps} className="flex-1 cursor-grab active:cursor-grabbing flex-1 p-2 flex items-center justify-center relative overflow-hidden bg-black/20">
+                                              {page.thumbnail ? (
+                                                <img 
+                                                  src={page.thumbnail} 
+                                                  alt={`P${index + 1}`} 
+                                                  className="max-w-[95%] max-h-[95%] object-contain rounded drop-shadow transition-transform duration-500" 
+                                                  style={{ transform: `rotate(${page.rotation}deg)` }}
+                                                  loading="lazy" 
+                                                />
+                                              ) : (
+                                                <div className="flex flex-col items-center gap-1 opacity-20">
+                                                  <FileText className="h-8 w-8 text-white" />
+                                                </div>
+                                              )}
+                                               {isSelected && <div className={cn("absolute inset-0 pointer-events-none", fileColor.solid, "opacity-5")} />}
+                                             </div>
+                                             <div className="h-7 sm:h-8 flex items-center justify-between bg-black/40 border-t border-white/5 shrink-0 px-2 overflow-hidden relative z-[40]">
+                                               {index > 0 ? (
+                                                 <button 
+                                                   onClick={(e) => movePage(e, page.id, "backward")}
+                                                   className="h-5 w-5 rounded-md hover:bg-white/10 flex items-center justify-center text-primary transition-colors cursor-pointer"
+                                                   title="Move Backward"
+                                                 >
+                                                   <ChevronLeft className="h-4 w-4" />
+                                                 </button>
+                                               ) : <div className="w-5" />}
+
+                                               <span className="text-[10px] font-black text-white/70">{index + 1}</span>
+
+                                               {index < pages.length - 1 ? (
+                                                 <button 
+                                                   onClick={(e) => movePage(e, page.id, "forward")}
+                                                   className="h-5 w-5 rounded-md hover:bg-white/10 flex items-center justify-center text-primary transition-colors cursor-pointer"
+                                                   title="Move Forward"
+                                                 >
+                                                   <ChevronRight className="h-4 w-4" />
+                                                 </button>
+                                               ) : <div className="w-5" />}
+                                             </div>
+                                           </div>
+                                          
+                                          {/* Top Right Hover Actions */}
+                                          <div className="absolute -top-2.5 -right-2.5 z-[50] flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                              onClick={(e) => rotateSingle(e, page.id, 90)} 
+                                              className={cn("h-6 w-6 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform", fileColor.text)}
+                                              title="Rotate Right"
+                                            >
+                                              <RotateCw className="h-3 w-3" />
+                                            </button>
+                                            <button 
+                                              onClick={(e) => deleteSingle(e, page.id)} 
+                                              className="h-6 w-6 rounded-full bg-white shadow-md border flex items-center justify-center text-muted-foreground hover:text-destructive hover:scale-110 transition-transform"
+                                              title="Delete Page"
+                                            >
+                                              <X className="h-3.5 w-3.5" />
+                                            </button>
+                                          </div>
+
+                                          {/* Insert Between Pages Action */}
+                                          <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                              onClick={(e) => insertBlankAfter(e, page.id)} 
+                                              className={cn("h-7 w-7 rounded-full bg-white shadow-md border border-border/50 flex flex-col items-center justify-center text-muted-foreground hover:scale-110 transition-all relative overflow-hidden", `hover:${fileColor.text}`)}
+                                              title="Insert blank page here"
+                                            >
+                                              <FilePlus className="h-4 w-4" />
+                                              <div className={cn("absolute bottom-1 right-1 text-white text-[5px] font-bold rounded-tl-sm px-0.5 leading-none", fileColor.solid)}>
+                                                +
+                                              </div>
+                                            </button>
+                                          </div>
+
+                                          {/* Drag Handle trigger */}
+                                          <div
+                                            {...provided.dragHandleProps}
+                                            className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing opacity-0"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                );
+                              })}
+                              {provided.placeholder}
+
+                              {/* Upload Another Card (Match Rotate PDF) */}
+                              <motion.button 
+                                whileHover={{ scale: 1.05 }} 
+                                whileTap={{ scale: 0.95 }} 
+                                onClick={() => fileInputRef.current?.click()} 
+                                className="aspect-[3/4.2] border-2 border-dashed border-white/10 bg-[#16191E] shadow-lg hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center gap-4 text-white/40 hover:text-primary  transition-all group flex-shrink-0"
+                                style={{ width: '100%', maxWidth: `${220 * zoom}px` }}
+                              >
+                                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm">
+                                  <Plus className="h-5 w-5" />
+                                </div>
+                                <div className="text-center px-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-white/40">Upload</p>
+                                  <p className="text-[8px] font-bold uppercase opacity-30 text-white">Another PDF</p>
+                                </div>
+                              </motion.button>
+                            </div>
+                          )}
+                        </StrictDroppable>
+                      </DragDropContext>
+                    )}
                   </div>
                 </div>
+
+                <div className={cn(
+                  "w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col min-h-0 bg-[#0B0D11] overflow-hidden border-l border-white/5",
+                  activeTab !== "options" && "hidden lg:flex"
+                )}>
+                  <div className="flex-1 flex flex-col min-h-0 p-6 relative">
+                    <div className="mb-6 shrink-0">
+                      <h2 className="text-xl sm:text-2xl font-black text-white text-center border-b border-white/10 pb-4 tracking-tighter capitalize transition-all">Organize PDF</h2>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 touch-pan-y">
+                      <div className="space-y-4 pb-24">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                           <span className="font-bold text-sm text-white/70">Source Files:</span>
+                           <button onClick={resetAll} className="text-sm font-bold text-rose-500 hover:text-rose-400">Reset Workspace</button>
+                        </div>
+                         {files.map((fileData, fIdx) => {
+                           const fileColor = FILE_COLORS[fileData.colorIndex] || FILE_COLORS[0];
+                           return (
+                             <div key={fileData.id} className={cn("flex items-center gap-2 p-3 text-white rounded-lg shadow-sm transition-all animate-in slide-in-from-right-4 duration-300", fileColor.solid)}>
+                                <div className="flex-1 flex items-center gap-2 min-w-0">
+                                  <ArrowUpDown className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                                  <span className="text-[10px] font-black truncate uppercase tracking-tight">{fileData.file.name}</span>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button 
+                                    disabled={fIdx === 0}
+                                    onClick={() => moveFile(fIdx, 'up')}
+                                    className="h-6 w-6 rounded bg-black/10 hover:bg-black/20 flex items-center justify-center disabled:opacity-20 transition-colors"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="h-3 w-3" />
+                                  </button>
+                                  <button 
+                                    disabled={fIdx === files.length - 1}
+                                    onClick={() => moveFile(fIdx, 'down')}
+                                    className="h-6 w-6 rounded bg-black/10 hover:bg-black/20 flex items-center justify-center disabled:opacity-20 transition-colors"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="h-3 w-3" />
+                                  </button>
+                                  <button 
+                                    onClick={() => removeFile(fIdx)}
+                                    className="h-6 w-6 rounded bg-black/10 hover:bg-rose-500/80 flex items-center justify-center transition-colors"
+                                    title="Remove File"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                             </div>
+                           );
+                         })}
+                      </div>
+                    </div>
+
+                    {/* Desktop Execution Button */}
+                    <div className="hidden lg:block shrink-0 pt-6 border-t border-white/10 bg-[#0B0D11]">
+                      <Button
+                        size="lg"
+                        className="w-full h-14 sm:h-16 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={applyChanges}
+                        disabled={pages.length === 0}
+                      >
+                        <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                        Organize PDF
+                        <div className="bg-white/20 h-6 w-6 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                          <ArrowRight className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* MOBILE ACTION FOOTER */}
+              <div className="lg:hidden shrink-0 pt-4 pb-6 px-4 bg-background border-t border-border">
                 <Button
                   size="lg"
-                  className="h-12 px-8 text-[11px] font-black uppercase tracking-widest shadow-glow rounded-xl"
+                  className="w-full h-12 sm:h-14 rounded-xl font-bold text-base sm:text-lg shadow-xl shadow-primary/25 group relative overflow-hidden flex items-center justify-center gap-3"
                   onClick={applyChanges}
+                  disabled={pages.length === 0}
                 >
-                  Apply Changes
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-6 py-8 bg-secondary/10 custom-scrollbar">
-                {loadingThumbnails && pages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Initializing Pages...</p>
+                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  Organize PDF
+                  <div className="bg-white/20 h-6 w-6 rounded-full flex items-center justify-center">
+                    <ArrowRight className="h-3.5 w-3.5 text-white" />
                   </div>
-                ) : (
-                  <DragDropContext onDragEnd={onDragEnd}>
-                    <StrictDroppable droppableId="pages" direction="horizontal">
-                      {(provided: any) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="flex flex-wrap gap-8 pb-32 justify-center sm:justify-start"
-                        >
-                          {pages.map((page, index) => (
-                            <Draggable key={page.id} draggableId={page.id} index={index}>
-                              {(provided: any, snapshot: any) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={cn(
-                                    "relative flex flex-col items-center transition-all duration-300",
-                                    snapshot.isDragging ? "z-50 scale-105" : "scale-100"
-                                  )}
-                                  style={{
-                                    ...provided.draggableProps.style,
-                                    width: `${170 * zoom}px`,
-                                  }}
-                                >
-                                  <div
-                                    className={cn(
-                                      "relative aspect-[3/4.2] w-full bg-white border-2 rounded-2xl shadow-elevated transition-all duration-300 overflow-hidden ring-offset-2 group cursor-pointer",
-                                      selectedPageIds.has(page.id) ? "border-primary ring-2 ring-primary shadow-glow" : "border-border hover:border-primary/40",
-                                      snapshot.isDragging && "shadow-2xl ring-4 ring-primary/20 border-primary"
-                                    )}
-                                    onClick={(e) => togglePageSelection(e, page.id)}
-                                  >
-                                    {/* Drag Handle */}
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="absolute top-2 right-2 z-20 p-1.5 bg-white/80 border border-border/50 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-                                    >
-                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                    </div>
-
-                                    {/* Selection Indicator */}
-                                    <div className="absolute top-2 left-2 z-20">
-                                      {selectedPageIds.has(page.id) ? (
-                                        <div className="bg-primary text-white rounded-lg p-1 shadow-md">
-                                          <CheckSquare className="h-4 w-4" />
-                                        </div>
-                                      ) : (
-                                        <div className="bg-white/80 border border-border/50 rounded-lg p-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                          <Square className="h-4 w-4 text-muted-foreground/30" />
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Individual Controls Overlay */}
-                                    <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                      <div className="flex gap-1 pointer-events-auto">
-                                        <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); rotateSingle(e, page.id, 90); }}>
-                                          <RotateCw className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button size="icon" variant="destructive" className="h-8 w-8 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); setSelectedPageIds(new Set([page.id])); deleteSelected(); }}>
-                                          <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </div>
-                                    </div>
-
-                                    {/* Thumbnail */}
-                                    <div
-                                      className="w-full h-full p-2 flex items-center justify-center bg-white/50 transition-transform duration-500"
-                                      style={{ transform: `rotate(${page.rotation}deg)` }}
-                                    >
-                                      <img src={page.thumbnail} alt={`P${index + 1}`} className="max-w-[85%] max-h-[85%] object-contain" loading="lazy" decoding="async" />
-                                    </div>
-
-                                    {/* Page Badge */}
-                                    <div className="absolute bottom-0 left-0 right-0 py-2 bg-secondary/90 backdrop-blur-sm border-t border-border flex items-center justify-center">
-                                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Page {index + 1}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </StrictDroppable>
-                  </DragDropContext>
-                )}
-              </div>
-
-              {/* Bottom Info Bar */}
-              <div className="shrink-0 p-3 bg-secondary/5 border-t border-border flex justify-center gap-8">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Safe & Lossless</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Zap className="h-3.5 w-3.5" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Instant Preview</span>
-                </div>
+                </Button>
               </div>
             </div>
           </div>
@@ -637,26 +892,28 @@ const OrganizePdf = () => {
       <input ref={fileInputRef} type="file" className="hidden" multiple={true} accept=".pdf" onChange={(e) => {
         if (e.target.files?.length) handleFilesChange(Array.from(e.target.files));
       }} />
-      <ToolSeoSection
-        toolName="Organize PDF Online"
-        category="edit"
-        intro="MagicDocx Organize PDF is a professional drag-and-drop workspace for rearranging, rotating, deleting, and duplicating the pages of any PDF document. Upload multiple PDFs to combine them, drag pages into the perfect order, insert blank pages, and download your reorganized document instantly. Undo/redo history lets you experiment freely, and every action happens locally in your browser | your files are never uploaded to any server."
-        steps={[
-          "Upload one or more PDF files using the drag-and-drop area.",
-          "Drag page thumbnails into your desired order, or select multiple pages for bulk actions.",
-          "Rotate, delete, or duplicate selected pages using the toolbar.",
-          "Click 'Apply Changes' to download your perfectly organized PDF."
-        ]}
-        formats={["PDF"]}
-        relatedTools={[
-          { name: "Merge PDF", path: "/merge-pdf", icon: LayoutGrid },
-          { name: "Split PDF", path: "/split-pdf", icon: LayoutGrid },
-          { name: "Delete Pages", path: "/delete-pages", icon: LayoutGrid },
-          { name: "Rotate PDF", path: "/rotate-pdf", icon: LayoutGrid },
-        ]}
-        schemaName="Organize PDF Online"
-        schemaDescription="Free online PDF organizer. Drag and drop to reorder, rotate, delete, and duplicate PDF pages with multi-file and undo/redo support."
-      />
+      {files.length === 0 && !results && !processing && (
+        <ToolSeoSection
+          toolName="Organize PDF Online"
+          category="edit"
+          intro="MagicDocx Organize PDF is a professional drag-and-drop workspace for rearranging, rotating, deleting, and duplicating the pages of any PDF document. Upload multiple PDFs to combine them, drag pages into the perfect order, insert blank pages, and download your reorganized document instantly. Undo/redo history lets you experiment freely, and every action happens locally in your browser | your files are never uploaded to any server."
+          steps={[
+            "Upload one or more PDF files using the drag-and-drop area.",
+            "Drag page thumbnails into your desired order, or select multiple pages for bulk actions.",
+            "Rotate, delete, or duplicate selected pages using the toolbar.",
+            "Click 'Apply Changes' to download your perfectly organized PDF."
+          ]}
+          formats={["PDF"]}
+          relatedTools={[
+            { name: "Merge PDF", path: "/merge-pdf", icon: LayoutGrid },
+            { name: "Split PDF", path: "/split-pdf", icon: LayoutGrid },
+            { name: "Delete Pages", path: "/delete-pages", icon: LayoutGrid },
+            { name: "Rotate PDF", path: "/rotate-pdf", icon: LayoutGrid },
+          ]}
+          schemaName="Organize PDF Online"
+          schemaDescription="Free online PDF organizer. Drag and drop to reorder, rotate, delete, and duplicate PDF pages with multi-file and undo/redo support."
+        />
+      )}
     </ToolLayout>
   );
 };

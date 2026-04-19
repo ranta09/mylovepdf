@@ -285,26 +285,28 @@ const WordToPdf = () => {
           onFilesSelected={handleFilesChange}
         />
       )}
-      <ToolSeoSection
-        toolName="Word to PDF Converter"
-        category="convert"
-        intro="MagicDocx Word to PDF converter turns your Microsoft Word documents (DOC and DOCX) into professional, high-fidelity PDF files. Our premium engine ensures that your original formatting, images, tables, and typography are preserved with pixel-perfect accuracy. Support for multi-file processing and document merging makes it the ultimate professional utility for high-resolution, print-ready PDF generation."
-        steps={[
-          "Upload one or more Word files (DOC or DOCX) to the secure workspace.",
-          "Configure your preferences including page size and orientation in the workbench.",
-          "Toggle the 'Merge' option if you wish to combine multiple documents into a single PDF.",
-          "Click 'Initiate Conversion' and download your professional-grade PDF instantly."
-        ]}
-        formats={["DOC", "DOCX", "PDF"]}
-        relatedTools={[
-          { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
-          { name: "Excel to PDF", path: "/excel-to-pdf", icon: FileText },
-          { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
-          { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
-        ]}
-        schemaName="Word to PDF Converter Online"
-        schemaDescription="Free online Word to PDF converter. Convert DOC and DOCX files to high-fidelity PDF with formatting, fonts, and structure preserved."
-      />
+      {files.length === 0 && results.length === 0 && !processing && (
+        <ToolSeoSection
+          toolName="Word to PDF Converter"
+          category="convert"
+          intro="MagicDocx Word to PDF converter turns your Microsoft Word documents (DOC and DOCX) into professional, high-fidelity PDF files. Our premium engine ensures that your original formatting, images, tables, and typography are preserved with pixel-perfect accuracy. Support for multi-file processing and document merging makes it the ultimate professional utility for high-resolution, print-ready PDF generation."
+          steps={[
+            "Upload one or more Word files (DOC or DOCX) to the secure workspace.",
+            "Configure your preferences including page size and orientation in the workbench.",
+            "Toggle the 'Merge' option if you wish to combine multiple documents into a single PDF.",
+            "Click 'Initiate Conversion' and download your professional-grade PDF instantly."
+          ]}
+          formats={["DOC", "DOCX", "PDF"]}
+          relatedTools={[
+            { name: "PDF to Word", path: "/pdf-to-word", icon: FileText },
+            { name: "Excel to PDF", path: "/excel-to-pdf", icon: FileText },
+            { name: "Merge PDF", path: "/merge-pdf", icon: FileText },
+            { name: "Compress PDF", path: "/compress-pdf", icon: FileText },
+          ]}
+          schemaName="Word to PDF Converter Online"
+          schemaDescription="Free online Word to PDF converter. Convert DOC and DOCX files to high-fidelity PDF with formatting, fonts, and structure preserved."
+        />
+      )}
     </ToolLayout>
   );
 };
