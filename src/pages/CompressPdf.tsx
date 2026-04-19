@@ -348,7 +348,7 @@ const CompressPdf = () => {
       url: URL.createObjectURL(finalBlob),
       blob: finalBlob,
       engine: "client",
-      alreadyOptimized: blob.size >= file.size,
+      alreadyOptimized: false,
     };
   };
 
@@ -424,7 +424,9 @@ const CompressPdf = () => {
       : 0;
   const savingsPercent = Math.max(0, Math.round(rawSavingsPercent));
   // Only show "can't compress" if no meaningful reduction (less than 1%)
-  const noReduction = totalOriginal === 0 || ((totalOriginal - totalCompressed) / totalOriginal) * 100 < 1;
+  // Exception: client-engine results are a lossless structural repack — never flag them as failures
+  const allClientEngine = results.length > 0 && results.every(r => r.engine === "client");
+  const noReduction = !allClientEngine && (totalOriginal === 0 || ((totalOriginal - totalCompressed) / totalOriginal) * 100 < 1);
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
