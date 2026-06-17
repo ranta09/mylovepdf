@@ -275,7 +275,7 @@ const PdfToPdfa = () => {
           onFilesSelected={setFiles}
         />
       )}
-      {files.length === 0 && results.length === 0 && !processing && (
+      {files.length === 0 && !processing && (
         <ToolSeoSection
           toolName="PDF to PDF/A Converter"
           category="convert"

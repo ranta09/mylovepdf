@@ -703,7 +703,8 @@ const EditPdf = () => {
     <ToolLayout
       title="Edit PDF Online"
       description="Edit existing text, add signatures, images, and annotations to your PDF documents."
-      toolName="Edit PDF Online"
+      category="edit"
+      icon={<Edit3 className="h-7 w-7" />}
     >
       <div className="space-y-4">
         {!file && (
@@ -713,8 +714,6 @@ const EditPdf = () => {
               description="Click existing text to edit it, or add new text, images, and annotations."
               accept=".pdf"
               onFilesSelected={handleFiles}
-              loading={loading}
-              isBatch={false}
             />
           </div>
         )}
@@ -760,7 +759,6 @@ const EditPdf = () => {
                   previews={previews} state={state} activePage={activePage}
                   zoom={zoom} zoomSteps={ZOOM_STEPS} setZoom={setZoom}
                   zoomIn={zoomIn} zoomOut={zoomOut} scrollToPage={scrollToPage}
-                  width={leftSidebarWidth}
                 />
 
                 <div 
@@ -892,7 +890,6 @@ const EditPdf = () => {
                   activeTool={activeTool} activePage={activePage}
                   addOverlay={addOverlay} versions={versions}
                   downloadVersion={downloadVersion}
-                  width={rightSidebarWidth}
                 />
               </div>
             </div>
