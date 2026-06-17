@@ -381,7 +381,7 @@ const CompressPdf = () => {
       }
 
       const outBytes   = await outDoc.save();
-      const canvasBlob = new Blob([outBytes], { type: "application/pdf" });
+      const canvasBlob = new Blob([new Uint8Array(outBytes)], { type: "application/pdf" });
 
       // Pick the smallest result: canvas < structural < original
       const candidates: Blob[] = [file, structuralBlob, canvasBlob];

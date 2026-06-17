@@ -153,14 +153,14 @@ export async function extractTextBlocks(
   const pdfViewport = page.getViewport({ scale: 1 });
   const textContent = await page.getTextContent();
 
-  const rawItems: RawItem[] = textContent.items
-    .filter((it): it is pdfjsLib.TextItem => "str" in it && it.str.trim().length > 0)
-    .map(it => ({
-      str:       it.str,
+  const rawItems: RawItem[] = (textContent.items as any[])
+    .filter((it) => typeof it?.str === "string" && it.str.trim().length > 0)
+    .map((it) => ({
+      str:       it.str as string,
       transform: it.transform as number[],
-      width:     (it as any).width  ?? 0,
-      height:    (it as any).height ?? 0,
-      fontName:  (it as any).fontName ?? "",
+      width:     (it.width  as number) ?? 0,
+      height:    (it.height as number) ?? 0,
+      fontName:  (it.fontName as string) ?? "",
     }));
 
   const lines  = groupIntoLines(rawItems);
