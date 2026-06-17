@@ -467,7 +467,7 @@ const PdfToWord = () => {
         />
       )}
 
-      {!files.length && !processing && results.length === 0 && (
+      {!files.length && !processing && (
         <ToolSeoSection
           toolName="PDF to Word Converter Online"
           category="convert"

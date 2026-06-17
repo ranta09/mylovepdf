@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import ToolSeoSection from "@/components/ToolSeoSection";
 import DownloadScreen from "@/components/DownloadScreen";
-import { Merge, Minimize2, Scissors, Lock, LayoutGrid, FileText as FP } from "lucide-react";
+import { Merge, Minimize2, Scissors, LayoutGrid, FileText as FP } from "lucide-react";
 import { PDFDocument, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import { createWorker } from "tesseract.js";
