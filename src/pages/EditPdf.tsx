@@ -18,6 +18,7 @@ import {
 } from "@/lib/pdfEditorUtils";
 import { extractTextBlocks, type TextBlock } from "@/lib/pdfTextExtractor";
 import { useEditorHistory } from "@/hooks/useEditorHistory";
+import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
 import {
   EditorToolbar, SecondaryToolbar, PageThumbnails,
   PropertiesPanel,
@@ -212,23 +213,9 @@ const EditPdf = () => {
   const [selAlign, setSelAlign] = useState<"left" | "center" | "right">("left");
 
   // ── Drag state ────────────────────────────────────────────────────────────
-  const [draggingOverlay, setDraggingOverlay] = useState<{ pageIdx: number; overlayId: string; startX: number; startY: number; mouseStartX: number; mouseStartY: number } | null>(null);
-  const wasDraggingMove = useRef(false);
-
   // ── Annotation state ──────────────────────────────────────────────────────
   const [annotColor, setAnnotColor] = useState("#2563eb");
   const [commentText, setCommentText] = useState("Comment");
-  const [imgDragging, setImgDragging] = useState(false);
-  const [imgStart, setImgStart] = useState<{ x: number; y: number } | null>(null);
-  const [imgRect, setImgRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [annotDragging, setAnnotDragging] = useState(false);
-  const [annotStart, setAnnotStart] = useState<{ x: number; y: number } | null>(null);
-  const [annotRect, setAnnotRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [lineEnd, setLineEnd] = useState<{ x: number; y: number } | null>(null);
-  const [freehandPoints, setFreehandPoints] = useState<number[][]>([]);
-  const [eraserDragging, setEraserDragging] = useState(false);
-  const [eraserStart, setEraserStart] = useState<{ x: number; y: number } | null>(null);
-  const [eraserRect, setEraserRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   // ─── Load PDF + extract text blocks ──────────────────────────────────────
 
