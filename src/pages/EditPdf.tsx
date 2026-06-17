@@ -331,6 +331,38 @@ const EditPdf = () => {
 
   // ─── Drag overlays ────────────────────────────────────────────────────────
 
+  // ─── Overlay helpers ──────────────────────────────────────────────────────
+
+  const addOverlay = (pageIdx: number, overlay: Overlay) => {
+    const next = cloneState(state);
+    next.pages[pageIdx].overlays.push(overlay);
+    pushState(next);
+  };
+  const removeOverlay = (pageIdx: number, id: string) => {
+    const next = cloneState(state);
+    next.pages[pageIdx].overlays = next.pages[pageIdx].overlays.filter(o => o.id !== id);
+    pushState(next);
+  };
+
+  // ─── Canvas interactions (extracted into hook) ────────────────────────────
+  const ci = useCanvasInteractions({
+    activeTool, annotKind, activeTab, activePage,
+    annotColor, commentText,
+    textContent, textSize, textColor, textBold, textItalic, textFont,
+    state, pushState, addOverlay, removeOverlay,
+    selectedBlockId,
+  });
+  const {
+    draggingOverlay, setDraggingOverlay, wasDraggingMove,
+    imgDragging, imgRect,
+    handleImgMouseDown, handleImgMouseMove, handleImgMouseUp,
+    annotDragging, annotRect, freehandPoints,
+    handleAnnotMouseDown, handleAnnotMouseMove, handleAnnotMouseUp,
+    eraserDragging, eraserRect,
+    handleEraserMouseDown, handleEraserMouseMove, handleEraserMouseUp,
+  } = ci;
+
+  // Overlay drag (uses draggingOverlay from hook)
   useEffect(() => {
     if (!draggingOverlay) return;
     const onMove = (e: MouseEvent) => {
@@ -353,24 +385,7 @@ const EditPdf = () => {
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-  }, [draggingOverlay, state, setState, pushState]);
-
-  // ─── Overlay helpers ──────────────────────────────────────────────────────
-
-  const addOverlay = (pageIdx: number, overlay: Overlay) => {
-    const next = cloneState(state);
-    next.pages[pageIdx].overlays.push(overlay);
-    pushState(next);
-  };
-  const removeOverlay = (pageIdx: number, id: string) => {
-    const next = cloneState(state);
-    next.pages[pageIdx].overlays = next.pages[pageIdx].overlays.filter(o => o.id !== id);
-    pushState(next);
-  };
-  const getRelativePos = (e: React.MouseEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    return { x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 };
-  };
+  }, [draggingOverlay, state, setState, pushState, setDraggingOverlay, wasDraggingMove]);
 
   const handleTransformCommit = (updates: { id: string; x: number; y: number; width?: number; height?: number }[], srcIdx: number) => {
     let hasOverlayUpdates = false;
@@ -381,7 +396,7 @@ const EditPdf = () => {
       const ovIdx = state.pages[srcIdx].overlays.findIndex(o => o.id === u.id);
       if (ovIdx >= 0) {
         if (!hasOverlayUpdates) { nextState = cloneState(state); hasOverlayUpdates = true; }
-        const nextOv = nextState.pages[srcIdx].overlays[ovIdx];
+        const nextOv = nextState.pages[srcIdx].overlays[ovIdx] as any;
         nextOv.x = u.x; nextOv.y = u.y;
         if (u.width !== undefined) nextOv.width = u.width;
         if (u.height !== undefined) nextOv.height = u.height;
@@ -403,20 +418,9 @@ const EditPdf = () => {
     return items;
   }, [state, textBlocksPerPage]);
 
-  // ─── Canvas interactions ──────────────────────────────────────────────────
-
-  const handlePageClick = (e: React.MouseEvent, srcIdx: number) => {
-    if (wasDraggingMove.current) return;
-    const t = e.target as HTMLElement;
-    if (!t.closest("[data-textblock]") && !t.closest("[data-overlay]")) {
-      if (selectedBlockId) setSelectedBlockId(null);
-      if (activeTool === "select" && !e.shiftKey) setSelectedIds(new Set());
-    }
-    if (activeTool === "addText" && !t.closest("[data-textblock]") && !t.closest("[data-overlay]") && !selectedBlockId) {
-      const { x, y } = getRelativePos(e);
-      addOverlay(srcIdx, { id: makeId(), type: "text", text: textContent, fontSize: textSize[0], color: textColor, bold: textBold, italic: textItalic, fontFamily: textFont, x, y } as TextOverlay);
-    }
-  };
+  // ─── Page click (wraps hook handler with this component's setters) ────────
+  const handlePageClick = (e: React.MouseEvent, srcIdx: number) =>
+    ci.handlePageClick(e, srcIdx, setSelectedBlockId, setSelectedIds);
 
   const handleItemSelectClick = (e: React.MouseEvent, id: string) => {
     if (activeTool !== "select") return;
@@ -427,70 +431,6 @@ const EditPdf = () => {
       else { next.clear(); next.add(id); }
       return next;
     });
-  };
-
-  const handleImgMouseDown = (e: React.MouseEvent) => { if (activeTab !== "image") return; e.preventDefault(); const { x, y } = getRelativePos(e); setImgStart({ x, y }); setImgRect(null); setImgDragging(true); };
-  const handleImgMouseMove = (e: React.MouseEvent) => { if (!imgDragging || !imgStart) return; const { x, y } = getRelativePos(e); setImgRect({ x: Math.min(imgStart.x, x), y: Math.min(imgStart.y, y), width: Math.abs(x - imgStart.x), height: Math.abs(y - imgStart.y) }); };
-  const handleImgMouseUp = (e: React.MouseEvent, srcIdx: number) => {
-    if (!imgDragging || !imgRect || imgRect.width < 2 || imgRect.height < 2) { setImgDragging(false); setImgRect(null); return; }
-    setImgDragging(false);
-    const input = document.createElement("input"); input.type = "file"; input.accept = "image/*";
-    input.onchange = () => {
-      const imgFile = input.files?.[0]; if (!imgFile) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        addOverlay(srcIdx, { id: makeId(), type: "image", dataUrl: reader.result as string, x: imgRect!.x, y: imgRect!.y, width: imgRect!.width, height: imgRect!.height } as ImageOverlay);
-        setImgRect(null); toast.success("Image placed!");
-      };
-      reader.readAsDataURL(imgFile);
-    };
-    input.click();
-  };
-
-  const handleAnnotMouseDown = (e: React.MouseEvent) => { if (activeTab !== "annotate") return; e.preventDefault(); const { x, y } = getRelativePos(e); setAnnotStart({ x, y }); setAnnotRect(null); setAnnotDragging(true); if (annotKind === "freehand") setFreehandPoints([[x, y]]); };
-  const handleAnnotMouseMove = (e: React.MouseEvent) => {
-    if (!annotDragging || !annotStart) return;
-    const { x, y } = getRelativePos(e);
-    if (annotKind === "freehand") setFreehandPoints(pts => [...pts, [x, y]]);
-    else if (annotKind === "line" || annotKind === "arrow") setLineEnd({ x, y });
-    else setAnnotRect({ x: Math.min(annotStart.x, x), y: Math.min(annotStart.y, y), width: Math.abs(x - annotStart.x), height: Math.abs(y - annotStart.y) });
-  };
-  const handleAnnotMouseUp = (e: React.MouseEvent, srcIdx: number) => {
-    if (!annotDragging || !annotStart) return;
-    setAnnotDragging(false);
-    if (annotKind === "comment") {
-      addOverlay(srcIdx, { id: makeId(), type: "annotation", kind: "comment", x: annotStart.x, y: annotStart.y, color: annotColor, text: commentText } as AnnotationOverlay);
-    } else if (annotKind === "freehand") {
-      addOverlay(srcIdx, { id: makeId(), type: "annotation", kind: "freehand", x: annotStart.x, y: annotStart.y, color: annotColor, points: freehandPoints } as AnnotationOverlay);
-      setFreehandPoints([]);
-    } else if ((annotKind === "line" || annotKind === "arrow") && lineEnd) {
-      const dx = lineEnd.x - annotStart.x, dy = lineEnd.y - annotStart.y;
-      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-        addOverlay(srcIdx, { id: makeId(), type: "annotation", kind: annotKind, x: annotStart.x, y: annotStart.y, width: dx, height: dy, color: annotColor } as AnnotationOverlay);
-      }
-      setLineEnd(null);
-    } else if (annotRect && annotRect.width > 1 && annotRect.height > 1) {
-      addOverlay(srcIdx, { id: makeId(), type: "annotation", kind: annotKind, x: annotRect.x, y: annotRect.y, width: annotRect.width, height: annotRect.height, color: annotColor } as AnnotationOverlay);
-    }
-    setAnnotRect(null);
-  };
-
-  const handleEraserMouseDown = (e: React.MouseEvent) => { if (activeTool !== "eraser") return; e.preventDefault(); const { x, y } = getRelativePos(e); setEraserStart({ x, y }); setEraserRect(null); setEraserDragging(true); };
-  const handleEraserMouseMove = (e: React.MouseEvent) => { if (!eraserDragging || !eraserStart) return; const { x, y } = getRelativePos(e); setEraserRect({ x: Math.min(eraserStart.x, x), y: Math.min(eraserStart.y, y), width: Math.abs(x - eraserStart.x), height: Math.abs(y - eraserStart.y) }); };
-  const handleEraserMouseUp = (e: React.MouseEvent, srcIdx: number) => {
-    if (!eraserDragging || !eraserStart) { setEraserDragging(false); return; }
-    setEraserDragging(false);
-    const rect = eraserRect; setEraserRect(null); setEraserStart(null);
-    if (rect && (rect.width > 0.5 || rect.height > 0.5)) {
-      const eraseBox = { x: rect.x, y: rect.y, w: rect.width, h: rect.height };
-      const next = cloneState(state);
-      const before = next.pages[srcIdx].overlays.length;
-      next.pages[srcIdx].overlays = next.pages[srcIdx].overlays.filter(ov => {
-        const bbox = overlayBBox(ov); return !bbox || !rectsIntersect(bbox, eraseBox);
-      });
-      const erased = before - next.pages[srcIdx].overlays.length;
-      if (erased > 0) { pushState(next); }
-    }
   };
 
   // ─── Print (PDF pages only) ───────────────────────────────────────────────
